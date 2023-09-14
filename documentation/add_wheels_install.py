@@ -39,7 +39,7 @@ def rowsPerOS(osName, wheelNames):
     # the span to combine to one cell in the OS column,
     # but only if it is actually spanning multiple lines
     ret = "  * - "
-    if spanNum > 1:
+    if spanNum > 0:
         ret += f":rspan:`{spanNum}` "
     ret += f"{osName}\n"
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     targets = map(lambda x: x.parts[-1], targets)
     targets = map(os.fspath, targets)
 
-    # wheel names in the form: "nimble-version-pyVersion-pyVersion-os_arch.whl"
+    # wheel names in the form: "nimble-version-pyTag-pyABITag-os_arch.whl"
     # So first we sort by the python version, then they are partitioned into
     # lists per each OS
     verSorted = sorted(targets, key=lambda x: int(x.split('-')[2][2:]))
@@ -99,9 +99,10 @@ if __name__ == "__main__":
     # name given within the file name.
     #
     # dict.get used to accomodate cases where we have more or less
-    # key values than expected; but as of this comment, the three
+    # key values than expected; but as of this comment, the four
     # given should cover all built wheels.
-    displayName = {'linux':"Linux", "macosx":"MacOS", "win":"Windows"}
+    displayName = {'manylinux':"Linux", "manylinux2014":"Linux",
+                   "linux":"Linux", "macosx":"MacOS", "win":"Windows"}
     for key, val in byOS.items():
         toWrite += rowsPerOS(displayName.get(key, key), val)
 

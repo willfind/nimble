@@ -1,0 +1,8 @@
+# We want this folder to be present since it is the location
+# hard coded for wheel storage in CI/CD, but we don't want to
+# include any files here in the repo because they are supposed
+# to be generated.
+#
+# We accomplish this by ignoring all files except this one.
+*
+!.gitignore
