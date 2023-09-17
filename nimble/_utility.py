@@ -21,6 +21,29 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._dependencies import checkVersion
 
+############################
+# Unavailable ML Methods  #
+###########################
+
+def fit(*args, **kwargs):
+    raise AttributeError("Attribute fit does not exist for Nimble. Try .train() instead.")
+
+def fit_transform(*args, **kwargs):
+    raise AttributeError("Attribute fit_transform does not exist for Nimble. Try nimble.fillMatching/nimble.Normalize() instead.")
+
+def transform(*args, **kwargs):
+    raise AttributeError("Attribute transform does not exist for Nimble. Try nimble.fillMatching/nimble.Normalize() instead.")
+
+def predict(*args, **kwargs):
+    raise AttributeError("Attribute predict does not exist for Nimble. Try .apply() instead")
+
+def score(*args, **kwargs):
+    raise AttributeError("Attribute score does not exist for Nimble. Try .getScores() instead.")
+
+def get_params(*args, **kwargs):
+    raise AttributeError("Attribute get_params does not exist for Nimble. Try .getLearnerParameterNames() instead.")
+
+
 def isFunction(func):
     """
     Return True if an object is a python or cython function
