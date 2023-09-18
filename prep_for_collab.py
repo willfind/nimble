@@ -16,10 +16,9 @@ if __name__ == "__main__":
 
     contentHeader = ["##### Required Colab Setup",]
 
+    installPage = "https://willfind.github.io/nimble/install"
     contentInstall = [
-        "!gcloud config set project nimble-302717\n",
-        "!gsutil cp gs://nimble/nimble-0.4.2-cp310-cp310-linux_x86_64.whl .\n",
-        "!pip install nimble-0.4.2-cp310-cp310-linux_x86_64.whl"
+        "!pip install nimble --find-links=" + installPage
         ]
 
     cellHeader = nbformat.v4.new_markdown_cell(contentHeader)
