@@ -1476,17 +1476,17 @@ class LowLevelBackend(object):
             err_message = str(e)
             assert err_message == "Attribute fit does not exist for Nimble learner objects. Try .train() instead."
             
-        # try:
-        #     toTest.fit_transform()
-        # except AttributeError as e:
-        #     err_message = str(e)
-        #     assert err_message == "Attribute fit_transform does not exist for Nimble learner objects. Try nimble.fillMatching/nimble.Normalize instead."
+        try:
+            toTest.fit_transform()
+        except AttributeError as e:
+            err_message = str(e)
+            assert err_message == "Attribute fit_transform does not exist for Nimble learner objects. Try nimble.fillMatching/nimble.Normalize() instead."
             
-        # try:
-        #     toTest.transform()
-        # except AttributeError as e:
-        #     err_message = str(e)
-        #     assert err_message == "Attribute transform does not exist for Nimble learner objects. Try nimble.fillMatching/nimble.Normalize instead."
+        try:
+            toTest.transform()
+        except AttributeError as e:
+            err_message = str(e)
+            assert err_message == "Attribute transform does not exist for Nimble learner objects. Try nimble.fillMatching/nimble.Normalize() instead."
             
         try:
             toTest.predict()
@@ -1534,23 +1534,23 @@ class LowLevelBackend(object):
             err_message = str(e)
             assert err_message == "Attribute fit does not exist for Nimble. Try .train() instead."
         
-        # try:
-        #     nimble.fit_transform(trainData)
-        # except AttributeError as e:
-        #     err_message = str(e)
-        #     assert err_message == "Attribute fit_transform does not exist for Nimble. Try nimble.fillMatching/nimble.Normalize instead."
+        try:
+            nimble.fit_transform(trainData)
+        except AttributeError as e:
+            err_message = str(e)
+            assert err_message == "Attribute fit_transform does not exist for Nimble. Try nimble.fillMatching/nimble.Normalize() instead."
         
-        # try:
-        #     nimble.transform(trainData)
-        # except AttributeError as e:
-        #     err_message = str(e)
-        #     assert err_message == "Attribute transform does not exist for Nimble. Try nimble.fillMatching/nimble.Normalize instead."
+        try:
+            nimble.transform(trainData)
+        except AttributeError as e:
+            err_message = str(e)
+            assert err_message == "Attribute transform does not exist for Nimble. Try nimble.fillMatching/nimble.Normalize() instead."
         
-        # try:
-        #     nimble.predict(trainData)
-        # except AttributeError as e:
-        #     err_message = str(e)
-        #     assert err_message == "Attribute predict does not exist for Nimble. Try .apply() instead."
+        try:
+            nimble.predict(trainData)
+        except AttributeError as e:
+            err_message = str(e)
+            assert err_message == "Attribute predict does not exist for Nimble. Try .apply() instead."
             
         try:
             nimble.score(trainData)

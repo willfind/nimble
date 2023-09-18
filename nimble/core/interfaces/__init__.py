@@ -9,7 +9,7 @@ from ._collect_interfaces import initInterfaceSetup
 predefined = []
 available = {}
 
-def custom_getattr(self, name):
+def customMlGetattr(self, name):
     base = f"Attribute {name} does not exist for Nimble learner objects. "
     if name == 'fit':
         msg = "Try .train() instead."
@@ -31,8 +31,6 @@ def custom_getattr(self, name):
         raise AttributeError(base + msg)
     else:
         return self.__getattribute__(name)
-    # else:
-    #     raise AttributeError(f"'{obj.__name__}' object has no attribute '{name}'")
 
-TrainedLearner.__getattr__ = custom_getattr
-CustomLearner.__getattr__ = custom_getattr
+TrainedLearner.__getattr__ = customMlGetattr
+CustomLearner.__getattr__ = customMlGetattr

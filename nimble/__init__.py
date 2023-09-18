@@ -72,12 +72,3 @@ core.logger.initLoggerAndLogConfig()
 __all__ = _setAll(vars(), includeModules=True, ignore=['core'])
 
 __version__ = "0.4.2"
-
-# class NimbleMlCatch:
-#     def __getattr__(self, name):
-#         if name == 'fit':
-#           raise AttributeError("Attribute fit does not exist for Nimble model objects. Try .train() instead.")
-#         else:
-#           raise AttributeError(f"'panda_num' module has no attribute '{name}'")
-
-# nimble = NimbleMlCatch()
