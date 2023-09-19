@@ -15,23 +15,19 @@ on:
       saveName:
         required: true
         type: string
-  workflow_dispatch:
-    inputs:
-      # The name of the artifact to be saved
-      saveName:
-        required: true
-        type: string
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os}}
+    name: ${{ matrix.pyVer}} for ${{ matrix.os}}
     # This will automatically split off concurrent jobs running-on each value
     runs-on: ${{ matrix.os}}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-#        os: [ubuntu-latest]
-
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        #os: ["ubuntu-latest"]
+        pyVer: ["cp3*"]
+        #pyVer: ["cp3*", "cp39", "cp310", "cp311"]
+        #pyVer: ["cp310"]
 
     steps:
       - uses: actions/checkout@v3
@@ -44,16 +40,20 @@ jobs:
             3.8
             3.9
             3.10
+            3.11
           cache: 'pip'
           cache-dependency-path: pyproject.toml
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.14.1
         # Allows us to specify cibuildwheel specific environment variables.
-        # Included in the comment was something helpful to limit the build
-        # output during trialing.
-#        env:
-#          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9, <3.10"
+        env:
+          # Using the input to specifify the matrix, we will either build all
+          # python versions for this OS sequentially (default), or build
+          # the specified versions in parallel. Can also be used to limit o
+          # only a specific version
+          CIBW_BUILD: ${{ matrix.pyVer}}-*
+          #CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9, <3.11"
         with:
           output-dir: wheelhouse
 

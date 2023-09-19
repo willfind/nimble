@@ -14,55 +14,8 @@ For convenience, installing optional packages can also be
 triggered while installing Nimble. We recommend the :ref:`quickstart-install`
 to make much of Nimble's functionality available with a single command.
 
-Binary Wheels
--------------
-
-The installation commands we document on this page will automatically find the correct
-precompiled binary wheel from the possible options in the table below. Not all
-systems and python versions are supported. Downloading and/or installing Nimble
-constitutes agreement to the Nimble
-:doc:`License Agreement<legal>`.
-
-..
-  Uses substitution to fill in the download links outside of the table structure
-  https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#substitution-definitions
-
-.. |lin3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-linux_x86_64.whl <wheels/nimble-0.4.2-cp38-cp38-linux_x86_64.whl>`
-.. |lin3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-linux_x86_64.whl <wheels/nimble-0.4.2-cp39-cp39-linux_x86_64.whl>`
-.. |lin310| replace:: :download:`nimble-0.4.2-cp310-cp310-linux_x86_64.whl <wheels/nimble-0.4.2-cp310-cp310-linux_x86_64.whl>`
-.. |mac3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp38-cp38-macosx_10_9_x86_64.whl>`
-.. |mac3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp39-cp39-macosx_10_9_x86_64.whl>`
-.. |mac310| replace:: :download:`nimble-0.4.2-cp310-cp310-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp310-cp310-macosx_10_9_x86_64.whl>`
-.. |win3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-win_amd64.whl <wheels/nimble-0.4.2-cp38-cp38-win_amd64.whl>`
-.. |win3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-win_amd64.whl <wheels/nimble-0.4.2-cp39-cp39-win_amd64.whl>`
-.. |win310| replace:: :download:`nimble-0.4.2-cp310-cp310-win_amd64.whl <wheels/nimble-0.4.2-cp310-cp310-win_amd64.whl>`
-
-.. table::
-   :align: left
-   :widths: auto
-
-   +---------+--------+-----------+
-   | OS      | Python | Link      |
-   +=========+========+===========+
-   |         | 3.8    | |lin3_8|  |
-   +         +--------+-----------+
-   | Linux   | 3.9    | |lin3_9|  |
-   +         +--------+-----------+
-   |         | 3.10   | |lin310|  |
-   +---------+--------+-----------+
-   |         | 3.8    | |mac3_8|  |
-   +         +--------+-----------+
-   | Mac     | 3.9    | |mac3_9|  |
-   +         +--------+-----------+
-   |         | 3.10   | |mac310|  |
-   +---------+--------+-----------+
-   |         | 3.8    | |win3_8|  |
-   +         +--------+-----------+
-   | Windows | 3.9    | |win3_9|  |
-   +         +--------+-----------+
-   |         | 3.10   | |win310|  |
-   +---------+--------+-----------+
-
+Note that downloading and/or installing Nimble constitutes agreement to the
+Nimble :doc:`License Agreement<legal>`.
 
 Install Methods
 ---------------
@@ -70,122 +23,6 @@ Install Methods
 * :ref:`quickstart-install` (recommended)
 * :ref:`specific-install`
 * :ref:`basic-install`
-
-.. _optional-packages:
-
-Optional Packages
------------------
-
-..
-  Many components of Nimble rely on the following third-party packages.
-  Most packages are ``pip`` and ``conda`` installable, but install
-  recommendations vary and some offer further optimizations. **Reading the
-  linked installation instructions for each package is highly recommended.**
-
-Many components of Nimble rely on the following third-party packages.
-Most packages are ``pip`` installable, but install
-recommendations vary and some offer further optimizations. **Reading the
-linked installation instructions for each package is highly recommended.**
-
-.. _operational-support:
-
-Operational Support
-^^^^^^^^^^^^^^^^^^^
-
-.. table::
-   :align: left
-   :widths: auto
-
-   +----------------+----------------------------------------------+------+
-   | Package        | Supports                                     | pip  |
-   +================+==============================================+======+
-   | `scipy`_       | Nimble's ``Sparse`` object and various       | |cm| |
-   |                | scientific calculations.                     |      |
-   +----------------+----------------------------------------------+------+
-   | `pandas`_      | Nimble's ``DataFrame`` object.               | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `matplotlib`_  | Plotting.                                    | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `requests`_    | Retrieving data from the web.                | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `cloudpickle`_ | Saving Nimble data objects.                  | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `dateutil`_    | Parsing strings to `datetime`_ objects.      | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `h5py`_        | Loading hdf5 files.                          | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `hyperopt`_    | Bayesian method for hyperparameter tuning.   | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `storm_tuner`_ | StochasticRandomMutator for hyperparameter   | |cm| |
-   |                | tuning.                                      |      |
-   +----------------+----------------------------------------------+------+
-..
-   +----------------+----------------------------------------------+------+-------+
-   | Package        | Supports                                     | pip  | conda |
-   +================+==============================================+======+=======+
-   | `scipy`_       | Nimble's ``Sparse`` object and various       | |cm| | |cm|  |
-   |                | scientific calculations.                     |      |       |
-   +----------------+----------------------------------------------+------+-------+
-   | `pandas`_      | Nimble's ``DataFrame`` object.               | |cm| | |cm|  |
-   +----------------+----------------------------------------------+------+-------+
-   | `matplotlib`_  | Plotting.                                    | |cm| | |cm|  |
-   +----------------+----------------------------------------------+------+-------+
-   | `requests`_    | Retrieving data from the web.                | |cm| | |cm|  |
-   +----------------+----------------------------------------------+------+-------+
-   | `cloudpickle`_ | Saving Nimble data objects.                  | |cm| | |cm|  |
-   +----------------+----------------------------------------------+------+-------+
-   | `dateutil`_    | Parsing strings to `datetime`_ objects.      | |cm| | |cm|  |
-   +----------------+----------------------------------------------+------+-------+
-   | `h5py`_        | Loading hdf5 files.                          | |cm| | |cm|  |
-   +----------------+----------------------------------------------+------+-------+
-   | `hyperopt`_    | Bayesian method for hyperparameter tuning.   | |cm| | |cm|  |
-   +----------------+----------------------------------------------+------+-------+
-   | `storm_tuner`_ | StochasticRandomMutator for hyperparameter   | |cm| |       |
-   |                | tuning.                                      |      |       |
-   +----------------+----------------------------------------------+------+-------+
-
-.. _ml-interfaces:
-
-Machine-Learning Interfaces
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-.. table::
-   :align: left
-   :widths: auto
-
-   +----------------+--------------------------------------------------+------+
-   | Package        | Provides                                         | pip  |
-   +================+==================================================+======+
-   | `sklearn`_     | Machine Learning.                                | |cm| |
-   +----------------+--------------------------------------------------+------+
-   | `tensorflow`_/ | Neural Networks.                                 | |cm| |
-   | `keras`_       | See :ref:`install note <tensorflow-note>` below. |      |
-   +----------------+--------------------------------------------------+------+
-   | `autoimpute`_  | Imputation. Machine Learning with missing data.  | |cm| |
-   +----------------+--------------------------------------------------+------+
-
-
-..
-   +----------------+--------------------------------------------------+------+----------------------------+
-   | Package        | Provides                                         | pip  | conda                      |
-   +================+==================================================+======+============================+
-   | `sklearn`_     | Machine Learning.                                | |cm| | |cm|                       |
-   +----------------+--------------------------------------------------+------+----------------------------+
-   | `tensorflow`_/ | Neural Networks.                                 | |cm| | |cm|                       |
-   | `keras`_       | See :ref:`install note <tensorflow-note>` below. |      |                            |
-   +----------------+--------------------------------------------------+------+----------------------------+
-   | `autoimpute`_  | Imputation. Machine Learning with missing data.  | |cm| |                            |
-   +----------------+--------------------------------------------------+------+----------------------------+
-
-.. _tensorflow-note:
-
-.. note::
-   Tensorflow recommends building from source, but some third parties provide prebuilt
-   ``tensorflow`` binaries available for various architectures.
-
-   - Unix: https://github.com/lakshayg/tensorflow-build
-   - Windows: https://github.com/fo40225/tensorflow-windows-wheel
 
 .. _quickstart-install:
 
@@ -315,8 +152,24 @@ operations requiring an optional package that is not installed.
 
     conda install -c nimble-data nimble
 
-.. |cm| unicode:: U+02713 .. check mark
 
+.. _optional-packages:
+
+Optional Packages
+-----------------
+
+..
+  Many components of Nimble rely on the following third-party packages.
+  Most packages are ``pip`` and ``conda`` installable, but install
+  recommendations vary and some offer further optimizations. **Reading the
+  linked installation instructions for each package is highly recommended.**
+
+Many components of Nimble rely on the following third-party packages.
+Most packages are ``pip`` installable, but install
+recommendations vary and some offer further optimizations. **Reading the
+linked installation instructions for each package is highly recommended.**
+
+.. |cm| unicode:: U+02713 .. check mark
 .. _NumPy: https://numpy.org/
 .. _packaging: https://packaging.pypa.io/
 .. _tomli: https://github.com/hukkin/tomli
@@ -330,7 +183,117 @@ operations requiring an optional package that is not installed.
 .. _h5py: https://docs.h5py.org/en/stable/build.html
 .. _hyperopt: http://hyperopt.github.io/hyperopt/
 .. _storm_tuner: https://github.com/ben-arnao/StoRM
+
+.. _operational-support:
+
+Operational Support
+^^^^^^^^^^^^^^^^^^^
+.. table::
+   :align: left
+   :widths: auto
+
+   +----------------+----------------------------------------------+------+
+   | Package        | Supports                                     | pip  |
+   +================+==============================================+======+
+   | `scipy`_       | Nimble's ``Sparse`` object and various       | |cm| |
+   |                | scientific calculations.                     |      |
+   +----------------+----------------------------------------------+------+
+   | `pandas`_      | Nimble's ``DataFrame`` object.               | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `matplotlib`_  | Plotting.                                    | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `requests`_    | Retrieving data from the web.                | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `cloudpickle`_ | Saving Nimble data objects.                  | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `dateutil`_    | Parsing strings to `datetime`_ objects.      | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `h5py`_        | Loading hdf5 files.                          | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `hyperopt`_    | Bayesian method for hyperparameter tuning.   | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `storm_tuner`_ | StochasticRandomMutator for hyperparameter   | |cm| |
+   |                | tuning.                                      |      |
+   +----------------+----------------------------------------------+------+
+..
+   +----------------+----------------------------------------------+------+-------+
+   | Package        | Supports                                     | pip  | conda |
+   +================+==============================================+======+=======+
+   | `scipy`_       | Nimble's ``Sparse`` object and various       | |cm| | |cm|  |
+   |                | scientific calculations.                     |      |       |
+   +----------------+----------------------------------------------+------+-------+
+   | `pandas`_      | Nimble's ``DataFrame`` object.               | |cm| | |cm|  |
+   +----------------+----------------------------------------------+------+-------+
+   | `matplotlib`_  | Plotting.                                    | |cm| | |cm|  |
+   +----------------+----------------------------------------------+------+-------+
+   | `requests`_    | Retrieving data from the web.                | |cm| | |cm|  |
+   +----------------+----------------------------------------------+------+-------+
+   | `cloudpickle`_ | Saving Nimble data objects.                  | |cm| | |cm|  |
+   +----------------+----------------------------------------------+------+-------+
+   | `dateutil`_    | Parsing strings to `datetime`_ objects.      | |cm| | |cm|  |
+   +----------------+----------------------------------------------+------+-------+
+   | `h5py`_        | Loading hdf5 files.                          | |cm| | |cm|  |
+   +----------------+----------------------------------------------+------+-------+
+   | `hyperopt`_    | Bayesian method for hyperparameter tuning.   | |cm| | |cm|  |
+   +----------------+----------------------------------------------+------+-------+
+   | `storm_tuner`_ | StochasticRandomMutator for hyperparameter   | |cm| |       |
+   |                | tuning.                                      |      |       |
+   +----------------+----------------------------------------------+------+-------+
+
+
 .. _sklearn: https://scikit-learn.org/stable/install.html
 .. _tensorflow: https://www.tensorflow.org/install
 .. _autoimpute: https://autoimpute.readthedocs.io/en/latest/user_guide/getting_started.html
 .. _keras: https://keras.io/getting_started/
+
+.. _ml-interfaces:
+
+Machine-Learning Interfaces
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. table::
+   :align: left
+   :widths: auto
+
+   +----------------+--------------------------------------------------+------+
+   | Package        | Provides                                         | pip  |
+   +================+==================================================+======+
+   | `sklearn`_     | Machine Learning.                                | |cm| |
+   +----------------+--------------------------------------------------+------+
+   | `tensorflow`_/ | Neural Networks.                                 | |cm| |
+   | `keras`_       | See :ref:`install note <tensorflow-note>` below. |      |
+   +----------------+--------------------------------------------------+------+
+   | `autoimpute`_  | Imputation. Machine Learning with missing data.  | |cm| |
+   +----------------+--------------------------------------------------+------+
+
+
+..
+   +----------------+--------------------------------------------------+------+----------------------------+
+   | Package        | Provides                                         | pip  | conda                      |
+   +================+==================================================+======+============================+
+   | `sklearn`_     | Machine Learning.                                | |cm| | |cm|                       |
+   +----------------+--------------------------------------------------+------+----------------------------+
+   | `tensorflow`_/ | Neural Networks.                                 | |cm| | |cm|                       |
+   | `keras`_       | See :ref:`install note <tensorflow-note>` below. |      |                            |
+   +----------------+--------------------------------------------------+------+----------------------------+
+   | `autoimpute`_  | Imputation. Machine Learning with missing data.  | |cm| |                            |
+   +----------------+--------------------------------------------------+------+----------------------------+
+
+.. _tensorflow-note:
+
+.. note::
+   Tensorflow recommends building from source, but some third parties provide prebuilt
+   ``tensorflow`` binaries available for various architectures.
+
+   - Unix: https://github.com/lakshayg/tensorflow-build
+   - Windows: https://github.com/fo40225/tensorflow-windows-wheel
+
+
+
+
+Binary Wheels
+-------------
+
+The installation commands we document on this page will automatically find the correct
+precompiled binary wheel from the possible options in the table below. Not all
+systems and python versions are supported.
+

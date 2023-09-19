@@ -563,7 +563,7 @@ def testLossCoverage():
             if not (val is kerasInt.package.losses.Loss):
                 assert val.__name__ in fullLossList
 
-
+@pytest.mark.slow
 def testLoadTrainedLearnerPredict():
     possible = nimble.learnerNames("keras")
 

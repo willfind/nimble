@@ -133,12 +133,12 @@ purchasePCA.plotFeatureAgainstFeature(
 ## centers are clearly visible and we will add it to our same
 ## 'clustersWithCenters' figure. Now that all of our plots have been added to
 ## our figure, the default `show=True` will display the figure.
-centers = nimble.data(kmeans.getAttributes()['cluster_centers_'],
+clusterCenters = nimble.data(kmeans.getAttributes()['cluster_centers_'],
                       featureNames=['component_1', 'component_2'])
-centers.points.setNames(['cluster' + str(i) for i in range(numClusters)])
+clusterCenters.points.setNames(['cluster' + str(i) for i in range(numClusters)])
 
 title = 'k-means clustering of principal components'
-centers.plotFeatureAgainstFeature('component_1', 'component_2', figureID=1,
+clusterCenters.plotFeatureAgainstFeature('component_1', 'component_2', figureID=1,
                                   title=title, marker='x', color='k')
 
 ## Cluster Analysis ##

@@ -133,6 +133,8 @@ base_notLogged = [
     'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
     'plotFeatureGroupMeans', 'plotFeatureGroupStatistics', 'pointView',
     'save', 'show', 'solveLinearSystem', 'toString', 'checkInvariants', 'view',
+    'max', 'min', 'mean', 'median', 'uniqueCount', 'proportionMissing',
+    'proportionZero'
     ]
 base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))
@@ -145,7 +147,8 @@ features_logged = [
 features_notLogged = [
     'count', 'getIndex', 'getIndices', 'getName', 'getNames', 'hasName',
     'plot', 'plotMeans', 'plotStatistics', 'similarities', 'statistics',
-    'unique',
+    'unique', 'max', 'min', 'mean', 'median', 'uniqueCount', 'proportionMissing',
+    'proportionZero', 'standardDeviation', 'populationStandardDeviation'
     ]
 features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
@@ -159,7 +162,8 @@ points_logged = [
 points_notLogged = [
     'count', 'getIndex', 'getIndices', 'getName', 'getNames', 'hasName',
     'plot', 'plotMeans', 'plotStatistics', 'similarities', 'statistics',
-    'unique',
+    'unique', 'max', 'min', 'mean', 'median', 'uniqueCount', 'proportionMissing',
+    'proportionZero', 'standardDeviation', 'populationStandardDeviation'
     ]
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))

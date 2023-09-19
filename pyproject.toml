@@ -14,7 +14,7 @@ authors = [
         { name="Spark Wave LLC", email="willfind@gmail.com" },
         ]
 description = "Interfaces and tools for data science."
-requires-python = ">=3.8, <3.11"
+requires-python = ">=3.8, <3.12"
 license = {text = "Proprietary"}
 classifiers = [
         'Development Status :: 3 - Alpha',
@@ -22,6 +22,7 @@ classifiers = [
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Operating System :: OS Independent',
         'License :: Other/Proprietary License',
         ]
@@ -115,3 +116,6 @@ repair-wheel-command = ""
 #test-extras = ['all']
 #test-command = "pytest {project}/tests/landingPage || true"
 
+[tool.cibuildwheel.macos]
+# make sure mac wheels include capability to install on arm
+archs = ["universal2"]

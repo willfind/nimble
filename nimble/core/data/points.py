@@ -2556,12 +2556,13 @@ class Points(ABC):
     ################
     # Stats methods #
     ###############
-    
+
+    @limitedTo2D
     def max(self):
         """
         Returns a nimble object representing the maximum
         value along the points axis.
-           
+
         See Also
         --------
         minimum
@@ -2580,6 +2581,7 @@ class Points(ABC):
         """
         return self._max()
 
+    @limitedTo2D
     def mean(self):
         """
         Returns a nimble object representing the mean
@@ -2602,12 +2604,13 @@ class Points(ABC):
         >
         """
         return self._mean()
-    
+
+    @limitedTo2D
     def median(self):
         """
         Returns a nimble object representing the median
         value along the points axis.
-        
+
         See Also
         --------
         mean
@@ -2625,7 +2628,8 @@ class Points(ABC):
         >
         """
         return self._median()
-    
+
+    @limitedTo2D
     def min(self):
         """
         Returns a nimble object representing the minimum
@@ -2648,7 +2652,8 @@ class Points(ABC):
         >
         """
         return self._min()
-    
+
+    @limitedTo2D
     def uniqueCount(self):
         """
         Returns a nimble object representing the number of unique
@@ -2668,6 +2673,7 @@ class Points(ABC):
         """
         return self._uniqueCount()
 
+    @limitedTo2D
     def proportionMissing(self):
         """
         Returns a nimble object representing the proportion of
@@ -2687,6 +2693,7 @@ class Points(ABC):
         """
         return self._proportionMissing()
 
+    @limitedTo2D
     def proportionZero(self):
         """
         Returns a nimble object representing the proportion of values
@@ -2706,6 +2713,7 @@ class Points(ABC):
         """
         return self._proportionZero()
 
+    @limitedTo2D
     def standardDeviation(self):
         '''
         Returns a nimble object representing the standard deviation
@@ -2725,6 +2733,7 @@ class Points(ABC):
         '''
         return self._standardDeviation()
 
+    @limitedTo2D
     def populationStandardDeviation(self):
         """
         Returns a nimble object representing the population standard
@@ -2743,7 +2752,7 @@ class Points(ABC):
         >
         """ 
         return self._populationStandardDeviation()
-    
+
     ####################
     # Abstract Methods #
     ####################
