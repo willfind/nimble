@@ -62,7 +62,7 @@ def test_meanAbsoluteErrorConfidenceInterval():
     def getPredictions(actual):
         return actual + 0.1 * getActual(len(actual))
 
-    expectedError = np.mean(abs(0.1 * getActual(1000000)))
+    expectedError = np.mean(abs(0.1 * getActual(1000000).copy(to='numpyarray')))
 
     fractionOfTimeInCI(getActual, getPredictions,
                        meanAbsoluteErrorConfidenceInterval, expectedError)
