@@ -31,6 +31,7 @@ LEARNERTYPES = {
         'BinaryCrossentropy', 'binary_crossentropy',
         'BinaryFocalCrossentropy', 'binary_focal_crossentropy',
         'CategoricalCrossentropy', 'categorical_crossentropy',
+        'CategoricalFocalCrossentropy', 'categorical_focal_crossentropy',
         'SparseCategoricalCrossentropy', 'sparse_categorical_crossentropy',
         'KLDivergence', 'kl_divergence',
         'Hinge', 'hinge',
@@ -150,7 +151,14 @@ class Keras(PredefinedInterfaceMixin):
             # grab the application loading functions.
             inApps = False
             if hasattr(obj, "__module__"):
-                inApps = "keras.applications" in obj.__module__
+                # the exact location changes depending on the version,
+                # we just need one to be present to demonstrate it's
+                # a learner.
+                possible = [
+                    "keras.applications",
+                    "keras.src.applications"
+                ]
+                inApps = any(appLoc in obj.__module__ for appLoc in possible)
 
             if (hasFit and hasPred and hasCompile) or inApps:
                 return True

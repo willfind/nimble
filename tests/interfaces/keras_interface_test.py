@@ -74,8 +74,10 @@ def chooseOptimizer(func):
 def test_Keras_version():
     interface = Keras()
     if tfKeras.nimbleAccessible():
-        # tensorflow.keras is prioritized based on recommendation from keras
-        version = tfKeras.__version__
+        tf.nimbleAccessible()
+        # tensorflow.keras is prioritized based on recommendation from keras;
+        # and in the span of versions that is true, the versioning matches up with tf
+        version = tf.__version__
     elif keras.nimbleAccessible():
         version = keras.__version__
     assert interface.version() == version
@@ -563,7 +565,7 @@ def testLossCoverage():
             if not (val is kerasInt.package.losses.Loss):
                 assert val.__name__ in fullLossList
 
-
+@pytest.mark.slow
 def testLoadTrainedLearnerPredict():
     possible = nimble.learnerNames("keras")
 
