@@ -26,15 +26,10 @@ from tests.helpers import generateRegressionData
 
 
 keras = DeferredModuleImport("keras")
-tfKeras = DeferredModuleImport('tensorflow.keras')
 tf = DeferredModuleImport("tensorflow")
 
-try:
-    from tensorflow.keras.models import Sequential
-    from tensorflow.keras.layers import Dense, Dropout
-except ImportError:
-    from keras.models import Sequential
-    from keras.layers import Dense, Dropout
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
 
 
 keraSkipDec = skipMissingPackage('Keras')
@@ -73,13 +68,9 @@ def chooseOptimizer(func):
 @noLogEntryExpected
 def test_Keras_version():
     interface = Keras()
-    if tfKeras.nimbleAccessible():
-        tf.nimbleAccessible()
-        # tensorflow.keras is prioritized based on recommendation from keras;
-        # and in the span of versions that is true, the versioning matches up with tf
-        version = tf.__version__
-    elif keras.nimbleAccessible():
-        version = keras.__version__
+    keras.nimbleAccessible()
+    version = keras.__version__
+
     assert interface.version() == version
 
 @keraSkipDec
@@ -121,12 +112,7 @@ def testKerasAPIClassification(optimizer):
                              metrics=['accuracy'], epochs=20, batch_size=50)
 
     # Comparison to raw in-keras calculation. Different versions require different access
-    try:
-        if tfKeras.nimbleAccessible():
-            opt_raw = getattr(tfKeras.optimizers, optimizer.name)(**optimizer.kwargs)
-    except AttributeError:
-        if keras.nimbleAccessible():
-            opt_raw = getattr(keras.optimizers, optimizer.name)(**optimizer.kwargs)
+    opt_raw = getattr(keras.optimizers, optimizer.name)(**optimizer.kwargs)
 
     raw = Sequential(layersRaw)
     raw.compile(optimizer=opt_raw, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
@@ -418,12 +404,7 @@ def testKeras_TrainedLearnerApplyArguments(optimizer):
         metrics=['accuracy'], epochs=1, shuffle=False)
 
     # Setup the callback we'll be passing to apply
-    try:
-        if tfKeras.nimbleAccessible():
-            CBBase = getattr(tfKeras.callbacks, "Callback")
-    except AttributeError:
-        if keras.nimbleAccessible():
-            CBBase = getattr(keras.callbacks, "Callback")
+    CBBase = getattr(keras.callbacks, "Callback")
     class CustomCallback(CBBase):
         def __init__(self):
             self.numHits = 0
@@ -472,55 +453,37 @@ def testKeras_TrainedLearnerApplyArguments_exception(optimizer):
 @noLogEntryExpected
 @chooseOptimizer
 def testKerasReproducibility(optimizer):
-    tfVersion1 = False
-    try:
-        from tensorflow import __version__
-        if __version__[:2] == '1.':
-            tfVersion1 = True
-    except ImportError:
-        pass
+    # for version2 we expect reproducibility
+    numClasses = 3
+    x_data = nimble.random.numpyRandom.random((1000, 20))
+    y_data = nimble.random.numpyRandom.randint(numClasses, size=(1000, 1))
+    x_train = nimble.data(x_data, useLog=False)
+    y_train = nimble.data(y_data, convertToType=float, useLog=False)
 
-    if tfVersion1:
-        # can't control randomness in this version. For testing, keras has
-        # already been loaded, but by instantiating a new Keras instance we can
-        # check that the warning will be displayed when users first use keras
-        with warnings.catch_warnings(record=True) as rec:
-            warnings.filterwarnings('always', module=r'.*keras_interface')
-            _ = nimble.core.interfaces.keras_interface.Keras()
-            start = "Randomness is outside of Nimble's control"
-            assert rec and str(rec[0].message).startswith(start)
-    else:
-        # for version2 we expect reproducibility
-        numClasses = 3
-        x_data = nimble.random.numpyRandom.random((1000, 20))
-        y_data = nimble.random.numpyRandom.randint(numClasses, size=(1000, 1))
-        x_train = nimble.data(x_data, useLog=False)
-        y_train = nimble.data(y_data, convertToType=float, useLog=False)
+    nimble.random.setSeed(1234, useLog=False)
+    layer0 = nimble.Init('Dense', units=64, activation='relu')
+    layer1 = nimble.Init('Dropout', rate=0.5)
+    layer2 = nimble.Init('Dense', units=numClasses, activation='sigmoid')
+    layers = [layer0, layer1, layer2]
+    mym1 = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
+                        layers=layers, loss='sparse_categorical_crossentropy', metrics=['accuracy'],
+                        epochs=20, batch_size=128, useLog=False)
 
-        nimble.random.setSeed(1234, useLog=False)
-        layer0 = nimble.Init('Dense', units=64, activation='relu')
-        layer1 = nimble.Init('Dropout', rate=0.5)
-        layer2 = nimble.Init('Dense', units=numClasses, activation='sigmoid')
-        layers = [layer0, layer1, layer2]
-        mym1 = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
-                           layers=layers, loss='sparse_categorical_crossentropy', metrics=['accuracy'],
-                           epochs=20, batch_size=128, useLog=False)
-
-        applied1 = mym1.apply(testX=x_train, useLog=False)
+    applied1 = mym1.apply(testX=x_train, useLog=False)
 
 
-        nimble.random.setSeed(1234, useLog=False)
-        layer0 = nimble.Init('Dense', units=64, activation='relu')
-        layer1 = nimble.Init('Dropout', rate=0.5)
-        layer2 = nimble.Init('Dense', units=numClasses, activation='sigmoid')
-        layers = [layer0, layer1, layer2]
-        mym2 = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
-                           layers=layers, loss='sparse_categorical_crossentropy', metrics=['accuracy'],
-                           epochs=20, batch_size=128, useLog=False)
+    nimble.random.setSeed(1234, useLog=False)
+    layer0 = nimble.Init('Dense', units=64, activation='relu')
+    layer1 = nimble.Init('Dropout', rate=0.5)
+    layer2 = nimble.Init('Dense', units=numClasses, activation='sigmoid')
+    layers = [layer0, layer1, layer2]
+    mym2 = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
+                        layers=layers, loss='sparse_categorical_crossentropy', metrics=['accuracy'],
+                        epochs=20, batch_size=128, useLog=False)
 
-        applied2 = mym2.apply(testX=x_train, useLog=False)
+    applied2 = mym2.apply(testX=x_train, useLog=False)
 
-        assert applied1 == applied2
+    assert applied1 == applied2
 
 @keraSkipDec
 def testLearnerTypes():
@@ -560,9 +523,14 @@ def testLossCoverage():
     # provides), check to see that it is represented in the LEARNERTYPES
     # constant.
     for n in dir(kerasInt.package.losses):
+        # result is based on the wrapped function, so it isn't included
+        # in the constant
+        if n == "LossFunctionWrapper":
+            continue
         val = getattr(kerasInt.package.losses, n)
         if type(val) is type and issubclass(val, kerasInt.package.losses.Loss):
-            if not (val is kerasInt.package.losses.Loss):
+            excluded = [kerasInt.package.losses.Loss]
+            if val not in excluded:
                 assert val.__name__ in fullLossList
 
 @pytest.mark.slow

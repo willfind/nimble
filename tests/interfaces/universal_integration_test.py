@@ -410,18 +410,6 @@ def test_loadModulesFromConfigLocation():
         try:
             canonicalName, _ = getCanonicalNameAndPossibleAliases(interface)
             packageName1 = packageName2 = canonicalName
-            if canonicalName == 'keras':
-                # determine if it will use tensorflow.keras or keras
-                try:
-                    importlib.import_module('tensorflow.keras')
-                    # first round we load from modified sys.path so we are
-                    # import tensorflow.keras
-                    packageName1 = 'tensorflow.keras'
-                    # second round we load from settings location so we
-                    # want to import the canonicalName
-                    packageName2 = 'keras'
-                except ImportError:
-                    pass
 
             with tempfile.TemporaryDirectory() as mockDirectory1:
                 # first directory containing the same package
