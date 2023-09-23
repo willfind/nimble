@@ -330,7 +330,7 @@ def testKerasIncremental(optimizer):
     """
     Test Keras can handle and incrementalTrain call
     """
-    numClasses = 3
+    numClasses = 4
     small = generateClassificationData(numClasses, 1, 16, 0)
     ((x_small, y_small), (_, _)) = small
 
@@ -343,9 +343,10 @@ def testKerasIncremental(optimizer):
     layer2 = nimble.Init('Dense', units=numClasses, activation='softmax')
     layers = [layer0, layer1, layer2]
     ##### Poor Fit using a tiny portion of the data, without all of the labels represented
-    # delete data associated with label 1
-    x_small.points.delete(1,useLog=False)
-    y_small.points.delete(1,useLog=False)
+    # delete data associated with a half of the labels (should have worse beginning
+    # performance)
+    x_small.points.delete([0,2], useLog=False)
+    y_small.points.delete([0,2], useLog=False)
     mym = nimble.train('keras.Sequential', trainX=x_small, trainY=y_small, optimizer=optimizer,
                        layers=layers, loss='sparse_categorical_crossentropy', metrics=['accuracy'],
                        epochs=1)
@@ -536,6 +537,7 @@ def testLossCoverage():
 @pytest.mark.slow
 def testLoadTrainedLearnerPredict():
     possible = nimble.learnerNames("keras")
+    assert len(possible) > 1
 
     testImagesFolder = os.path.join(os.getcwd(), 'tests', 'interfaces', "testImages")
 
@@ -574,6 +576,5 @@ def testLoadTrainedLearnerPredict():
             results.append(ret)
 
         retY = nimble.data(results, rowsArePoints=False)
-
         correct = nimble.calculate.fractionCorrect(testY, retY)
         assert correct >= 0.8
