@@ -16,6 +16,7 @@ import inspect
 import operator
 import functools
 import re
+import difflib
 
 import numpy as np
 
@@ -1031,10 +1032,21 @@ class Axis(ABC):
         if not self._namesCreated():
             self._setAllDefault()
 
-        if name not in self.names:
+        if name not in self.names:  
+            closestMatch = None
+            topScore = 0
+            for exitingName in self.names:
+                score = difflib.SequenceMatcher(None, name, exitingName).ratio()
+                if score > topScore:
+                    topScore = score
+                    closestMatch = exitingName 
             msg = "The " + self._axis + " name '" + name
-            msg += "' cannot be found."
-            raise KeyError(msg)
+            msg += "' cannot be found." 
+            if topScore >= 0.8:       
+               suggstn = " Did you mean '" + closestMatch + "'?"
+               raise KeyError(msg + suggstn)
+            else: 
+                raise KeyError(msg)
         return self.names[name]
 
     def _processMultiple(self, key):
