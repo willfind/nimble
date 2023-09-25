@@ -128,8 +128,20 @@ class OverrideSettings:
         nimble.settings.changes = copy.deepcopy(self.backupChanges)
         # for tests that load settings during the test
         nimble.core.configuration.loadSettings = loadSavedSettings
-        # setup logger to use new settings and set logging hooks in settings
-        nimble.core.logger.initLoggerAndLogConfig()
+
+        # The first time a test is run, we run the init helper so that
+        # the database in the temp directory is set up.
+        if TEMPDIRLOG.name not in nimble.core.logger.active.logLocation:
+            nimble.core.logger.initLoggerAndLogConfig()
+        # If we already have that database set up, don't call the helper.
+        # Instead, manually set the hooks that would have been called (needed
+        # for some tests of the log/config). By avoiding that call,
+        # we don't open additional connections to the database each test
+        else:
+            locHook = nimble.core.logger.session_logger.cleanThenReInitLoc
+            nameHook = nimble.core.logger.session_logger.cleanThenReInitName
+            nimble.settings.hook("logger", "location", locHook)
+            nimble.settings.hook("logger", "name", nameHook)
 
 overrideObj = OverrideSettings()
 
@@ -174,6 +186,7 @@ def pytest_sessionfinish():
     """
     Cleanup after all tests have completed.
     """
+    nimble.core.logger.active.cleanup()
     TEMPDIRLOG.cleanup()
 
     currPath = os.path.abspath(inspect.getfile(inspect.currentframe()))

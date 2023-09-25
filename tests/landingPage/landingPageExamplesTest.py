@@ -14,11 +14,10 @@ tests can define a function to further validate the output.
 
 import os
 import subprocess
-import tempfile
 import re
-import shutil
-
 import pytest
+
+from tests.helpers import PortableNamedTempFileContext
 
 EXDIR = os.path.join(os.getcwd(), 'documentation', 'source', 'examples')
 
@@ -29,7 +28,7 @@ def back_singleExample(scriptLoc):
     # Copy the script, to use the same terminal size used in examples and
     # comment out plotting functions
     with open(scriptLoc) as f:
-        with tempfile.NamedTemporaryFile('w+') as tempFile:
+        with PortableNamedTempFileContext('w+') as tempFile:
             # set a terminal size that will display the data as if it were in
             # small resolution Notebook
             terminalSize = [
@@ -63,10 +62,10 @@ def back_singleExample_withPlots(scriptLoc):
     """
     Modify the script to write plots out to a temp file, then excute
     """
-    tmpNTF = tempfile.NamedTemporaryFile
+    pntfc = PortableNamedTempFileContext
     plotStart = re.compile(r'\.plot.*\(')
 
-    with open(scriptLoc) as f, tmpNTF('w+') as tSrc, tmpNTF('w+') as tPlot:
+    with open(scriptLoc) as f, pntfc('w+') as tSrc, pntfc('w+') as tPlot:
         openParen = False
         seenShow = False
         for line in f.readlines():

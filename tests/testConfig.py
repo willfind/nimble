@@ -7,7 +7,6 @@ import os
 import copy
 import pathlib
 from functools import wraps
-import tempfile
 import sys
 import io
 import re
@@ -22,7 +21,7 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble._dependencies import DEPENDENCIES
 from tests.helpers import raises, patch
-
+from tests.helpers import PortableNamedTempFileContext
 
 ###############
 ### Helpers ###
@@ -78,7 +77,7 @@ def useSessionConfiguration(test):
     """
     @wraps(test)
     def wrapped():
-        with tempfile.NamedTemporaryFile('w+', suffix='.ini') as tmp:
+        with PortableNamedTempFileContext('w+', suffix='.ini') as tmp:
             # can reuse the settings established when test began
             # will copy everything not in changes to the temporary config file
             # and store changes to apply to new nimble.settings object

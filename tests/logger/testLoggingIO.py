@@ -6,7 +6,6 @@ import os
 import shutil
 import sys
 import sqlite3
-import tempfile
 import re
 import functools
 from io import StringIO
@@ -21,6 +20,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import InvalidArgumentType
 from tests.helpers import raises, patch
 from tests.helpers import getDataConstructors
+from tests.helpers import PortableNamedTempFileContext
 
 #####################
 # Helpers for tests #
@@ -73,18 +73,21 @@ def prepopulatedLogSafetyWrapper(testFunc):
         location = nimble.settings.get("logger", "location")
         name = nimble.settings.get("logger", "name")
         pathToFile = os.path.join(location, name + ".db")
-        conn = sqlite3.connect(pathToFile)
-        c = conn.cursor()
-        c.execute("UPDATE logger SET timestamp = '2018-03-22 12:00:00' WHERE entry <= 18")
-        conn.commit()
-        c.execute("UPDATE logger SET sessionNumber = 1, timestamp = '2018-03-23 12:00:00' WHERE entry > 18 AND entry <= 36")
-        conn.commit()
-        c.execute("UPDATE logger SET sessionNumber = 2, timestamp = '2018-03-23 18:00:00' WHERE entry > 36 AND entry <= 54")
-        conn.commit()
-        c.execute("UPDATE logger SET sessionNumber = 3, timestamp = '2018-03-25 12:00:00' WHERE entry > 54 AND entry <= 72")
-        conn.commit()
-        c.execute("UPDATE logger SET sessionNumber = 4, timestamp = '2018-04-24 12:00:00' WHERE entry > 72")
-        conn.commit()
+        try:
+            conn = sqlite3.connect(pathToFile)
+            c = conn.cursor()
+            c.execute("UPDATE logger SET timestamp = '2018-03-22 12:00:00' WHERE entry <= 18")
+            conn.commit()
+            c.execute("UPDATE logger SET sessionNumber = 1, timestamp = '2018-03-23 12:00:00' WHERE entry > 18 AND entry <= 36")
+            conn.commit()
+            c.execute("UPDATE logger SET sessionNumber = 2, timestamp = '2018-03-23 18:00:00' WHERE entry > 36 AND entry <= 54")
+            conn.commit()
+            c.execute("UPDATE logger SET sessionNumber = 3, timestamp = '2018-03-25 12:00:00' WHERE entry > 54 AND entry <= 72")
+            conn.commit()
+            c.execute("UPDATE logger SET sessionNumber = 4, timestamp = '2018-04-24 12:00:00' WHERE entry > 72")
+            conn.commit()
+        finally:
+            conn.close()
 
         try:
             testFunc()
@@ -199,9 +202,9 @@ def testLoadTypeFunctionsUseLog():
     assert "'numPoints': 4" in logInfo
     assert "'numFeatures': 1" in logInfo
 
-    with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
+    with PortableNamedTempFileContext(suffix=".pickle") as tmpFile:
         trainXObj.save(tmpFile.name)
-        load = nimble.data(tmpFile.name)
+        _ = nimble.data(tmpFile.name)
     logInfo = getLastLogData()
     assert "'returnType': None" in logInfo
     assert "'numPoints': 12" in logInfo
@@ -216,9 +219,9 @@ def testLoadTypeFunctionsUseLog():
 
     # loadTrainedLearner
     tl = nimble.train('nimble.KNNClassifier', trainXObj, trainYObj, arguments={'k': 1})
-    with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
+    with PortableNamedTempFileContext(suffix=".pickle") as tmpFile:
         tl.save(tmpFile.name)
-        load = nimble.loadTrainedLearner(tmpFile.name)
+        _ = nimble.loadTrainedLearner(tmpFile.name)
     logInfo = getLastLogData()
     assert f"'identifier': '{tl.logID}'" in logInfo
     assert "'learnerName': 'KNNClassifier'" in logInfo
@@ -804,7 +807,7 @@ def testShowLogToFile():
     nimble.data([[4, 5], [6, 7], [8, 9]], useLog=True)
     # write to log
     location = nimble.settings.get("logger", "location")
-    with tempfile.NamedTemporaryFile() as out:
+    with PortableNamedTempFileContext() as out:
         pathToFile = out.name
         nimble.showLog(saveToFileName=pathToFile)
         assert os.path.exists(pathToFile)

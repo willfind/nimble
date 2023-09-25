@@ -1,4 +1,3 @@
-import tempfile
 import os
 import copy
 import functools
@@ -28,6 +27,7 @@ from tests.helpers import raises
 from tests.helpers import getDataConstructors
 from tests.helpers import oneLogEntryExpected, noLogEntryExpected
 from tests.helpers import patch, assertCalled, assertNotCalled
+from tests.helpers import PortableNamedTempFileContext
 
 returnTypes = copy.copy(nimble.core.data.available)
 returnTypesNoSparse = [retType for retType in returnTypes if retType != 'Sparse']
@@ -628,7 +628,7 @@ def test_data_CSV_data():
         fromList = nimble.data(source=[[1, 2, 3]], returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
@@ -644,7 +644,7 @@ def test_data_CSV_dataRandomExtension():
         fromList = nimble.data(source=[[1, 2, 3]], returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".foo", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".foo", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
@@ -659,7 +659,7 @@ def test_data_CSV_data_noComment():
         fromList = nimble.data(source=[[1, 2], [1, 2]], returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,#3\n")
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
@@ -674,7 +674,7 @@ def test_data_CSV_data_ListOnly():
     fromList = nimble.data(source=[[1, 2, 'three'], [4, 5, 'six']])
 
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,three\n")
         tmpCSV.write("4,5,six\n")
         tmpCSV.flush()
@@ -688,7 +688,7 @@ def test_data_CSV_data_ListOnly_noComment():
     fromList = nimble.data(source=[[1, 2, 'three'], [4, 5, '#six']])
 
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,three\n")
         tmpCSV.write("4,5,#six\n")
         tmpCSV.flush()
@@ -703,7 +703,7 @@ def test_data_CSV_emptyFile():
         fromList = nimble.data(source=[[1, 2, 3]], returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("")
             tmpCSV.flush()
             objName = 'fromCSV'
@@ -716,7 +716,7 @@ def test_data_CSV_openToEndOfFile():
         fromList = nimble.data(source=[[1, 2, 3]], returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w+') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w+') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             with raises(FileFormatException, match='No data found in file'):
                 fromCSV = nimble.data(source=tmpCSV, returnType=t)
@@ -729,7 +729,7 @@ def test_data_CSV_data_unicodeCharacters():
         fromList = nimble.data(source=data, returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("P,\u2119\n")
             tmpCSV.write("Y,\u01B4\n")
             tmpCSV.write("T,\u2602\n")
@@ -754,7 +754,7 @@ def test_data_CSV_data_columnTypeHierarchy():
         fromList = nimble.data(source=data, returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("True,False,True,False,TRUE,false,1,1.0,1,1,1\n")
             tmpCSV.write("False,True,False,True,FALSE,true,2,2.0,2,2,2\n")
             tmpCSV.write("True,False,True,False,TRUE,false,3,3.0,3,3,3\n")
@@ -779,7 +779,7 @@ def test_data_CSV_data_columnTypeHierarchyWithNaN():
         fromList = nimble.data(source=data, returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("True,False,1,1.0,1,1\n")
             tmpCSV.write("False,,2,,,2\n")
             tmpCSV.write("True,False,,3.0,3,\n")
@@ -804,7 +804,7 @@ def test_data_CSV_data_emptyStringsNotMissing():
         fromList = nimble.data(source=data, treatAsMissing=[None], returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("True,False,1,1\n")
             tmpCSV.write("False,,2,2\n")
             tmpCSV.write("True,False,,\n")
@@ -829,7 +829,7 @@ def test_data_CSV_data_defaultFeatureNames():
         fromList.features.setNames('a', oldIdentifiers=1)
         fromList.features.setNames('b', oldIdentifiers=2)
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write(",a,b,\n")
             tmpCSV.write("True,False,1,1\n")
             tmpCSV.write("False,,2,2\n")
@@ -855,7 +855,7 @@ def test_data_CSV_lastFeatureAllMissing():
         fromList4 = nimble.data(source=dataKeep, featureNames=ftKeep)
         fromList5 = nimble.data(source=dataEmpty, featureNames=ftKeep,
                                 treatAsMissing=[])
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,three,\n")
             tmpCSV.write("4,5,six,\n")
             tmpCSV.write("0,-1,negativeTwo,\n")
@@ -884,7 +884,7 @@ def test_data_CSV_lastFeatureAllMissing():
             assert len(fromCSV6.features) == 2
             assert all(v != v for v in fromCSV6.features[1])
 
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write('a,b,c,\n')
             tmpCSV.write("1,2,three,\n")
             tmpCSV.write("4,5,six,\n")
@@ -899,7 +899,7 @@ def test_data_CSV_lastFeatureAllMissing():
 def test_data_CSV_emptyFirstValue():
     """Test if empty first value automatically detects pointNames correctly"""
     # should trigger pointNames
-    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+    with PortableNamedTempFileContext('w+', suffix='.csv') as tmpCSV:
         tmpCSV.write(',ft1,ft2,ft3\n')
         tmpCSV.write('a,1,2,3\n')
         tmpCSV.write('b,3,4,5\n')
@@ -910,7 +910,7 @@ def test_data_CSV_emptyFirstValue():
         assert fromCSV.points.getNames() == ['a', 'b']
 
     # should also trigger pointNames
-    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+    with PortableNamedTempFileContext('w+', suffix='.csv') as tmpCSV:
         tmpCSV.write(',ft1,ft2,\n')
         tmpCSV.write('a,1,2,3\n')
         tmpCSV.write('b,3,4,5\n')
@@ -921,7 +921,7 @@ def test_data_CSV_emptyFirstValue():
         assert fromCSV.points.getNames() == ['a', 'b']
 
     # no pointNames, first column is not unique
-    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+    with PortableNamedTempFileContext('w+', suffix='.csv') as tmpCSV:
         tmpCSV.write(',ft1,ft2,ft3\n')
         tmpCSV.write('a,1,2,3\n')
         tmpCSV.write('a,3,4,5\n')
@@ -932,7 +932,7 @@ def test_data_CSV_emptyFirstValue():
         assert not fromCSV.points._namesCreated()
 
     # pointNames, keepPoints with unique first column
-    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+    with PortableNamedTempFileContext('w+', suffix='.csv') as tmpCSV:
         tmpCSV.write(',ft1,ft2,ft3\n')
         tmpCSV.write('a,1,2,3\n')
         tmpCSV.write('b,4,5,6\n')
@@ -946,7 +946,7 @@ def test_data_CSV_emptyFirstValue():
 
     # no pointNames, keepPoints with non unique first column
     # does not matter whether the kept points are unique or not
-    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+    with PortableNamedTempFileContext('w+', suffix='.csv') as tmpCSV:
         tmpCSV.write(',ft1,ft2,ft3\n')
         tmpCSV.write('a,1,2,3\n')
         tmpCSV.write('b,4,5,6\n')
@@ -959,7 +959,7 @@ def test_data_CSV_emptyFirstValue():
         assert not limitCSV.points._namesCreated()
 
 def test_data_CSV_allMissingColumn():
-    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+    with PortableNamedTempFileContext('w+', suffix='.csv') as tmpCSV:
         tmpCSV.write('ft0,ft1,ft2,ft3\n')
         tmpCSV.write(',1,a,3.0\n')
         tmpCSV.write(',4,b,6.0\n')
@@ -974,7 +974,7 @@ def test_data_CSV_allMissingColumn():
         assert dtypes[2] == np.object_
         assert dtypes[3] == np.float_
 
-    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+    with PortableNamedTempFileContext('w+', suffix='.csv') as tmpCSV:
         tmpCSV.write('ft0,ft1,ft2,ft3\n')
         tmpCSV.write('1.,2.,,3.0\n')
         tmpCSV.write('4.,5.,,6.0\n')
@@ -991,7 +991,7 @@ def test_data_MTXArr_data():
         fromList = nimble.data(source=[[1, 2, 3]], returnType=t)
 
         # instantiate from mtx array file
-        with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
+        with PortableNamedTempFileContext(suffix=".mtx", mode='w') as tmpMTXArr:
             tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
             tmpMTXArr.write("1 3\n")
             tmpMTXArr.write("1\n")
@@ -1013,7 +1013,7 @@ def test_data_MTXArr_dataRandomExtension():
         fromList = nimble.data(source=[[1, 2, 3]], returnType=t)
 
         # instantiate from mtx array file
-        with tempfile.NamedTemporaryFile(suffix=".foo", mode='w') as tmpMTXArr:
+        with PortableNamedTempFileContext(suffix=".foo", mode='w') as tmpMTXArr:
             tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
             tmpMTXArr.write("1 3\n")
             tmpMTXArr.write("1\n")
@@ -1036,7 +1036,7 @@ def test_data_MTXCoo_data():
         fromList = nimble.data(source=[[1, 2, 3]], returnType=t)
 
         # instantiate from mtx coordinate file
-        with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
+        with PortableNamedTempFileContext(suffix=".mtx", mode='w') as tmpMTXCoo:
             tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.write("1 1 1\n")
@@ -1058,7 +1058,7 @@ def test_data_MTXCoo_dataRandomExtension():
         fromList = nimble.data(source=[[1, 2, 3]], returnType=t)
 
         # instantiate from mtx coordinate file
-        with tempfile.NamedTemporaryFile(suffix=".foo", mode='w') as tmpMTXCoo:
+        with PortableNamedTempFileContext(suffix=".foo", mode='w') as tmpMTXCoo:
             tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.write("1 1 1\n")
@@ -1077,7 +1077,7 @@ def test_data_MTXCoo_dataRandomExtension():
 
 @raises(FileFormatException)
 def test_data_CSV_unequalRowLength_short():
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write('1,2,3,4\n')
         tmpCSV.write('4,5,6\n')
         tmpCSV.flush()
@@ -1086,7 +1086,7 @@ def test_data_CSV_unequalRowLength_short():
 
 @raises(FileFormatException)
 def test_data_CSV_unequalRowLength_long():
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("4,5,6,7\n")
@@ -1097,7 +1097,7 @@ def test_data_CSV_unequalRowLength_long():
 
 @raises(FileFormatException)
 def test_data_CSV_unequalRowLength_definedByNames():
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("one,two,three\n")
         tmpCSV.write("11,22,33,44\n")
         tmpCSV.write("4,5,6,7\n")
@@ -1107,7 +1107,7 @@ def test_data_CSV_unequalRowLength_definedByNames():
 
 
 def test_data_CSV_unequalRowLength_position():
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("#ignore\n")
         tmpCSV.write("1,2,3,4,0,0,0,0\n")
         tmpCSV.write("\n")
@@ -1131,7 +1131,7 @@ def test_data_HDF5_data():
                                 [[1, 2], [3, 4]]]], returnType=t)
         # HDF5 commonly uses two extensions .hdf5 and .h5
         for suffix in ['.hdf5', '.h5']:
-            with tempfile.NamedTemporaryFile(suffix=suffix) as tmpHDF:
+            with PortableNamedTempFileContext(suffix=suffix) as tmpHDF:
                 arr = np.array([[1, 2], [3, 4]])
                 hdfFile = h5py.File(tmpHDF, 'w')
                 one = hdfFile.create_group('one')
@@ -1157,7 +1157,7 @@ def test_data_HDF5_dataRandomExtension():
                                 [[[1, 2], [3, 4]],
                                  [[1, 2], [3, 4]]]], returnType=t)
 
-        with tempfile.NamedTemporaryFile(suffix=".data") as tmpHDF:
+        with PortableNamedTempFileContext(suffix=".data") as tmpHDF:
             arr = np.array([[1, 2], [3, 4]])
             hdfFile = h5py.File(tmpHDF, 'w')
             one = hdfFile.create_group('one')
@@ -1185,7 +1185,7 @@ def test_data_HDF5_dataDifferentStructures():
         fromList = nimble.data(source=data, returnType=t)
 
         # Case 1: file contains single Dataset with all data
-        with tempfile.NamedTemporaryFile(suffix=".h5") as tmpHDF:
+        with PortableNamedTempFileContext(suffix=".h5") as tmpHDF:
             hdfFile = h5py.File(tmpHDF, 'w')
             ds1 = hdfFile.create_dataset('data', data=np.array(data))
             hdfFile.flush()
@@ -1196,7 +1196,7 @@ def test_data_HDF5_dataDifferentStructures():
             assert fromList == fromHDF
 
         # Case 2: Two Datasets
-        with tempfile.NamedTemporaryFile(suffix=".h5") as tmpHDF:
+        with PortableNamedTempFileContext(suffix=".h5") as tmpHDF:
             hdfFile = h5py.File(tmpHDF, 'w')
             hdfFile.create_dataset('mtx1', data=np.array(data)[0])
             hdfFile.create_dataset('mtx2', data=np.array(data)[1])
@@ -1211,7 +1211,7 @@ def test_data_HDF5_dataDifferentStructures():
         # This is the stucture in other tests so we will not test here
 
         # Case 4: Two groups each containing two groups with two Datasets (vectors)
-        with tempfile.NamedTemporaryFile(suffix=".hdf5") as tmpHDF:
+        with PortableNamedTempFileContext(suffix=".hdf5") as tmpHDF:
             hdfFile = h5py.File(tmpHDF, 'w')
             zero = hdfFile.create_group('index0')
             zeroZero = zero.create_group('index0')
@@ -1242,7 +1242,7 @@ def test_data_HDF5_dataDifferentStructures():
 def test_data_objName_and_path_CSV():
     for t in returnTypes:
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
 
@@ -1259,7 +1259,7 @@ def test_data_objName_and_path_CSV():
 def test_data_objName_and_path_MTXArr():
     for t in returnTypes:
         # instantiate from mtx array file
-        with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
+        with PortableNamedTempFileContext(suffix=".mtx", mode='w') as tmpMTXArr:
             tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
             tmpMTXArr.write("1 3\n")
             tmpMTXArr.write("1\n")
@@ -1280,7 +1280,7 @@ def test_data_objName_and_path_MTXArr():
 def test_data_objName_and_path_MTXCoo():
     for t in returnTypes:
         # instantiate from mtx coordinate file
-        with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
+        with PortableNamedTempFileContext(suffix=".mtx", mode='w') as tmpMTXCoo:
             tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.write("1 1 1\n")
@@ -1311,14 +1311,13 @@ def test_extractNames_CSV():
                                featureNames=fNames, returnType=t)
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
-        tmpCSV.write('ignore,one,two,three\n')
-        tmpCSV.write("pn1,1,2,3\n")
-        tmpCSV.flush()
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write('ignore,one,two,three\n')
+            tmpCSV.write("pn1,1,2,3\n")
+            tmpCSV.flush()
 
-        fromCSV = nimble.data(tmpCSV.name, pointNames=True, featureNames=True,
-                              returnType=t)
-        tmpCSV.close()
+            fromCSV = nimble.data(tmpCSV.name, pointNames=True, featureNames=True,
+                                returnType=t)
         assert fromList == fromCSV
 
 
@@ -1330,15 +1329,14 @@ def test_names_AutoDetectedBlankLines_CSV():
                                featureNames=fNames, returnType=t)
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
-        tmpCSV.write("\n")
-        tmpCSV.write("\n")
-        tmpCSV.write("pointNames,one,two,three\n")
-        tmpCSV.write("pn1,1,2,3\n")
-        tmpCSV.flush()
+        with PortableNamedTempFileContext('w', suffix=".csv") as tmpCSV:
+            tmpCSV.write("\n")
+            tmpCSV.write("\n")
+            tmpCSV.write("pointNames,one,two,three\n")
+            tmpCSV.write("pn1,1,2,3\n")
+            tmpCSV.flush()
 
-        fromCSV = nimble.data(source=tmpCSV.name, returnType=t)
-        tmpCSV.close()
+            fromCSV = nimble.data(source=tmpCSV.name, returnType=t)
         assert fromList == fromCSV
 
 
@@ -1348,15 +1346,14 @@ def test_featNamesOnly_AutoDetectedBlankLines_CSV():
         fromList = nimble.data(source=[[1, 2, 3]], featureNames=fNames)
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
-        tmpCSV.write("\n")
-        tmpCSV.write("\n")
-        tmpCSV.write("one,two,three\n")
-        tmpCSV.write("1,2,3\n")
-        tmpCSV.flush()
+        with PortableNamedTempFileContext('w', suffix=".csv") as tmpCSV:
+            tmpCSV.write("\n")
+            tmpCSV.write("\n")
+            tmpCSV.write("one,two,three\n")
+            tmpCSV.write("1,2,3\n")
+            tmpCSV.flush()
 
-        fromCSV = nimble.data(source=tmpCSV.name)
-        tmpCSV.close()
+            fromCSV = nimble.data(source=tmpCSV.name)
         assert fromList == fromCSV
 
 def test_featNamesOnly_AutoDetectedCommentedLine_CSV():
@@ -1364,16 +1361,16 @@ def test_featNamesOnly_AutoDetectedCommentedLine_CSV():
         fromList = nimble.data(source=[[1, 2, 3], [4, 5, 6]])
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
-        tmpCSV.write("\n")
-        tmpCSV.write("\n")
-        tmpCSV.write("#one,two,three\n")
-        tmpCSV.write("1,2,3\n")
-        tmpCSV.write("4,5,6\n")
-        tmpCSV.flush()
+        with PortableNamedTempFileContext('w', suffix=".csv") as tmpCSV:
+            tmpCSV.write("\n")
+            tmpCSV.write("\n")
+            tmpCSV.write("#one,two,three\n")
+            tmpCSV.write("1,2,3\n")
+            tmpCSV.write("4,5,6\n")
+            tmpCSV.flush()
 
-        fromCSV = nimble.data(source=tmpCSV.name)
-        tmpCSV.close()
+            fromCSV = nimble.data(source=tmpCSV.name)
+
         assert fromList == fromCSV
         assert fromCSV.features._getNamesNoGeneration() is None
 
@@ -1385,15 +1382,15 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
                                featureNames=fNames, returnType=t)
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
-        tmpCSV.write("\n")
-        tmpCSV.write("\n")
-        tmpCSV.write("pointNames,one,two,three\n")
-        tmpCSV.write("pn1,1,2,3\n")
-        tmpCSV.flush()
-        fromCSV = nimble.data(source=tmpCSV.name, featureNames=True,
-                              returnType=t)
-        tmpCSV.close()
+        with PortableNamedTempFileContext('w', suffix=".csv") as tmpCSV:
+            tmpCSV.write("\n")
+            tmpCSV.write("\n")
+            tmpCSV.write("pointNames,one,two,three\n")
+            tmpCSV.write("pn1,1,2,3\n")
+            tmpCSV.flush()
+            fromCSV = nimble.data(source=tmpCSV.name, featureNames=True,
+                                returnType=t)
+
         assert fromList == fromCSV
 
 
@@ -1403,15 +1400,15 @@ def test_specifiedIgnore_overides_autoDetectBlankLine_CSV():
         fromList = nimble.data(data, returnType=t)
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
-        tmpCSV.write("\n")
-        tmpCSV.write("\n")
-        tmpCSV.write('0,1,2,3\n')
-        tmpCSV.write("10,11,12,13\n")
-        tmpCSV.flush()
-        fromCSV = nimble.data(tmpCSV.name, pointNames=False,
-                              featureNames=False, returnType=t)
-        tmpCSV.close()
+        with PortableNamedTempFileContext('w', suffix=".csv") as tmpCSV:
+            tmpCSV.write("\n")
+            tmpCSV.write("\n")
+            tmpCSV.write('0,1,2,3\n')
+            tmpCSV.write("10,11,12,13\n")
+            tmpCSV.flush()
+            fromCSV = nimble.data(tmpCSV.name, pointNames=False,
+                                featureNames=False, returnType=t)
+
         assert fromList == fromCSV
 
 
@@ -1422,12 +1419,11 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
 
     """
     if rawType == 'csv':
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
-        tmpCSV.write(rawStr)
-        tmpCSV.flush()
-        ret = nimble.data(source=tmpCSV.name,
-                          pointNames=pointNames, featureNames=featureNames)
-        tmpCSV.close()
+        with PortableNamedTempFileContext('w', suffix=".csv") as tmpCSV:
+            tmpCSV.write(rawStr)
+            tmpCSV.flush()
+            ret = nimble.data(source=tmpCSV.name,
+                            pointNames=pointNames, featureNames=featureNames)
     else:
         fnameRow = list(map(_intFloatOrString, rawStr.split('\n')[0].split(',')))
         dataRow = list(map(_intFloatOrString, rawStr.split('\n')[1].split(',')))
@@ -1577,17 +1573,16 @@ def test_namesInComment_MTXArr():
         fromList = nimble.data(source=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx array file
-        tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx", mode='w')
-        tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
-        tmpMTXArr.write("%#pn1\n")
-        tmpMTXArr.write("%#one,two,three\n")
-        tmpMTXArr.write("1 3\n")
-        tmpMTXArr.write("1\n")
-        tmpMTXArr.write("2\n")
-        tmpMTXArr.write("3\n")
-        tmpMTXArr.flush()
-        fromMTXArr = nimble.data(source=tmpMTXArr.name)
-        tmpMTXArr.close()
+        with PortableNamedTempFileContext('w', suffix=".mtx") as tmpMTXArr:
+            tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+            tmpMTXArr.write("%#pn1\n")
+            tmpMTXArr.write("%#one,two,three\n")
+            tmpMTXArr.write("1 3\n")
+            tmpMTXArr.write("1\n")
+            tmpMTXArr.write("2\n")
+            tmpMTXArr.write("3\n")
+            tmpMTXArr.flush()
+            fromMTXArr = nimble.data(source=tmpMTXArr.name)
         if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
             assert fromList.isApproximatelyEqual(fromMTXArr)
         else:
@@ -1603,17 +1598,16 @@ def test_namesInComment_MTXCoo():
                                featureNames=fNames, returnType=t)
 
         # instantiate from mtx coordinate file
-        tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx", mode='w')
-        tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
-        tmpMTXCoo.write("%#pn1\n")
-        tmpMTXCoo.write("%#one,two,three\n")
-        tmpMTXCoo.write("1 3 3\n")
-        tmpMTXCoo.write("1 1 1\n")
-        tmpMTXCoo.write("1 2 2\n")
-        tmpMTXCoo.write("1 3 3\n")
-        tmpMTXCoo.flush()
-        fromMTXCoo = nimble.data(source=tmpMTXCoo.name, returnType=t)
-        tmpMTXCoo.close()
+        with PortableNamedTempFileContext('w', suffix=".mtx") as tmpMTXCoo:
+            tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+            tmpMTXCoo.write("%#pn1\n")
+            tmpMTXCoo.write("%#one,two,three\n")
+            tmpMTXCoo.write("1 3 3\n")
+            tmpMTXCoo.write("1 1 1\n")
+            tmpMTXCoo.write("1 2 2\n")
+            tmpMTXCoo.write("1 3 3\n")
+            tmpMTXCoo.flush()
+            fromMTXCoo = nimble.data(source=tmpMTXCoo.name, returnType=t)
         assert fromList == fromMTXCoo
 
 
@@ -1626,22 +1620,22 @@ def test_extractNames_MTXArr():
                                featureNames=fNames, returnType=t)
 
         # instantiate from mtx array file
-        tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx", mode='w')
-        tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
-        tmpMTXArr.write("2 4\n")
-        tmpMTXArr.write("-4\n")
-        tmpMTXArr.write("11\n")
-        tmpMTXArr.write("1\n")
-        tmpMTXArr.write("21\n")
-        tmpMTXArr.write("2\n")
-        tmpMTXArr.write("22\n")
-        tmpMTXArr.write("3\n")
-        tmpMTXArr.write("23\n")
-        tmpMTXArr.flush()
+        with PortableNamedTempFileContext('w', suffix=".mtx") as tmpMTXArr:
+            tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+            tmpMTXArr.write("2 4\n")
+            tmpMTXArr.write("-4\n")
+            tmpMTXArr.write("11\n")
+            tmpMTXArr.write("1\n")
+            tmpMTXArr.write("21\n")
+            tmpMTXArr.write("2\n")
+            tmpMTXArr.write("22\n")
+            tmpMTXArr.write("3\n")
+            tmpMTXArr.write("23\n")
+            tmpMTXArr.flush()
 
-        fromMTXArr = nimble.data(tmpMTXArr.name, pointNames=True,
-                                 featureNames=True, returnType=t)
-        tmpMTXArr.close()
+            fromMTXArr = nimble.data(tmpMTXArr.name, pointNames=True,
+                                    featureNames=True, returnType=t)
+
         if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
             assert fromList.isApproximatelyEqual(fromMTXArr)
         else:
@@ -1657,21 +1651,21 @@ def test_extractNames_MTXCoo():
                                featureNames=fNames, returnType=t)
 
         # instantiate from mtx coordinate file
-        tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx", mode='w')
-        tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
-        tmpMTXCoo.write("2 4 8\n")
-        tmpMTXCoo.write("1 1 11\n")
-        tmpMTXCoo.write("1 2 1\n")
-        tmpMTXCoo.write("1 3 2\n")
-        tmpMTXCoo.write("1 4 3\n")
-        tmpMTXCoo.write("2 1 21\n")
-        tmpMTXCoo.write("2 2 22\n")
-        tmpMTXCoo.write("2 3 -5\n")
-        tmpMTXCoo.write("2 4 23\n")
-        tmpMTXCoo.flush()
-        fromMTXCoo = nimble.data(tmpMTXCoo.name, pointNames=True,
-                                 featureNames=True, returnType=t)
-        tmpMTXCoo.close()
+        with PortableNamedTempFileContext('w', suffix=".mtx") as tmpMTXCoo:
+            tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+            tmpMTXCoo.write("2 4 8\n")
+            tmpMTXCoo.write("1 1 11\n")
+            tmpMTXCoo.write("1 2 1\n")
+            tmpMTXCoo.write("1 3 2\n")
+            tmpMTXCoo.write("1 4 3\n")
+            tmpMTXCoo.write("2 1 21\n")
+            tmpMTXCoo.write("2 2 22\n")
+            tmpMTXCoo.write("2 3 -5\n")
+            tmpMTXCoo.write("2 4 23\n")
+            tmpMTXCoo.flush()
+            fromMTXCoo = nimble.data(tmpMTXCoo.name, pointNames=True,
+                                    featureNames=True, returnType=t)
+
         if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
             assert fromList.isApproximatelyEqual(fromMTXCoo)
         else:
@@ -1686,7 +1680,7 @@ def test_extractNames_HDF():
                                                     [[1, 2], [3, 4]]]],
                                pointNames=pNames)
 
-        with tempfile.NamedTemporaryFile(suffix=".data") as tmpHDF:
+        with PortableNamedTempFileContext(suffix=".data") as tmpHDF:
             arr = np.array([[1, 2], [3, 4]])
             hdfFile = h5py.File(tmpHDF, 'w')
             one = hdfFile.create_group('one')
@@ -1710,7 +1704,7 @@ def test_extractNames_HDF():
 @raises(InvalidArgumentValue)
 def test_csv_extractNames_duplicatePointName():
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write('ignore,one,two,three\n')
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.write("pn1,11,22,33\n")
@@ -1722,7 +1716,7 @@ def test_csv_extractNames_duplicatePointName():
 @raises(InvalidArgumentValue)
 def test_csv_extractNames_duplicateFeatureName():
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write('one,two,one\n')
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
@@ -1740,12 +1734,12 @@ def test_csv_roundtrip_autonames():
         withFnames = nimble.data(data, featureNames=fnames)
         withBoth = nimble.data(data, featureNames=fnames, pointNames=pnames)
 
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVFnames:
+        with PortableNamedTempFileContext(suffix=".csv") as tmpCSVFnames:
             withFnames.save(tmpCSVFnames.name, 'csv', includeNames=True)
             fromFileFnames = nimble.data(source=tmpCSVFnames.name)
             assert fromFileFnames == withFnames
 
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVBoth:
+        with PortableNamedTempFileContext(suffix=".csv") as tmpCSVBoth:
             withBoth.save(tmpCSVBoth.name, 'csv', includeNames=True)
             fromFileBoth = nimble.data(source=tmpCSVBoth.name)
             assert fromFileBoth == withBoth
@@ -1757,7 +1751,7 @@ def test_hdf_roundtrip_autonames():
                 [[[-1, -2], [-3, -4]], [[-1, -2], [-3, -4]]]]
         withPNames = nimble.data(data, pointNames=pNames)
 
-        with tempfile.NamedTemporaryFile(suffix=".hdf5") as tmpHDF:
+        with PortableNamedTempFileContext(suffix=".hdf5") as tmpHDF:
             withPNames.save(tmpHDF.name, includeNames=True)
             fromFile = nimble.data(tmpHDF.name)
             assert withPNames == fromFile
@@ -2005,7 +1999,7 @@ def test_data_CSV_passedOpen():
         fromList = nimble.data(source=[[1, 2, 3]])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
@@ -2042,7 +2036,7 @@ def test_data_MTXArr_passedOpen():
         fromList = nimble.data(source=[[1, 2, 3]])
 
         # instantiate from mtx array file
-        with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
+        with PortableNamedTempFileContext(suffix=".mtx", mode='w') as tmpMTXArr:
             tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
             tmpMTXArr.write("1 3\n")
             tmpMTXArr.write("1\n")
@@ -2084,7 +2078,7 @@ def test_data_MTXCoo_passedOpen():
         fromList = nimble.data(source=[[1, 2, 3]], returnType=t)
 
         # instantiate from mtx coordinate file
-        with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
+        with PortableNamedTempFileContext(suffix=".mtx", mode='w') as tmpMTXCoo:
             tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.write("1 1 1\n")
@@ -2115,7 +2109,7 @@ def test_data_MTXCoo_passedOpen():
 def test_data_GZIP_passedOpen():
     for t in returnTypes:
         fromList = nimble.data(source=[[1, 2, 3], [4, 5, 6]], returnType=t)
-        with tempfile.NamedTemporaryFile('w+b', suffix='.gz') as tempGZIP:
+        with PortableNamedTempFileContext('w+b', suffix='.gz') as tempGZIP:
             with gzip.GzipFile(tempGZIP.name, mode='wb') as mygzip:
                 mygzip.write(b'1,2,3\n4,5,6')
             tempGZIP.seek(0)
@@ -2128,7 +2122,7 @@ def test_data_GZIP_passedOpen():
 def test_data_ZIP_passedOpen():
     for t in returnTypes:
         fromList = nimble.data(source=[[1, 2, 3], [4, 5, 6]], returnType=t)
-        with tempfile.NamedTemporaryFile('w+b', suffix='.zip') as tempZIP:
+        with PortableNamedTempFileContext('w+b', suffix='.zip') as tempZIP:
             with zipfile.ZipFile(tempZIP, 'w') as myzip:
                 myzip.writestr('data.csv', '1,2,3\n4,5,6')
             tempZIP.seek(0)
@@ -2141,7 +2135,7 @@ def test_data_ZIP_passedOpen():
 def test_data_TAR_passedOpen():
     for t in returnTypes:
         fromList = nimble.data(source=[[1, 2, 3], [4, 5, 6]], returnType=t)
-        with tempfile.NamedTemporaryFile('w+b', suffix='.tar') as tempTAR:
+        with PortableNamedTempFileContext('w+b', suffix='.tar') as tempTAR:
             with tarfile.TarFile(fileobj=tempTAR, mode='w') as tar:
                 with io.BytesIO(b'1,2,3\n4,5,6') as data1:
                     file1 = tarfile.TarInfo('data.csv')
@@ -2196,7 +2190,7 @@ def mocked_requests_get(url, *args, **kwargs):
         return MockResponse(mtx, 200)
     if 'HDF' in url:
         data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
-        with tempfile.NamedTemporaryFile(suffix=".data") as tmpHDF:
+        with PortableNamedTempFileContext(suffix=".data") as tmpHDF:
             hdfFile = h5py.File(tmpHDF, 'w')
             ds1 = hdfFile.create_dataset('data', data=np.array(data))
             hdfFile.flush()
@@ -2720,7 +2714,7 @@ def test_data_ignoreNonNumericalFeaturesCSV():
         fromList = nimble.data(source=[[1, 3], [5, 7]], returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,two,3.0,four\n")
             tmpCSV.write("5,six,7,8\n")
             tmpCSV.flush()
@@ -2741,7 +2735,7 @@ def test_data_CSV_ignoreNonNumerical_removalCleanup_hard():
                                returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3.0,4.0,1\n")
             tmpCSV.write("5,six,7,8,1\n")
             tmpCSV.write("11,6,12,eight,1.0\n")
@@ -2764,7 +2758,7 @@ def test_data_CSV_ignoreNonNumerical_removalCleanup_easy():
                                returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,two,3.0,four,one\n")
             tmpCSV.write("5,6,7,8,1\n")
             tmpCSV.write("11,6,12,8,1.0\n")
@@ -2787,7 +2781,7 @@ def test_data_ignoreNonNumericalFeaturesCSV_noEffect():
                                returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3,4\n")
             tmpCSV.write("5,6,7,8\n")
             tmpCSV.flush()
@@ -2808,7 +2802,7 @@ def test_CSV_ignoreNonNumericalFeatures_featureNamesDontTrigger():
                                returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3,four\n")
             tmpCSV.write("5,6,7,8\n")
             tmpCSV.flush()
@@ -2826,7 +2820,7 @@ def test_CSV_ignoreNonNumericalFeatures_featureNamesAdjusted():
         fromList = nimble.data(featureNames=fNames, source=data, returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3,4\n")
             tmpCSV.write("1,2,3,four\n")
             tmpCSV.write("5,6,7,H8\n")
@@ -2845,7 +2839,7 @@ def test_CSV_data_ignoreNonNumericalFeatures_allRemoved():
                                returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write(",ones,twos,threes\n")
             tmpCSV.write("single,1A,2A,3A\n")
             tmpCSV.write("dubs,11,22A,33\n")
@@ -2867,7 +2861,7 @@ def test_CSVformatting_simpleQuotedValues():
         fromList = nimble.data([[1, 2, 3, 4], [5, 6, 7, 8]], returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,\"2\",\"3\",4\n")
             tmpCSV.write("5,\"6\",\"7\",8\n")
             tmpCSV.flush()
@@ -2885,7 +2879,7 @@ def test_CSVformatting_specialCharsInQuotes():
         fromList = nimble.data(data, featureNames=fNames[:3], returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("\"1,ONE\",\"2;TWO\",\"3\t'EE'\",\"4f\"\n")
             tmpCSV.write("1,2,3,four\n")
             tmpCSV.write("5,6,7,H8\n")
@@ -2904,7 +2898,7 @@ def test_CSVformatting_emptyAndCommentLines():
         fromList = nimble.data(source=data, returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("#stuff\n")
             tmpCSV.write("\n")
             tmpCSV.write("\n")
@@ -2929,7 +2923,7 @@ def test_CSVformatting_scientificNotation():
         fromRaw = nimble.data(source=data)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1.000000000e+00,2.000000000e+00,3.000000000e+00\n")
             tmpCSV.write("1.100000000e+01,2.200000000e+01,3.300000000e+01\n")
             tmpCSV.write("1.110000000e+02,2.220000000e+02,3.330000000e+02\n")
@@ -2949,7 +2943,7 @@ def test_data_keepPF_AllPossibleNatOrder():
     for (t, f) in itertools.product(returnTypes, filesForms):
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
         orig = nimble.data(source=data)
-        with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+        with PortableNamedTempFileContext(suffix="." + f) as tmpF:
             orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
@@ -2968,7 +2962,7 @@ def test_data_keepPF_AllPossibleReverseOrder():
     for (t, f) in itertools.product(returnTypes, filesForms):
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
         orig = nimble.data(source=data)
-        with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+        with PortableNamedTempFileContext(suffix="." + f) as tmpF:
             orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
@@ -3001,7 +2995,7 @@ def test_data_keepPF_AllPossibleWithNames_extracted():
     orig = nimble.data(source=data)
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
-        with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+        with PortableNamedTempFileContext(suffix="." + f) as tmpF:
             orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
@@ -3044,7 +3038,7 @@ def test_data_keepPF_AllPossibleWithNames_fullNamesListProvided():
 
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
-        with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+        with PortableNamedTempFileContext(suffix="." + f) as tmpF:
             orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
@@ -3087,7 +3081,7 @@ def test_data_keepPF_AllPossibleWithNames_fullNamesDictProvided():
 
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
-        with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+        with PortableNamedTempFileContext(suffix="." + f) as tmpF:
             orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
@@ -3130,7 +3124,7 @@ def test_data_keepPF_AllCombosWithExactNamesProvided():
 
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
-        with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+        with PortableNamedTempFileContext(suffix="." + f) as tmpF:
             orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
@@ -3212,7 +3206,7 @@ def test_data_csv_keepPoints_IndexingGivenFeatureNames():
     fnames = ['1', '2', '3']
     wanted = nimble.data(source=data, featureNames=fnames)
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -3251,7 +3245,7 @@ def test_data_keepPF_csv_noUncessaryStorage():
         nimble.core._createHelpers.initDataObject = fakeinitDataObject
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.write("11,22,33\n")
             tmpCSV.write("111,222,333\n")
@@ -3278,7 +3272,7 @@ def test_data_keepPF_csv_noUncessaryStorage():
 #		nimble.core._createHelpers.initDataObject = fakeinitDataObject
 #
 #		# instantiate from mtx array file
-#		with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
+#		with PortableNamedTempFileContext(suffix=".mtx", mode='w') as tmpMTXArr:
 #			tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
 #			tmpMTXArr.write("1 3\n")
 #			tmpMTXArr.write("1\n")
@@ -3308,7 +3302,7 @@ def test_data_keepPF_csv_noUncessaryStorage():
 #		nimble.core._createHelpers.initDataObject = fakeinitDataObject
 #
 #		# instantiate from mtx coordinate file
-#		with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
+#		with PortableNamedTempFileContext(suffix=".mtx", mode='w') as tmpMTXCoo:
 #			tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
 #			tmpMTXCoo.write("1 3 3\n")
 #			tmpMTXCoo.write("1 1 1\n")
@@ -3328,7 +3322,7 @@ def test_data_keepPF_csv_noUncessaryStorage():
 def test_data_keepPF_csv_simple():
     wanted = nimble.data(source=[[222], [22]])
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -3342,7 +3336,7 @@ def test_data_keepPF_mtxArr_simple():
     fromList = nimble.data(source=[[3]])
 
     # instantiate from mtx array file
-    with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
+    with PortableNamedTempFileContext(suffix=".mtx", mode='w') as tmpMTXArr:
         tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
         tmpMTXArr.write("2 2\n")
         tmpMTXArr.write("1\n")
@@ -3360,7 +3354,7 @@ def test_data_keepPF_mtxCoo_simple():
     fromList = nimble.data(source=[[2]], returnType="Sparse")
 
     # instantiate from mtx coordinate file
-    with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
+    with PortableNamedTempFileContext(suffix=".mtx", mode='w') as tmpMTXCoo:
         tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
         tmpMTXCoo.write("2 3 3\n")
         tmpMTXCoo.write("1 1 1\n")
@@ -3440,7 +3434,7 @@ def test_data_keepPF_spCsc_simple():
 @raises(InvalidArgumentValue)
 def test_keepPF_csv_ExceptionUnknownFeatureName_Extracted():
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -3454,7 +3448,7 @@ def test_keepPF_csv_ExceptionUnknownFeatureName_Extracted():
 @raises(InvalidArgumentValue)
 def test_keepPF_csv_ExceptionUnknownFeatureName_Provided():
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -3466,7 +3460,7 @@ def test_keepPF_csv_ExceptionUnknownFeatureName_Provided():
 
 @raises(InvalidArgumentValue)
 def test_csv_keepFeatures_indexNotInFile():
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -3479,7 +3473,7 @@ def test_csv_keepFeatures_indexNotInFile():
 
 @raises(InvalidArgumentValue)
 def test_csv_keepPoints_indexNotInFile():
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -3493,7 +3487,7 @@ def test_csv_keepPoints_indexNotInFile():
 @raises(InvalidArgumentValue)
 def test_keepPF_csv_ExceptionUnknownPointName_extracted():
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -3507,7 +3501,7 @@ def test_keepPF_csv_ExceptionUnknownPointName_extracted():
 @raises(InvalidArgumentValue)
 def test_keepPF_csv_ExceptionUnknownPointName_provided():
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -3519,7 +3513,7 @@ def test_keepPF_csv_ExceptionUnknownPointName_provided():
 
 @raises(InvalidArgumentValue)
 def test_csv_keepPoints_noNamesButNameSpecified():
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -3532,7 +3526,7 @@ def test_csv_keepPoints_noNamesButNameSpecified():
 
 @raises(InvalidArgumentValue)
 def test_csv_keepFeatures_noNamesButNameSpecified():
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -3544,7 +3538,7 @@ def test_csv_keepFeatures_noNamesButNameSpecified():
 
 
 def test_csv_keepFeatures_duplicatesInList():
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -3571,7 +3565,7 @@ def test_csv_keepFeatures_duplicatesInList():
 
 
 def test_csv_keepPoints_duplicatesInList():
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -3605,7 +3599,7 @@ def test_data_csv_keepPF_and_ignoreFlag():
                                returnType=t)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("pns,ones,twos,threes\n")
             tmpCSV.write("single,1,2,3A\n")
             tmpCSV.write("dubs,11,22A,33\n")
@@ -3623,7 +3617,7 @@ def test_data_csv_keepPF_and_ignoreFlag():
 def test_data_keepPoints_csv_endAfterAllFound():
     wanted = nimble.data(source=[[11, 22, 33], [1, 2, 3]])
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         # This line has an extra value - if it was actually read by the
@@ -3638,7 +3632,7 @@ def test_data_keepPoints_csv_endAfterAllFound():
 def test_data_keepPF_csv_nameAlignment_allNames():
     for t in nimble.core.data.available:
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.write("11,22,33\n")
             tmpCSV.write("111,222,333\n")
@@ -3672,7 +3666,7 @@ def test_data_keepPF_csv_nameAlignment_keptNames():
         # instantiate from csv file
         keptPNames = ['third', 'second']
         keptFNames = ['two', 'one']
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.write("11,22,33\n")
             tmpCSV.write("111,222,333\n")
@@ -3700,7 +3694,7 @@ def test_data_csv_keepPoints_keepingAllPointNames_index():
     pnames = ['1', '2', '3']
     wanted = nimble.data(source=data, pointNames=pnames)
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -3717,7 +3711,7 @@ def test_data_csv_keepPoints_keepingAllPointNames_names():
     pnames = ['1', '2', '3']
     wanted = nimble.data(source=data, pointNames=pnames)
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -3734,7 +3728,7 @@ def test_data_csv_keepFeatures_keepingAllFeatureNames_index():
     fnames = ['2', '3', '1']
     wanted = nimble.data(source=data, featureNames=fnames)
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -3751,7 +3745,7 @@ def test_data_csv_keepFeatures_keepingAllFeatureNames_names():
     fnames = ['b', 'c', 'a']
     wanted = nimble.data(source=data, featureNames=fnames)
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -3767,7 +3761,7 @@ def test_data_csv_keepFeatures_reordersFeatureNames_fnamesTrue():
     fnames = ['2', '3', '1']
     wanted = nimble.data(source=data, featureNames=fnames)
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -3791,7 +3785,7 @@ def test_data_csv_inputSeparatorAutomatic():
     wanted = nimble.data(source=[[1,2,3], [4,5,6]])
     # instantiate from csv file
     for delimiter in [',', '\t', ' ', ':', ';', '|']:
-        with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(mode='w') as tmpCSV:
             tmpCSV.write("1{0}2{0}3\n".format(delimiter))
             tmpCSV.write("4{0}5{0}6\n".format(delimiter))
             tmpCSV.flush()
@@ -3803,7 +3797,7 @@ def test_data_csv_inputSeparatorSpecified():
     wanted = nimble.data(source=[[1,2,3], [4,5,6]])
     # instantiate from csv file
     for delimiter in [',', '\t', ' ', ':', ';', '|']:
-        with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
+        with PortableNamedTempFileContext(mode='w') as tmpCSV:
             tmpCSV.write("1{0}2{0}3\n".format(delimiter))
             tmpCSV.write("4{0}5{0}6\n".format(delimiter))
             tmpCSV.flush()
@@ -3813,7 +3807,7 @@ def test_data_csv_inputSeparatorSpecified():
 
 @raises(FileFormatException)
 def test_data_csv_inputSeparatorConfusion():
-    with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(mode='w') as tmpCSV:
         tmpCSV.write("1,2;3\n")
         tmpCSV.write("4,5,6\n")
         tmpCSV.flush()
@@ -3822,7 +3816,7 @@ def test_data_csv_inputSeparatorConfusion():
 
 @raises(InvalidArgumentValue)
 def test_data_csv_inputSeparatorNot1Character():
-    with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
+    with PortableNamedTempFileContext(mode='w') as tmpCSV:
         tmpCSV.write("1,,2,,3\n")
         tmpCSV.write("4,,5,,6\n")
         tmpCSV.flush()
@@ -4536,23 +4530,23 @@ def test_returnType_autodetection_listLike():
 
 def test_returnType_autodetection_csv():
     # 1D
-    with tempfile.NamedTemporaryFile('w+') as f1:
+    with PortableNamedTempFileContext('w+') as f1:
         f1.write('1,2,3\n')
         f1.seek(0)
         test1 = nimble.data(f1)
         assert test1.getTypeString() == "Matrix"
-    with tempfile.NamedTemporaryFile('w+') as f2:
+    with PortableNamedTempFileContext('w+') as f2:
         f2.write('1,2,a\n')
         f2.seek(0)
         test2 = nimble.data(f2)
         assert test2.getTypeString() == "DataFrame"
     # 2D
-    with tempfile.NamedTemporaryFile('w+') as f3:
+    with PortableNamedTempFileContext('w+') as f3:
         f3.write('1,2\n3,4\n')
         f3.seek(0)
         test3 = nimble.data(f3)
         assert test3.getTypeString() == "Matrix"
-    with tempfile.NamedTemporaryFile('w+') as f4:
+    with PortableNamedTempFileContext('w+') as f4:
         f4.write('1,a\n3,b\n')
         f4.seek(0)
         test4 = nimble.data(f4)
@@ -4562,12 +4556,12 @@ def test_returnType_autodetection_csv():
     backup = pd.nimbleAccessible
     pd.nimbleAccessible = lambda: False
     try:
-        with tempfile.NamedTemporaryFile('w+') as f5:
+        with PortableNamedTempFileContext('w+') as f5:
             f5.write('1,2,a\n')
             f5.seek(0)
             test5 = nimble.data(f5)
             assert test5.getTypeString() == "Matrix"
-        with tempfile.NamedTemporaryFile('w+') as f6:
+        with PortableNamedTempFileContext('w+') as f6:
             f6.write('1,a\n3,b\n')
             f6.seek(0)
             test6 = nimble.data(f6)

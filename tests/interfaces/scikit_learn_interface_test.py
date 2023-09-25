@@ -2,8 +2,6 @@
 Unit tests for scikit_learn_interface.py
 """
 
-import tempfile
-
 import numpy as np
 import pytest
 
@@ -19,8 +17,9 @@ from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import generateClassificationData
 from tests.helpers import generateRegressionData
-from .test_helpers import checkLabelOrderingAndScoreAssociations
 from tests.helpers import skipMissingPackage
+from tests.helpers import PortableNamedTempFileContext
+from .test_helpers import checkLabelOrderingAndScoreAssociations
 
 packageName = 'sciKitLearn'
 
@@ -882,7 +881,7 @@ def _apply_saveLoad(trainerLearnerObj, givenTestX):
     Given a TrainedLearner object, return the results of apply after having
     saved then loaded the learner from a file.
     """
-    with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
+    with PortableNamedTempFileContext(suffix=".pickle") as tmpFile:
         trainerLearnerObj.save(tmpFile.name)
         trainer_ret_l = loadTrainedLearner(tmpFile.name)
         return trainer_ret_l.apply(givenTestX, useLog=False)
@@ -896,7 +895,7 @@ def test_saveLoadTrainedLearner_logCount():
     trainObj = nimble.data(train, useLog=False)
 
     tl = nimble.train('SciKitLearn.LogisticRegression', trainObj, 0, useLog=False)
-    with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
+    with PortableNamedTempFileContext(suffix=".pickle") as tmpFile:
         tl.save(tmpFile.name)
         load = loadTrainedLearner(tmpFile.name)
 

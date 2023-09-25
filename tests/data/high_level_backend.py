@@ -23,7 +23,6 @@ features.splitByParsing, points.replace, features.replace
 
 from copy import deepcopy
 import os.path
-import tempfile
 import datetime
 import functools
 import copy
@@ -46,6 +45,7 @@ from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import assertCalled
 from tests.helpers import getDataConstructors
+from tests.helpers import PortableNamedTempFileContext
 from .baseObject import DataTestObject
 
 
@@ -1947,7 +1947,7 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
     def test_trainAndTestSets_nameAppend_PathPreserve(self):
         data = [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]
         toTest = self.constructor(data, )
-        with tempfile.NamedTemporaryFile(suffix='.csv') as tmpFile:
+        with PortableNamedTempFileContext(suffix='.csv') as tmpFile:
             toTest.save(tmpFile.name, fileFormat='csv')
 
             toTest = self.constructor(tmpFile.name, name='toTest')
@@ -4098,7 +4098,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         single = len(replaceLocs) == 1
 
         test = toTest.copy()
-        with tempfile.NamedTemporaryFile('w+') as tmp:
+        with PortableNamedTempFileContext('w+') as tmp:
             if single:
                 tmp.write(','.join(map(str, replace)))
                 tmp.write('\n')

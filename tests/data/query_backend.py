@@ -10,7 +10,6 @@ solveLinearSystem, report, features.report
 """
 
 import math
-import tempfile
 import os
 import os.path
 from functools import reduce
@@ -36,7 +35,7 @@ from tests.helpers import raises
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import assertCalled
-from tests.helpers import getDataConstructors
+from tests.helpers import PortableNamedTempFileContext
 from .baseObject import DataTestObject
 
 
@@ -92,7 +91,7 @@ class QueryBackendSparseUnsafe(DataTestObject):
         toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
+        with PortableNamedTempFileContext(suffix=".csv") as tmpFile:
             toWrite.save(tmpFile.name, fileFormat='csv', includeNames=True)
 
             # read it back into a different object, then test equality
@@ -118,7 +117,7 @@ class QueryBackendSparseUnsafe(DataTestObject):
         toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
+        with PortableNamedTempFileContext(suffix=".csv") as tmpFile:
             toWrite.save(tmpFile.name, fileFormat='csv', includeNames=True)
             # read it back into a different object, then test equality
             # must specify featureNames=True because 'automatic' will not detect
@@ -397,7 +396,7 @@ class QueryBackendSparseSafe(DataTestObject):
         toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
+        with PortableNamedTempFileContext(suffix=".csv") as tmpFile:
             toWrite.save(tmpFile.name, fileFormat='csv', includeNames=True)
 
             # read it back into a different object, then test equality
@@ -418,7 +417,7 @@ class QueryBackendSparseSafe(DataTestObject):
 
         # should be no leading blank lines and data values should be floats
         exp = "pointNames,one,two,three\none,1.0,2.0,3.0\n2,0.0,2.0,4.0\n0,0.0,0.0,0.0\n"
-        with tempfile.NamedTemporaryFile(mode='w+', suffix=".csv") as tmpFile:
+        with PortableNamedTempFileContext(mode='w+', suffix=".csv") as tmpFile:
             toWrite.save(tmpFile.name, fileFormat='csv', includeNames=True)
             tmpFile.seek(0)
             assert tmpFile.read() == exp
@@ -429,7 +428,7 @@ class QueryBackendSparseSafe(DataTestObject):
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         toWrite = self.constructor(data)
 
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
+        with PortableNamedTempFileContext(suffix=".csv") as tmpFile:
             toWrite.save(tmpFile.name, fileFormat='csv', includeNames=False)
             assertNoNamesGenerated(toWrite)
 
@@ -461,7 +460,7 @@ class QueryBackendSparseSafe(DataTestObject):
             # recognizable when we read in from the file.
             axisExclude = getattr(exclude, axis + 's')
 
-            with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
+            with PortableNamedTempFileContext(suffix=".csv") as tmpFile:
                 exclude.save(tmpFile.name, fileFormat='csv', includeNames=True)
 
                 # read it back into a different object, then test equality
@@ -488,7 +487,7 @@ class QueryBackendSparseSafe(DataTestObject):
         pointNames = ['1', 'one', '2', '0']
         toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpFile:
+        with PortableNamedTempFileContext(suffix=".mtx") as tmpFile:
             toWrite.save(tmpFile.name, fileFormat='mtx', includeNames=True)
 
             # read it back into a different object, then test equality
@@ -502,7 +501,7 @@ class QueryBackendSparseSafe(DataTestObject):
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         toWrite = self.constructor(data)
 
-        with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpFile:
+        with PortableNamedTempFileContext(suffix=".mtx") as tmpFile:
             toWrite.save(tmpFile.name, fileFormat='mtx', includeNames=False)
 
         assertNoNamesGenerated(toWrite)
@@ -514,14 +513,14 @@ class QueryBackendSparseSafe(DataTestObject):
         toSave = self.constructor(data, pointNames=pointNames,
                                   featureNames=featureNames)
 
-        with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
+        with PortableNamedTempFileContext(suffix=".pickle") as tmpFile:
             toSave.save(tmpFile.name)
             load1 = nimble.data(tmpFile.name)
 
         assert toSave.isIdentical(load1)
         assert load1.isIdentical(toSave)
 
-        with tempfile.NamedTemporaryFile(suffix=".p") as tmpFile:
+        with PortableNamedTempFileContext(suffix=".p") as tmpFile:
             toSave.save(tmpFile.name)
             load2 = nimble.data(tmpFile.name)
 
@@ -532,7 +531,7 @@ class QueryBackendSparseSafe(DataTestObject):
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         toSave = self.constructor(data)
 
-        with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
+        with PortableNamedTempFileContext(suffix=".pickle") as tmpFile:
             toSave.save(tmpFile.name)
 
         assertNoNamesGenerated(toSave)
@@ -546,7 +545,7 @@ class QueryBackendSparseSafe(DataTestObject):
                                   featureNames=featureNames)
 
         for suffix in ['.csv', '.mtx', 'hdf5', '.h5', '.pickle', '.p', '.pkl']:
-            with tempfile.NamedTemporaryFile(suffix=suffix) as tmpFile:
+            with PortableNamedTempFileContext(suffix=suffix) as tmpFile:
                 toSave.save(tmpFile.name)
                 loadObj = nimble.data(tmpFile.name, useLog=False)
 
@@ -2425,7 +2424,7 @@ class QueryBackendSparseSafe(DataTestObject):
     @pytest.mark.slow
     @noLogEntryExpected
     def test_plot_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+        with PortableNamedTempFileContext(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -2446,7 +2445,7 @@ class QueryBackendSparseSafe(DataTestObject):
     @pytest.mark.slow
     @noLogEntryExpected
     def test_plotFeatureDistribution_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+        with PortableNamedTempFileContext(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -2468,7 +2467,7 @@ class QueryBackendSparseSafe(DataTestObject):
     @pytest.mark.slow
     @noLogEntryExpected
     def test_plotFeatureAgainstFeature_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+        with PortableNamedTempFileContext(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -2489,7 +2488,7 @@ class QueryBackendSparseSafe(DataTestObject):
     @pytest.mark.slow
     @noLogEntryExpected
     def test_features_plot_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+        with PortableNamedTempFileContext(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -2508,7 +2507,7 @@ class QueryBackendSparseSafe(DataTestObject):
     @pytest.mark.slow
     @noLogEntryExpected
     def test_features_plotMeans_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+        with PortableNamedTempFileContext(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -2527,7 +2526,7 @@ class QueryBackendSparseSafe(DataTestObject):
     @pytest.mark.slow
     @noLogEntryExpected
     def test_features_plotStatistics_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+        with PortableNamedTempFileContext(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -2546,7 +2545,7 @@ class QueryBackendSparseSafe(DataTestObject):
     @pytest.mark.slow
     @noLogEntryExpected
     def test_plotFeatureGroupMeans_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+        with PortableNamedTempFileContext(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -2570,7 +2569,7 @@ class QueryBackendSparseSafe(DataTestObject):
     @pytest.mark.slow
     @noLogEntryExpected
     def test_plotGroupStatistics_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+        with PortableNamedTempFileContext(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -2594,7 +2593,7 @@ class QueryBackendSparseSafe(DataTestObject):
     @pytest.mark.slow
     @noLogEntryExpected
     def test_points_plot_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+        with PortableNamedTempFileContext(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -2613,7 +2612,7 @@ class QueryBackendSparseSafe(DataTestObject):
     @pytest.mark.slow
     @noLogEntryExpected
     def test_points_plotMeans_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+        with PortableNamedTempFileContext(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -2632,7 +2631,7 @@ class QueryBackendSparseSafe(DataTestObject):
     @pytest.mark.slow
     @noLogEntryExpected
     def test_points_plotStatistics_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+        with PortableNamedTempFileContext(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0

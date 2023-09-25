@@ -3,7 +3,6 @@
 """
 import sys
 from io import StringIO
-import tempfile
 import re
 
 import numpy as np
@@ -13,6 +12,7 @@ import scipy.sparse
 import nimble
 from nimble.exceptions import ImproperObjectAction
 from tests.helpers import raises
+from tests.helpers import PortableNamedTempFileContext
 from .baseObject import DataTestObject
 
 ############################
@@ -147,11 +147,11 @@ class HighDimensionSafeSparseUnsafe(DataTestObject):
             toSaveType = toSave.getTypeString()
             assert len(toSave._dims) > 2
 
-            with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
+            with PortableNamedTempFileContext(suffix=".pickle") as tmpFile:
                 toSave.save(tmpFile.name)
                 pklObj = nimble.data(tmpFile.name, returnType=toSaveType)
 
-            with tempfile.NamedTemporaryFile(suffix=".hdf5") as tmpFile:
+            with PortableNamedTempFileContext(suffix=".hdf5") as tmpFile:
                 toSave.save(tmpFile.name)
                 hdf5Obj = nimble.data(tmpFile.name, returnType=toSaveType)
 

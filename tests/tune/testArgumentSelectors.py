@@ -7,13 +7,9 @@ from pytest import fixture
 
 import nimble
 from nimble import Tune
-from nimble.random import pythonRandom
 from nimble.core.tune import ArgumentSelector
 from nimble.core.tune import BruteForce, Consecutive, Bayesian, Iterative
 from nimble.core.tune import StochasticRandomMutator
-from nimble.calculate import fractionIncorrect
-from nimble.exceptions import InvalidArgumentValue
-from nimble.exceptions import InvalidArgumentValueCombination
 from tests.helpers import noLogEntryExpected, raises
 from nimble._utility import storm_tuner, hyperopt
 

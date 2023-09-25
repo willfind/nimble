@@ -250,6 +250,7 @@ class SessionLogger(object):
         """
         # only need to call if we have previously called setup
         if self.isAvailable:
+            self.cursor.close()
             self.connection.close()
             self.isAvailable = False
 
