@@ -1041,7 +1041,7 @@ class Axis(ABC):
                     topScore = score
                     closestMatch = exitingName 
             msg = "The " + self._axis + " name '" + name
-            msg += "' cannot be found." 
+            msg += "' cannot be found."
             if topScore >= 0.8:       
                suggstn = " Did you mean '" + closestMatch + "'?"
                raise KeyError(msg + suggstn)
