@@ -4583,30 +4583,23 @@ def test_convertToType_overwriteMatrixReturnType():
         assert type(data) == nimble.core.data.dataframe.DataFrame
 
 def test_pointNames_assisted_match():
-    
     rawData = [[1, 2, 3], [2, 4, 6]]
     pointNames = ['Single', 'Double']
     data = nimble.data(rawData, pointNames=pointNames)
     try:
-        #import pdb; pdb.set_trace()
         data.points['Singel']
     except KeyError as e:
         assert str(e) == '"The point name \'Singel\' cannot be found. Did you mean \'Single\'?"'
 
-# def test_featureNames_assisted_match():
-#     #import pdb; pdb.set_trace()
-#     rawData = [[1, 2, 3], [2, 4, 6]]
-#     featureNames = ["rainy season", "rain season", "wet season"]
-#     data = nimble.data(rawData, featureNames=featureNames)
-#     msg = "The " + self._axis + " name '" + name
-#     msg += "' cannot be found." 
-#     suggstn = " Did you mean '" + closestMatch + "'?"
-    
-#     try:
-#         data.features['rainy-season']
-#     except KeyError as e:
-#         assert str(e) == "The feature name" \'rainy-season\' cannot be found. Did you mean \'rainy season\'?"
-    
+def test_featureNames_assisted_match():
+    rawData = [[1, 2, 3], [2, 4, 6]]
+    featureNames = ["rainy season", "rain season", "wet season"]
+    data = nimble.data(rawData, featureNames=featureNames)    
+    try:
+        data.features['rainy-season']
+    except KeyError as e:
+        assert str(e) == '"The feature name \'rainy-season\' cannot be found. Did you mean \'rainy season\'?"'
+
 # tests for combination of one name set being specified and one set being
 # in data.
 
