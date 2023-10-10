@@ -573,22 +573,32 @@ def tableString(table, rowHeader=True, colHeaders=None, roundDigits=None,
 # Unavailable ML Methods  #
 ###########################
 
-def fit(*args, **kwargs):
-    raise AttributeError("Attribute fit does not exist for Nimble. Try .train() instead.")
+def _customMlGetattrHelper(name):
+    """
+    Helper for adjusting the __getAttr__ of nimble and TrainedLearner.
+    Returns a "Try ... instead" style string for certain name inputs,
+    which are then used by the caller to construct an appropriate
+    AttributeError.
+    """
+    fill = None
 
-def fit_transform(*args, **kwargs):
-    raise AttributeError("Attribute fit_transform does not exist for Nimble. Try nimble.fillMatching/nimble.Normalize() instead.")
+    if name == 'fit':
+        fill = "nimble.train() or the TrainedLearner's .retrain() method"
 
-def transform(*args, **kwargs):
-    raise AttributeError("Attribute transform does not exist for Nimble. Try nimble.fillMatching/nimble.Normalize() instead.")
+    if name in ['fit_transform', 'transform']:
+        fill = "nimble.normalize or a data object's points/features"
+        fill += ".fillMatching() and features.normalize() methods"
 
-def predict(*args, **kwargs):
-    raise AttributeError("Attribute predict does not exist for Nimble. Try .apply() instead.")
+    if name == 'predict':
+        fill = "the TrainedLearner's .apply() method"
 
-def score(*args, **kwargs):
-    raise AttributeError("Attribute score does not exist for Nimble. Try .getScores() instead.")
+    if name == 'score':
+        fill = "the TrainedLearner's .getScores() method"
 
-def get_params(*args, **kwargs):
-    raise AttributeError("Attribute get_params does not exist for Nimble. Try .getLearnerParameterNames() instead.")
+    if name == 'get_params':
+        fill = "nimble.learnerParameters() or the TrainedLearner's "
+        fill += ".getAttributes() method"
 
-
+    if fill is not None:
+        return f"Try {fill} instead."
+    return None

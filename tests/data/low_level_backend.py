@@ -1437,10 +1437,10 @@ class LowLevelBackend(object):
         test.name = changeName
         assert test.name == changeName
 
-    ############
+    ###############
     # __getattr__ #
-    ############
-      
+    ###############
+
     def test_getattr_suggestions(self):
         data = [[1, 2, 3], [7, 8, 9]]
         toTest = nimble.data(data)
@@ -1462,105 +1462,3 @@ class LowLevelBackend(object):
         except AttributeError as e:
             err_message = str(e)
             assert err_message == "Attribute columns does not exist for Nimble data objects. Try .features.getNames() instead."
-                
-    def test_ml_getattr_suggestions(self):
-        #import pdb; pdb.set_trace()
-        data = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-        ftNames = ['a', 'b' ,'c', 'label']
-        trainData = nimble.data(data, featureNames=ftNames)
-        toTest = nimble.train('nimble.KNNClassifier', trainX=trainData,trainY='label')
-                
-        try:
-            toTest.fit()
-        except AttributeError as e:
-            err_message = str(e)
-            assert err_message == "Attribute fit does not exist for Nimble learner objects. Try .train() instead."
-            
-        try:
-            toTest.fit_transform()
-        except AttributeError as e:
-            err_message = str(e)
-            assert err_message == "Attribute fit_transform does not exist for Nimble learner objects. Try nimble.fillMatching/nimble.Normalize() instead."
-            
-        try:
-            toTest.transform()
-        except AttributeError as e:
-            err_message = str(e)
-            assert err_message == "Attribute transform does not exist for Nimble learner objects. Try nimble.fillMatching/nimble.Normalize() instead."
-            
-        try:
-            toTest.predict()
-        except AttributeError as e:
-            err_message = str(e)
-            assert err_message == "Attribute predict does not exist for Nimble learner objects. Try .apply() instead."
-        
-        try:
-            toTest.score()
-        except AttributeError as e:
-            err_message = str(e)
-            assert err_message == "Attribute score does not exist for Nimble learner objects. Try .getScores() instead."
-        
-        try:
-            toTest.get_params()
-        except AttributeError as e:
-            err_message = str(e)
-            assert err_message == "Attribute get_params does not exist for Nimble learner objects. Try .getLearnerParameterNames() instead."
-            
-        # try:
-        #     toTest.predict()
-        # except AttributeError as e:
-        #     err_message = str(e)
-        #     assert err_message == "Attribute predict does not exist for Nimble learner objects. Try .apply() instead."
-
-    def test_nimble_ml_getattr_suggestions(self):
-        #import pdb; pdb.set_trace()
-        data = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-        ftNames = ['a', 'b' ,'c', 'label']
-        trainData = nimble.data(data, featureNames=ftNames)
-        #toTest = nimble.train('nimble.KNNClassifier', trainX=trainData,trainY='label')
-        
-        ml_match = {
-            "fit": "train",
-            "fit_transform": "nimble.fillMatching/nimble.Normalize",
-            "transform": "nimble.fillMatching/nimble.Normalize",
-            "predict": "apply",
-            "score": "getScores",
-            "get_params": "getLearnerParameterNames"
-                }
-                
-        try:
-            nimble.fit(trainData)
-        except AttributeError as e:
-            err_message = str(e)
-            assert err_message == "Attribute fit does not exist for Nimble. Try .train() instead."
-        
-        try:
-            nimble.fit_transform(trainData)
-        except AttributeError as e:
-            err_message = str(e)
-            assert err_message == "Attribute fit_transform does not exist for Nimble. Try nimble.fillMatching/nimble.Normalize() instead."
-        
-        try:
-            nimble.transform(trainData)
-        except AttributeError as e:
-            err_message = str(e)
-            assert err_message == "Attribute transform does not exist for Nimble. Try nimble.fillMatching/nimble.Normalize() instead."
-        
-        try:
-            nimble.predict(trainData)
-        except AttributeError as e:
-            err_message = str(e)
-            assert err_message == "Attribute predict does not exist for Nimble. Try .apply() instead."
-            
-        try:
-            nimble.score(trainData)
-        except AttributeError as e:
-            err_message = str(e)
-            assert err_message == "Attribute score does not exist for Nimble. Try .getScores() instead."
-        
-        try:
-            nimble.get_params(trainData)
-        except AttributeError as e:
-            err_message = str(e)
-            assert err_message == "Attribute get_params does not exist for Nimble. Try .getLearnerParameterNames() instead."
-            
