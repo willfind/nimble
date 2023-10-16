@@ -50,8 +50,8 @@ operation = [
         ]
 interfaces = [
         'scikit-learn>=1.0',
-        'tensorflow>=1.14',
-        'keras>=2.0',
+        'tensorflow>=2.0',
+        'keras>=2.4',
         'autoimpute>=0.12'
         ]
 quickstart = [
@@ -77,8 +77,8 @@ all = [
         'hyperopt>=0.2',
         'storm_tuner',
         'scikit-learn>=1.0',
-        'tensorflow>=1.14',
-        'keras>=2.0',
+        'tensorflow>=2.0',
+        'keras>=2.4',
         'autoimpute>=0.12',
         ]
 

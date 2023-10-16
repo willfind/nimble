@@ -1,5 +1,6 @@
 """
-Relies on being keras 2.0.8
+Relies on being keras 2.4 or greater (tf integration) but less
+than 3.0 (return to multibackend)
 """
 
 import os
@@ -12,10 +13,10 @@ import numpy as np
 from packaging.version import parse
 
 import nimble
+from nimble._dependencies import checkVersion
 from nimble._utility import inspectArguments, dtypeConvert
 from nimble._utility import inheritDocstringsFactory
 from nimble._utility import mergeArguments
-from nimble._dependencies import checkVersion
 from nimble.exceptions import InvalidArgumentValue
 from .universal_interface import PredefinedInterfaceMixin
 from ._interface_helpers import PythonSearcher
@@ -31,6 +32,7 @@ LEARNERTYPES = {
         'BinaryCrossentropy', 'binary_crossentropy',
         'BinaryFocalCrossentropy', 'binary_focal_crossentropy',
         'CategoricalCrossentropy', 'categorical_crossentropy',
+        'CategoricalFocalCrossentropy', 'categorical_focal_crossentropy',
         'SparseCategoricalCrossentropy', 'sparse_categorical_crossentropy',
         'KLDivergence', 'kl_divergence',
         'Hinge', 'hinge',
@@ -85,36 +87,27 @@ class Keras(PredefinedInterfaceMixin):
     This class is an interface to keras.
     """
     def __init__(self):
-        # modify path if another directory provided
-        self._tfVersion2 = False
-        try:
-            # keras recommends using tensorflow.keras when possible
-            # need to set tensorflow random seed before importing keras
-            self.tensorflow = modifyImportPathAndImport('tensorflow',
-                                                        'tensorflow')
-            checkVersion(self.tensorflow)
-            # tensorflow has a tremendous quantity of informational outputs
-            # that drown out anything else on standard out
-            logging.getLogger('tensorflow').disabled = True
-            if parse(self.tensorflow.__version__) < parse('2'):
-                msg = "Randomness is outside of Nimble's control for version "
-                msg += "1.x of Tensorflow. Reproducible results cannot be "
-                msg += "guaranteed"
-                warnings.warn(msg, UserWarning)
-            else:
-                self._tfVersion2 = True
-            self.package = modifyImportPathAndImport('keras',
-                                                     'tensorflow.keras')
+        # tensorflow has a tremendous quantity of informational outputs
+        # that drown out anything else on standard out
+        logging.getLogger('tensorflow').disabled = True
 
-        except ImportError:
-            self.package = modifyImportPathAndImport('keras', 'keras')
+        # we want to grab certain metadata direct from keras
+        self.keras = modifyImportPathAndImport('keras', 'keras')
+        # needed for certain configuration
+        self.tensorflow = modifyImportPathAndImport('tensorflow', 'tensorflow')
 
+        # this is the api we'll access, even through it is backed by
+        # the keras package itself.
+        self.package = self.keras
 
-        # keras 2.0.8 has no __all__
-        names = os.listdir(self.package.__path__[0])
-        possibilities = []
+        # setup __all__ so that learner and object searching can proceed as
+        # anticipated, and we can more easily filter certain things.
         if not hasattr(self.package, '__all__'):
             self.package.__all__ = []
+
+        # extend __all__ as needed
+        names = os.listdir(self.package.__path__[0])
+        possibilities = []
         for name in names:
             splitList = name.split('.')
             if len(splitList) == 1 or splitList[1] in ['py', 'pyc']:
@@ -123,9 +116,11 @@ class Keras(PredefinedInterfaceMixin):
                     possibilities.append(splitList[0])
 
         possibilities = np.unique(possibilities).tolist()
-        if 'utils' in possibilities:
-            possibilities.remove('utils')
         self.package.__all__.extend(possibilities)
+        unwanted = ['utils', 'experimental']
+        for subMod in unwanted:
+            if subMod in self.package.__all__:
+                self.package.__all__.remove(subMod)
 
         def isLearner(obj):
             """
@@ -135,10 +130,11 @@ class Keras(PredefinedInterfaceMixin):
             isn't one of the excluded ones), whereas any of the loader
             functions in the keras.applications submodle are wanted.
             """
-            # The basic Model object isn't allowed. WideDeepModel and
-            # Linear model are currently experimental, and it isn't
-            # clear how we might want to handle them.
-            excluded = ["Model", "WideDeepModel", "LinearModel"]
+            # The basic Model object and the Functional object aren't allowed.
+            # WideDeepModel and Linear model are currently experimental, and
+            # it isn't clear how we might want to handle them.
+            excluded = ["Model", "Functional", "SharpnessAwareMinimization",
+                        "WideDeepModel", "LinearModel"]
             if obj.__name__ in excluded:
                 return False
 
@@ -150,7 +146,14 @@ class Keras(PredefinedInterfaceMixin):
             # grab the application loading functions.
             inApps = False
             if hasattr(obj, "__module__"):
-                inApps = "keras.applications" in obj.__module__
+                # the exact location changes depending on the version,
+                # we just need one to be present to demonstrate it's
+                # a learner.
+                possible = [
+                    "keras.applications",
+                    "keras.src.applications"
+                ]
+                inApps = any(appLoc in obj.__module__ for appLoc in possible)
 
             if (hasFit and hasPred and hasCompile) or inApps:
                 return True
@@ -161,30 +164,22 @@ class Keras(PredefinedInterfaceMixin):
 
         super().__init__()
 
-    def _checkVersion(self):
-        savedName = self.package.__name__
-        if savedName != 'keras':
-            try:
-                self.package.__name__ = 'keras'
-                super()._checkVersion()
-            finally:
-                self.package.__name__ = savedName
-        else:
-            super()._checkVersion()
-
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
     #######################################
 
     def accessible(self):
         try:
-            try:
-                _ = modifyImportPathAndImport('keras', 'tensorflow.keras')
-            except ImportError:
-                _ = modifyImportPathAndImport('keras', 'keras')
+            _ = modifyImportPathAndImport('keras', 'keras')
         except ImportError:
             return False
         return True
+
+    def _checkVersion(self):
+        checkVersion(self.keras)
+
+    def version(self):
+        return self.keras.__version__
 
     @classmethod
     def getCanonicalName(cls):
@@ -235,14 +230,16 @@ To install keras
         return 'undefined'
 
     def _learnerType(self, learnerBackend):
-        for lt, losses in LEARNERTYPES.items():
+        for lType, losses in LEARNERTYPES.items():
             if not hasattr(learnerBackend, 'loss'):
                 return 'UNKNOWN'
             loss = getattr(learnerBackend, 'loss')
             if hasattr(loss, 'name'):
+                if loss.name == "LossFunctionWrapper":
+                    loss = loss.fn.__name__
                 loss = loss.name
             if loss in losses:
-                return lt
+                return lType
         return 'UNKNOWN'
 
     def _findCallableBackend(self, name):
@@ -407,9 +404,8 @@ To install keras
 
 
     def _setRandomness(self, arguments, randomSeed):
-        if self._tfVersion2:
-            checkArgsForRandomParam(arguments, 'seed')
-            self.tensorflow.random.set_seed(randomSeed)
+        checkArgsForRandomParam(arguments, 'seed')
+        self.tensorflow.random.set_seed(randomSeed)
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,

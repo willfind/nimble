@@ -120,7 +120,11 @@ def back_callExampleAsMain(script, checkLines=None):
     toCheck = {} # stores {linenumber: re.Match}
     with open(expOut, 'rb') as exp:
         expLines = exp.readlines()
-        for i, (out, exp) in enumerate(zip(outLines, expLines)):
+        offset = 0
+        for i, exp in enumerate(expLines):
+            # offset indicates how far ahead expLines is due to missing
+            # optional lines
+            out = outLines[i-offset]
             print(out)
             print(exp)
             # remove trailing whitespace
@@ -131,6 +135,11 @@ def back_callExampleAsMain(script, checkLines=None):
                 match = re.match(exp, out)
                 assert match
                 toCheck[i + 1] = match
+            elif exp.startswith(b'OPTIONAL: '):
+                exp = exp[10:]
+                match = re.match(exp, out)
+                if not match:
+                    offset += 1
             else:
                 assert exp == out
 
