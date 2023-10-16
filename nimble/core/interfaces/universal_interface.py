@@ -25,6 +25,7 @@ from nimble._utility import cloudpickle
 from nimble._utility import mergeArguments
 from nimble._utility import prettyListString
 from nimble._utility import prettyDictString
+from nimble._utility import _customMlGetattrHelper
 from nimble._dependencies import checkVersion
 from nimble.core.logger import handleLogging, LogID
 from nimble.core.configuration import configErrors
@@ -961,6 +962,17 @@ class TrainedLearner(object):
         self._trainYNames = trainYNames
         # Set if using TrainedLearners
         self.label = None
+
+    def __getattr__(self, name):
+        base = f"module 'TrainedLearner' has no attribute '{name}'. "
+        extend = _customMlGetattrHelper(name)
+
+        if extend is not None:
+            raise AttributeError(base + extend)
+
+        # If it's not a special name, defer to the orignal attribute
+        # getter's raised error
+        return self.__getattribute__(name)
 
     @property
     def learnerName(self):
