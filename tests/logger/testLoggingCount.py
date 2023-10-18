@@ -348,7 +348,7 @@ axisDunder_tested = ['Axis.__bool__', 'Axis.__len__']
 pointsDunder_tested = ['Points.__iter__', 'Points.__getitem__']
 featuresDunder_tested = ['Features.__iter__', 'Features.__getitem__']
 uiDunder_tested = []
-tlDunder_tested = []
+tlDunder_tested = ['TrainedLearner.__getattr__']
 
 ALL_DUNDER_TESTED = (baseDunder_tested + axisDunder_tested
                      + pointsDunder_tested + featuresDunder_tested

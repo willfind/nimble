@@ -7,6 +7,7 @@ import pytest
 import numpy as np
 from packaging.version import parse, Version
 
+import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import PackageException
@@ -16,8 +17,9 @@ from nimble._utility import inspectArguments
 from nimble._utility import storm_tuner, hyperopt
 from nimble._utility import numpy2DArray, is2DArray
 from nimble._utility import _setAll
+from nimble._utility import _customMlGetattrHelper
 from nimble._dependencies import DEPENDENCIES
-from tests.helpers import raises
+from tests.helpers import raises, noLogEntryExpected
 
 def skipIfNoStormTuner():
     if not storm_tuner.nimbleAccessible():
@@ -226,3 +228,135 @@ def test_setAll():
     all4 = _setAll(variables, ignore=['variable', 'path'],
                    includeModules=True)
     assert all4 == ['compile', 'findall', 'match', 'search']
+
+
+###############
+# __getattr__ #
+###############
+
+@noLogEntryExpected
+def test_ml_getattr_suggestions():
+    data = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    ftNames = ['a', 'b' ,'c', 'label']
+    trainData = nimble.data(data, featureNames=ftNames, useLog=False)
+    toTest = nimble.train('nimble.KNNClassifier', trainX=trainData,trainY='label', useLog=False)
+
+    try:
+        toTest.fit()
+    except AttributeError as e:
+        err_message = str(e)
+        exp = ("module 'TrainedLearner' has no attribute 'fit'. Try nimble.train() "
+               "or the TrainedLearner's .retrain() method instead.")
+        assert err_message == exp
+        assert _customMlGetattrHelper("fit") in err_message
+
+    try:
+        toTest.fit_transform()
+    except AttributeError as e:
+        err_message = str(e)
+        exp = ("module 'TrainedLearner' has no attribute 'fit_transform'. Try "
+               "nimble.normalize or a data object's points/features.fillMatching() "
+               "and features.normalize() methods instead.")
+        assert err_message == exp
+        assert _customMlGetattrHelper("fit_transform") in err_message
+
+    try:
+        toTest.transform()
+    except AttributeError as e:
+        err_message = str(e)
+        exp = ("module 'TrainedLearner' has no attribute 'transform'. Try "
+               "nimble.normalize or a data object's points/features.fillMatching() "
+               "and features.normalize() methods instead.")
+        assert err_message == exp
+        assert _customMlGetattrHelper("transform") in err_message
+
+    try:
+        toTest.predict()
+    except AttributeError as e:
+        err_message = str(e)
+        exp = ("module 'TrainedLearner' has no attribute 'predict'. Try the "
+               "TrainedLearner's .apply() method instead.")
+        assert err_message == exp
+        assert _customMlGetattrHelper("predict") in err_message
+
+    try:
+        toTest.score()
+    except AttributeError as e:
+        err_message = str(e)
+        exp = ("module 'TrainedLearner' has no attribute 'score'. Try the "
+               "TrainedLearner's .getScores() method instead.")
+        assert err_message == exp
+        assert _customMlGetattrHelper("score") in err_message
+
+    try:
+        toTest.get_params()
+    except AttributeError as e:
+        err_message = str(e)
+        exp = ("module 'TrainedLearner' has no attribute 'get_params'. "
+               "Try nimble.learnerParameters() or the TrainedLearner's "
+               ".getAttributes() method instead.")
+        assert err_message == exp
+        assert _customMlGetattrHelper("get_params") in err_message
+
+@noLogEntryExpected
+def test_nimble_ml_getattr_suggestions():
+    data = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    ftNames = ['a', 'b' ,'c', 'label']
+    trainData = nimble.data(data, featureNames=ftNames, useLog=False)
+
+    try:
+        nimble.fit(trainData)
+    except AttributeError as e:
+        err_message = str(e)
+        exp = ("module 'nimble' has no attribute 'fit'. Try nimble.train() "
+               "or the TrainedLearner's .retrain() method instead.")
+        assert err_message == exp
+        assert _customMlGetattrHelper("fit") in err_message
+
+    try:
+        nimble.fit_transform(trainData)
+    except AttributeError as e:
+        err_message = str(e)
+        exp = ("module 'nimble' has no attribute 'fit_transform'. Try "
+               "nimble.normalize or a data object's points/features.fillMatching() "
+               "and features.normalize() methods instead.")
+        assert err_message == exp
+        assert _customMlGetattrHelper("fit_transform") in err_message
+
+    try:
+        nimble.transform(trainData)
+    except AttributeError as e:
+        err_message = str(e)
+        exp = ("module 'nimble' has no attribute 'transform'. Try "
+               "nimble.normalize or a data object's points/features.fillMatching() "
+               "and features.normalize() methods instead.")
+        assert err_message == exp
+        assert _customMlGetattrHelper("transform") in err_message
+
+    try:
+        nimble.predict(trainData)
+    except AttributeError as e:
+        err_message = str(e)
+        exp = ("module 'nimble' has no attribute 'predict'. Try the "
+               "TrainedLearner's .apply() method instead.")
+        assert err_message == exp
+        assert _customMlGetattrHelper("predict") in err_message
+
+    try:
+        nimble.score(trainData)
+    except AttributeError as e:
+        err_message = str(e)
+        exp = ("module 'nimble' has no attribute 'score'. Try the "
+               "TrainedLearner's .getScores() method instead.")
+        assert err_message == exp
+        assert _customMlGetattrHelper("score") in err_message
+
+    try:
+        nimble.get_params(trainData)
+    except AttributeError as e:
+        err_message = str(e)
+        exp = ("module 'nimble' has no attribute 'get_params'. "
+               "Try nimble.learnerParameters() or the TrainedLearner's "
+               ".getAttributes() method instead.")
+        assert err_message == exp
+        assert _customMlGetattrHelper("get_params") in err_message

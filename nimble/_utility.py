@@ -568,3 +568,37 @@ def tableString(table, rowHeader=True, colHeaders=None, roundDigits=None,
         out += '\n'
 
     return out
+
+############################
+# Unavailable ML Methods  #
+###########################
+
+def _customMlGetattrHelper(name):
+    """
+    Helper for adjusting the __getAttr__ of nimble and TrainedLearner.
+    Returns a "Try ... instead" style string for certain name inputs,
+    which are then used by the caller to construct an appropriate
+    AttributeError.
+    """
+    fill = None
+
+    if name == 'fit':
+        fill = "nimble.train() or the TrainedLearner's .retrain() method"
+
+    if name in ['fit_transform', 'transform']:
+        fill = "nimble.normalize or a data object's points/features"
+        fill += ".fillMatching() and features.normalize() methods"
+
+    if name == 'predict':
+        fill = "the TrainedLearner's .apply() method"
+
+    if name == 'score':
+        fill = "the TrainedLearner's .getScores() method"
+
+    if name == 'get_params':
+        fill = "nimble.learnerParameters() or the TrainedLearner's "
+        fill += ".getAttributes() method"
+
+    if fill is not None:
+        return f"Try {fill} instead."
+    return None
