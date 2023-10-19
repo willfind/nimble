@@ -339,9 +339,15 @@ def testSciKitLearnRegressionLearners():
     def compareOutputs(learner):
         skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
+
+        extraArgs = {}
+        if learner == 'QuantileRegressor':
+            extraArgs = {'solver':"highs"}
+
         sciKitLearnObj = sklObj()
-        arguments = setupSKLArguments(sciKitLearnObj)
+        arguments = setupSKLArguments(sciKitLearnObj, extraArgs)
         sciKitLearnObj.fit(Xtrain, Ytrain)
+
         predSKL = sciKitLearnObj.predict(Xtest)
         predSKL = nimble.data(predSKL.reshape(-1,1), useLog=False)
 
@@ -548,8 +554,10 @@ def testSciKitLearnTransformationLearners():
             _compareSingleInputOutputs(learner, trainX, trainX.copy("numpyarray"))
         except TypeError as TE:
             # at issue could be the the parameter 'y' or 'Y' - .lower covers both
-            # cases
-            assert str(TE).lower() == "fit() missing 1 required positional argument: 'y'"
+            # cases. Sometimes our target string is prefaced with the object
+            # in question, so we use in instead of ==
+            target = "fit() missing 1 required positional argument: 'y'"
+            assert target in str(TE).lower()
 
 
 @sklSkipDec
@@ -911,11 +919,12 @@ def equalityAssertHelper(ret1, ret2, ret3=None):
         identicalThenApprox(ret1, ret3)
         identicalThenApprox(ret2, ret3)
 
-def setupSKLArguments(sciKitLearnObj):
-    arguments = {}
+def setupSKLArguments(sciKitLearnObj, extraArgs=None):
+    arguments = {} if extraArgs is None else extraArgs
     if 'random_state' in sciKitLearnObj.get_params():
         arguments['random_state'] = generateSubsidiarySeed()
-        sciKitLearnObj.set_params(**arguments)
+    sciKitLearnObj.set_params(**arguments)
+
     return arguments
 
 def adjustRandomParamForNimble(arguments):
