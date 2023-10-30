@@ -10,7 +10,8 @@ jobs:
   build-wheels:
     uses: ./.github/workflows/buildWheels.yml
     with:
-      saveName: built_wheels
+      saveNameWheel: built_wheel
+      saveNameConda: built_channel
 
   build-site:
     # try to build the site regardless of how much of the previous job
@@ -19,7 +20,8 @@ jobs:
     needs: [build-wheels]
     uses: ./.github/workflows/buildSite.yml
     with:
-      saveName: built_wheels
+      saveNameWheel: built_wheel
+      saveNameConda: built_channel
 
   deploy-site:
     uses: ./.github/workflows/deploySite.yml

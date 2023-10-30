@@ -1,6 +1,6 @@
 package:
   name: nimble
-  version: "0.4.1"
+  version: "0.4.3"
 
 source:
   path: ../
@@ -14,10 +14,14 @@ requirements:
     - setuptools
     - numpy>=1.14
     - packaging>=20.0
+    - tomli
+    - pytest
   run:
     - python {{ python }}
     - numpy>=1.14
     - packaging>=20.0
+    - tomli
+    - pytest
 
 outputs:
   - name: nimble
@@ -48,4 +52,4 @@ test:
     - nimble
 
 about:
-  home: https://github.com/willfind/nimble
+  home: https://willfind.github.io/nimble/index.html
