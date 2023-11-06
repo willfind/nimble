@@ -1282,16 +1282,19 @@ class Base(ABC):
                     res[k].points.append(point.copy(), useLog=False)
                     
                 if calculate == 'sum':
-                    def typeCounter(pt):  
-                        commonGroup = pt[0]  
-                        counterN = 1 if pt[1] else 0   
-                        return [(commonGroup, counterN)] 
+                
+                    res.points.calculate('')
+                    res.points._statistics_backend('sum', nimble.calculate.sum)
+                    # def typeCounter(pt):  
+                    #     commonGroup = pt[0]  
+                    #     counterN = 1 if pt[1] else 0   
+                    #     return [(commonGroup, counterN)] 
 
-                    def featureReducer(commonGroup, counterN, *args):   
-                        return (commonGroup, sum(counterN))
+                    # def featureReducer(commonGroup, counterN, *args):   
+                    #     return (commonGroup, sum(counterN))
                         
-                    #desiredTable = 
-                    res[k].points.mapReduce(typeCounter, featureReducer)
+                    # #desiredTable = 
+                    # res[k].points.mapReduce(typeCounter, featureReducer)
                                             
                     #res[k].features.calculate(lambda ft: ft +.features, useLog=False)
 
