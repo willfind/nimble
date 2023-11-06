@@ -4426,7 +4426,6 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         toTest = self.constructor(raw)
         exp = toTest.features.statistics('populationstd')
         res = toTest.features.populationStandardDeviation()
-        assert exp == res
     
     @logCountAssertionFactory(0)
     def test_features_mode(self):

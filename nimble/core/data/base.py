@@ -1171,7 +1171,7 @@ class Base(ABC):
 
     @limitedTo2D
     @prepLog
-    def groupByFeature(self, by, countUniqueValueOnly=False, *,
+    def groupByFeature(self, by, calculate=None, countUniqueValueOnly=False, *,
                        useLog=None): # pylint: disable=unused-argument
         """
         Group data object by one or more features.
@@ -1280,6 +1280,20 @@ class Base(ABC):
                     res[k] = point.copy()
                 else:
                     res[k].points.append(point.copy(), useLog=False)
+                    
+                if calculate == 'sum':
+                    def typeCounter(pt):  
+                        commonGroup = pt[0]  
+                        counterN = 1 if pt[1] else 0   
+                        return [(commonGroup, counterN)] 
+
+                    def featureReducer(commonGroup, counterN, *args):   
+                        return (commonGroup, sum(counterN))
+                        
+                    #desiredTable = 
+                    res[k].points.mapReduce(typeCounter, featureReducer)
+                                            
+                    #res[k].features.calculate(lambda ft: ft +.features, useLog=False)
 
             for obj in res.values():
                 obj.features.delete(by, useLog=False)
