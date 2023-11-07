@@ -5,15 +5,15 @@ Nimble can be installed in a variety of ways and strives for flexibility
 during the install process. To avoid requiring packages that may never be used,
 Nimble only has only three required dependencies, `Numpy`_, `packaging`_,
 and `tomli`_.
-`NumPy`_, provides access to a limited portion of the API and additional
-functionality is accessed by installing third-party :ref:`optional-packages`.
+`NumPy`_ enables a baseline portion of the data manipulation API.
 The `packaging`_ dependency is used to validate the installed versions of any
 optional packages. The `tomli`_ dependency is a fallback for certain dependency
-checks of the optional dependencies.
+checks of the optional dependencies. All further functionality is accessed by
+installing third-party :ref:`optional-packages`.
 
 For convenience, installing optional packages can also be
 triggered while installing Nimble. We recommend the :ref:`quickstart-install`
-to make much of Nimble's functionality available with a single command.
+to make almost all of Nimble's functionality available with a single command.
 
 Note that downloading and/or installing Nimble constitutes agreement to the
 Nimble :doc:`License Agreement<legal>`.
@@ -30,7 +30,7 @@ Install Methods
 Nimble Install Quickstart
 -------------------------
 
-To install a selection of :ref:`optional-packages` while installing Nimble,
+To install a curated selection of :ref:`optional-packages` while installing Nimble,
 both ``pip`` and ``conda`` installs offer a quickstart option. Quickstart
 installs all :ref:`operational-support` packages and SciKit-Learn from the
 :ref:`ml-interfaces`. These packages were chosen because they are reliably
@@ -237,4 +237,3 @@ Binary Wheels
 The installation commands for pip we document on this page will automatically find the correct
 precompiled binary wheel from the possible options in the table below. Not all
 systems and python versions are supported.
-
