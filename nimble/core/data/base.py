@@ -1293,16 +1293,44 @@ class Base(ABC):
                 else:
                     res[k].points.append(point.copy(), useLog=False)
                 
-            if calculate is not None:                #
+            if calculate is not None:  
+                cleanFuncName = validateInputString(calculate, accepted,
+                                            'statistics') 
+        
+                if cleanFuncName == 'max':
+                    toCall = nimble.calculate.maximum
+                elif cleanFuncName == 'mean':
+                    toCall = nimble.calculate.mean
+                elif cleanFuncName == 'median':
+                    toCall = nimble.calculate.median
+                elif cleanFuncName == 'min':
+                    toCall = nimble.calculate.minimum
+                elif cleanFuncName == 'uniquecount':
+                    toCall = nimble.calculate.uniqueCount
+                elif cleanFuncName == 'proportionmissing':
+                    toCall = nimble.calculate.proportionMissing
+                elif cleanFuncName == 'proportionzero':
+                    toCall = nimble.calculate.proportionZero
+                elif cleanFuncName in ['std', 'standarddeviation', 'samplestd',
+                                    'samplestandarddeviation']:
+                    toCall = nimble.calculate.standardDeviation
+                elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
+
+                    def populationStandardDeviation(values):
+                        return nimble.calculate.standardDeviation(values, False)
+
+                    toCall = populationStandardDeviation
+                    
                 for k in list(res.keys()):
                     #res[k].points.calculate('')
                     #calc[k] = res[k].features._statisticsBackend('sum', nimble.calculate.sum)
                     #calc[k] = res[k].features._statistics(calculate, groupByFeature=by)
                     # need a 'if k not in res:'
-                    if k  not in calc:
-                        calc[k] = res[k].features._statisticsBackend(calculate, groupByFeature=by)
+                    # if k  not in calc:
+                    
+                    calc[k] = res[k].features._statisticsBackend(cleanFuncName, toCall)
                 
-                for obj in res.values():
+                for obj in calc.values():
                     obj.features.delete(by, useLog=False)
                 
                 return calc
