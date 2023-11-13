@@ -11,16 +11,24 @@ name: Build ghpages site
 on:
   workflow_call:
     inputs:
-        # The name of the artifact containing the wheels
-        saveName:
-          required: true
-          type: string
+      # The name of the artifact containing the wheels
+      saveNameWheel:
+        required: true
+        type: string
+      # The name of the artifact containing the conda channel
+      saveNameConda:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
-        # The name of the artifact containing the wheels
-        saveName:
-          required: true
-          type: string
+      # The name of the artifact containing the wheels
+      saveNameWheel:
+        required: true
+        type: string
+      # The name of the artifact containing the conda channel
+      saveNameConda:
+        required: true
+        type: string
 
 
 jobs:
@@ -38,10 +46,7 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: ${{inputs.saveName}}
-
-      - name: install dependency for wheel manipulation
-        run: pip install wheel
+          name: ${{inputs.saveNameWheel}}
 
       - name: validate wheel presence
         # test -z checks if the input is a zero length string.
@@ -49,14 +54,6 @@ jobs:
         # if not wheels are found, abort this action so we don't
         # build and deploy an empty site.
         run: if test -z "$(find . -maxdepth 1 -name "*.whl")"; then exit 1; fi
-
-      - name: remove source scripts for all wheels
-        # small bash loop to run the script for each file that satisfies
-        # the glob
-        run: |
-          for name in *.whl; do
-              python remove_source.py . $name
-          done
 
       - name: Move Wheels to docs source
         run: mv *.whl ./documentation/source/wheels
@@ -77,6 +74,11 @@ jobs:
       - name: Build site
         # our cwd is the project root, we -C to indicate the folder we want to build from/in
         run: make html -C documentation
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{inputs.saveNameConda}}
+          path: ./documentation/html/nimble-data
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v2

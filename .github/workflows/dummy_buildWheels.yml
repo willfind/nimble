@@ -14,12 +14,12 @@ name: BuildWheels(Dummy)
 on:
   workflow_call:
     inputs:
-      # The name of the artifact to be saved
-      saveName:
+      # The name of the artifact containing the wheels
+      saveNameWheel:
         required: true
         type: string
-      # Path to the folder of wheels to be saved
-      dummyPath:
+      # The name of the artifact containing the conda channel
+      saveNameConda:
         required: true
         type: string
 
@@ -29,13 +29,39 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
 
     steps:
       - uses: actions/checkout@v3
 
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-activate-base: true
+          activate-environment: ""
+
+      - name: Remove Source
+        shell: bash
+        run: |
+          cd wheelhouse
+          pip install wheel
+          for name in *.whl; do
+              python3 ../remove_source.py . $name
+          done
+
+      - name: Conda channel build
+        run: |
+          conda install conda-build
+          conda build conda_recipe/ --output-folder=conda_output --no-test --no-anaconda-upload --no-activate
+
+      # retention days param critical for cost saving wrt free/paid storage.
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{inputs.saveName}}
-          path: ${{dummyPath}}
+          name: ${{inputs.saveNameWheel}}
+          path: ./wheelhouse/
+          retention-days: 1
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{inputs.saveNameConda}}
+          path: ./conda_output/
           retention-days: 1
