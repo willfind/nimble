@@ -28,8 +28,9 @@ from nimble.match import QueryString
 from nimble._utility import cloudpickle, h5py, plt, IPython
 from nimble._utility import isDatetime
 from nimble._utility import tableString, prettyListString, quoteStrings
+#from nimble.calculate.utility import ACCEPTED_STATS
 from .stretch import Stretch
-from ._dataHelpers import formatIfNeeded
+from ._dataHelpers import formatIfNeeded, validateInputString
 from ._dataHelpers import constructIndicesList
 from ._dataHelpers import createListOfDict, createDictOfList
 from ._dataHelpers import createDataNoValidation
@@ -1265,7 +1266,18 @@ class Base(ABC):
         else:
             findKey = findKey2
 
+        import pdb ; pdb.set_trace()
+
         res = {}
+        calc = {}
+        #accepted = nimble.calculate.utility.ACCEPTED_STATS
+        accepted = [
+            'max', 'mean', 'median', 'min', 'unique count',
+            'proportion missing', 'proportion zero', 'standard deviation',
+            'std', 'population std', 'population standard deviation',
+            'sample std', 'sample standard deviation'
+            ]
+        
         if countUniqueValueOnly:
             for point in self.points:
                 k = findKey(point, by)
@@ -1280,11 +1292,23 @@ class Base(ABC):
                     res[k] = point.copy()
                 else:
                     res[k].points.append(point.copy(), useLog=False)
-                    
-                if calculate == 'sum':
                 
-                    res.points.calculate('')
-                    res.points._statistics_backend('sum', nimble.calculate.sum)
+            if calculate is not None:                #
+                for k in list(res.keys()):
+                    #res[k].points.calculate('')
+                    #calc[k] = res[k].features._statisticsBackend('sum', nimble.calculate.sum)
+                    #calc[k] = res[k].features._statistics(calculate, groupByFeature=by)
+                    # need a 'if k not in res:'
+                    if k  not in calc:
+                        calc[k] = res[k].features._statisticsBackend(calculate, groupByFeature=by)
+                
+                for obj in res.values():
+                    obj.features.delete(by, useLog=False)
+                
+                return calc
+                
+                #     res[k].points.calculate('')
+                #     res.points._statistics_backend('sum', nimble.calculate.sum)
                     # def typeCounter(pt):  
                     #     commonGroup = pt[0]  
                     #     counterN = 1 if pt[1] else 0   

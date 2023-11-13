@@ -31,6 +31,7 @@ from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
 from nimble._utility import prettyListString
 from nimble._utility import inspectArguments
 from nimble._utility import tableString
+#from nimble.calculate.utility import ACCEPTED_STATS
 from .points import Points
 from .features import Features
 from ._dataHelpers import valuesToPythonList, constructIndicesList
@@ -886,6 +887,7 @@ class Axis(ABC):
             'sample std', 'sample standard deviation', 'sum',
             'mode', 'variance', 'median absolute deviation', 'quartiles',
             ]
+        #accepted = nimble.calculate.utility.ACCEPTED_STATS
         cleanFuncName = validateInputString(statisticsFunction, accepted,
                                             'statistics')
 
