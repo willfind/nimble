@@ -148,7 +148,9 @@ traffic.features.delete('weather_description')
 
 ## To make the string values in `weather_main` suitable for machine learning,
 ## we will represent each of the 11 unique values contained in this column as
-## 11 new binary features.
+## 11 new binary features. This technique is typically called one-hot encoding
+## because for every point in the dataset only one of these new features will
+## be equal to 1 (hot) while others will be 0 (cold).
 newCols = traffic.replaceFeatureWithBinaryFeatures('weather_main')
 sampleFts = ['weather_main=Clouds', 'weather_main=Clear', 'weather_main=Mist']
 traffic[:, sampleFts].show('Sample of binary weather features',
