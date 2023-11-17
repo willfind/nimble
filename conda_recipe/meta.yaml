@@ -15,13 +15,11 @@ requirements:
     - numpy>=1.14
     - packaging>=20.0
     - tomli
-    - pytest
   run:
     - python {{ python }}
     - numpy>=1.14
     - packaging>=20.0
     - tomli
-    - pytest
 
 outputs:
   - name: nimble

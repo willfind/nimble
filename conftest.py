@@ -34,21 +34,6 @@ def addNimble(doctest_namespace):
     """
     doctest_namespace["nimble"] = nimble
 
-@pytest.fixture
-def tmpDataToFileFixture():
-    """
-    Used for doctests which write out a file in the cwd. This will change
-    the cwd temporarily so that this doctest will not polute the filesystem
-    """
-    backupCWD = os.getcwd()
-    with tempfile.TemporaryDirectory() as tmpdirForCSV:
-        try:
-            os.chdir(tmpdirForCSV)
-            yield
-        finally:
-            os.chdir(backupCWD)
-
-
 class DictSessionConfig(SessionConfiguration):
     """
     Use a dictionary instead of configuration file for config settings.
