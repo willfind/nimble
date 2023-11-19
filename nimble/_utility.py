@@ -20,6 +20,9 @@ import numpy as np
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._dependencies import checkVersion
+#from nimble import calculate
+import nimble
+#from data._dataHelpers import validateInputString 
 
 def isFunction(func):
     """
@@ -568,6 +571,37 @@ def tableString(table, rowHeader=True, colHeaders=None, roundDigits=None,
         out += '\n'
 
     return out
+
+def _getStatsFunction(clean_func_name):
+    if clean_func_name == 'max':
+        to_call = nimble.calculate.maximum
+    elif clean_func_name == 'mean':
+        to_call = nimble.calculate.mean
+    elif clean_func_name == 'median':
+        to_call = nimble.calculate.median
+    elif clean_func_name == 'min':
+        to_call = nimble.calculate.minimum
+    elif clean_func_name == 'uniquecount':
+        to_call = nimble.calculate.uniqueCount
+    elif clean_func_name == 'proportionmissing':
+        to_call = nimble.calculate.proportionMissing
+    elif clean_func_name == 'proportionzero':
+        to_call = nimble.calculate.proportionZero
+    elif clean_func_name in ['std', 'standarddeviation', 'samplestd',
+                             'samplestandarddeviation']:
+        to_call = nimble.calculate.standardDeviation
+    elif clean_func_name in ['populationstd', 'populationstandarddeviation']:
+
+        def populationStandardDeviation(values):
+            return nimble.calculate.standardDeviation(values, False)
+
+        to_call = populationStandardDeviation
+    else:
+        raise ValueError(f"Invalid calculation function name: {clean_func_name}")
+
+    return to_call
+
+
 
 ############################
 # Unavailable ML Methods  #

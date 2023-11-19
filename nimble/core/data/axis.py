@@ -45,6 +45,8 @@ from ._dataHelpers import plotAxisLabels, plotXTickLabels
 from ._dataHelpers import plotConfidenceIntervalMeanAndError, plotErrorBars
 from ._dataHelpers import plotSingleBarChart, plotMultiBarChart
 
+from nimble._utility import _getStatsFunction
+
 class Axis(ABC):
     """
     Differentiate how methods act dependent on the axis.
@@ -890,21 +892,22 @@ class Axis(ABC):
         #accepted = nimble.calculate.utility.ACCEPTED_STATS
         cleanFuncName = validateInputString(statisticsFunction, accepted,
                                             'statistics')
+        toCall = _getStatsFunction(cleanFuncName)
 
-        if cleanFuncName == 'max':
-            toCall = nimble.calculate.maximum
-        elif cleanFuncName == 'mean':
-            toCall = nimble.calculate.mean
-        elif cleanFuncName == 'median':
-            toCall = nimble.calculate.median
-        elif cleanFuncName == 'min':
-            toCall = nimble.calculate.minimum
-        elif cleanFuncName == 'uniquecount':
-            toCall = nimble.calculate.uniqueCount
-        elif cleanFuncName == 'proportionmissing':
-            toCall = nimble.calculate.proportionMissing
-        elif cleanFuncName == 'proportionzero':
-            toCall = nimble.calculate.proportionZero
+        # if cleanFuncName == 'max':
+        #     toCall = nimble.calculate.maximum
+        # elif cleanFuncName == 'mean':
+        #     toCall = nimble.calculate.mean
+        # elif cleanFuncName == 'median':
+        #     toCall = nimble.calculate.median
+        # elif cleanFuncName == 'min':
+        #     toCall = nimble.calculate.minimum
+        # elif cleanFuncName == 'uniquecount':
+        #     toCall = nimble.calculate.uniqueCount
+        # elif cleanFuncName == 'proportionmissing':
+        #     toCall = nimble.calculate.proportionMissing
+        # elif cleanFuncName == 'proportionzero':
+        #     toCall = nimble.calculate.proportionZero
         elif cleanFuncName == 'mode':
             toCall = nimble.calculate.mode
         elif cleanFuncName == 'sum':
@@ -917,16 +920,16 @@ class Axis(ABC):
             toCall = nimble.calculate.quartiles
         elif cleanFuncName == 'medianabsolutedeviation':
             toCall = nimble.calculate.medianAbsoluteDeviation
-        elif cleanFuncName in ['std', 'standarddeviation', 'samplestd',
-                               'samplestandarddeviation']:
-            toCall = nimble.calculate.standardDeviation
-        elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
+        # elif cleanFuncName in ['std', 'standarddeviation', 'samplestd',
+        #                        'samplestandarddeviation']:
+        #     toCall = nimble.calculate.standardDeviation
+        # elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
         
 
-            def populationStandardDeviation(values):
-                return nimble.calculate.standardDeviation(values, False)
+        #     def populationStandardDeviation(values):
+        #         return nimble.calculate.standardDeviation(values, False)
 
-            toCall = populationStandardDeviation
+        #     toCall = populationStandardDeviation
 
         if self._axis == 'point' or groupByFeature is None:
             return self._statisticsBackend(cleanFuncName, toCall)

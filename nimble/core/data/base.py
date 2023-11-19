@@ -52,6 +52,9 @@ from ._dataHelpers import binaryOpNamePathMerge
 from ._dataHelpers import indicesSplit
 from ._dataHelpers import prepLog
 
+from nimble._utility import _getStatsFunction
+
+
 def to2args(f):
     """
     This function is for __pow__. In cython, __pow__ must have 3
@@ -1296,37 +1299,33 @@ class Base(ABC):
             if calculate is not None:  
                 cleanFuncName = validateInputString(calculate, accepted,
                                             'statistics') 
+                toCall = _getStatsFunction(cleanFuncName)
         
-                if cleanFuncName == 'max':
-                    toCall = nimble.calculate.maximum
-                elif cleanFuncName == 'mean':
-                    toCall = nimble.calculate.mean
-                elif cleanFuncName == 'median':
-                    toCall = nimble.calculate.median
-                elif cleanFuncName == 'min':
-                    toCall = nimble.calculate.minimum
-                elif cleanFuncName == 'uniquecount':
-                    toCall = nimble.calculate.uniqueCount
-                elif cleanFuncName == 'proportionmissing':
-                    toCall = nimble.calculate.proportionMissing
-                elif cleanFuncName == 'proportionzero':
-                    toCall = nimble.calculate.proportionZero
-                elif cleanFuncName in ['std', 'standarddeviation', 'samplestd',
-                                    'samplestandarddeviation']:
-                    toCall = nimble.calculate.standardDeviation
-                elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
+                # if cleanFuncName == 'max':
+                #     toCall = nimble.calculate.maximum
+                # elif cleanFuncName == 'mean':
+                #     toCall = nimble.calculate.mean
+                # elif cleanFuncName == 'median':
+                #     toCall = nimble.calculate.median
+                # elif cleanFuncName == 'min':
+                #     toCall = nimble.calculate.minimum
+                # elif cleanFuncName == 'uniquecount':
+                #     toCall = nimble.calculate.uniqueCount
+                # elif cleanFuncName == 'proportionmissing':
+                #     toCall = nimble.calculate.proportionMissing
+                # elif cleanFuncName == 'proportionzero':
+                #     toCall = nimble.calculate.proportionZero
+                # elif cleanFuncName in ['std', 'standarddeviation', 'samplestd',
+                #                     'samplestandarddeviation']:
+                #     toCall = nimble.calculate.standardDeviation
+                # elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
 
-                    def populationStandardDeviation(values):
-                        return nimble.calculate.standardDeviation(values, False)
+                #     def populationStandardDeviation(values):
+                #         return nimble.calculate.standardDeviation(values, False)
 
-                    toCall = populationStandardDeviation
+                #     toCall = populationStandardDeviation
                     
                 for k in list(res.keys()):
-                    #res[k].points.calculate('')
-                    #calc[k] = res[k].features._statisticsBackend('sum', nimble.calculate.sum)
-                    #calc[k] = res[k].features._statistics(calculate, groupByFeature=by)
-                    # need a 'if k not in res:'
-                    # if k  not in calc:
                     
                     calc[k] = res[k].features._statisticsBackend(cleanFuncName, toCall)
                 
@@ -1334,21 +1333,6 @@ class Base(ABC):
                     obj.features.delete(by, useLog=False)
                 
                 return calc
-                
-                #     res[k].points.calculate('')
-                #     res.points._statistics_backend('sum', nimble.calculate.sum)
-                    # def typeCounter(pt):  
-                    #     commonGroup = pt[0]  
-                    #     counterN = 1 if pt[1] else 0   
-                    #     return [(commonGroup, counterN)] 
-
-                    # def featureReducer(commonGroup, counterN, *args):   
-                    #     return (commonGroup, sum(counterN))
-                        
-                    # #desiredTable = 
-                    # res[k].points.mapReduce(typeCounter, featureReducer)
-                                            
-                    #res[k].features.calculate(lambda ft: ft +.features, useLog=False)
 
             for obj in res.values():
                 obj.features.delete(by, useLog=False)
