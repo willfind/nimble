@@ -24,6 +24,8 @@ from nimble._dependencies import checkVersion
 import nimble
 #from data._dataHelpers import validateInputString 
 
+acceptedStats = []
+
 def isFunction(func):
     """
     Return True if an object is a python or cython function
@@ -573,20 +575,61 @@ def tableString(table, rowHeader=True, colHeaders=None, roundDigits=None,
     return out
 
 def _getStatsFunction(clean_func_name):
+    # acceptedStats = [
+    # "count",
+    # "mode",
+    # "proportion_zero",
+    # "unique_count",
+    # "minimum",
+    # "standard_deviation",
+    # "sample std",
+    # "median_absolute_deviation",
+    # "max",
+    # "std",
+    # "sum",
+    # "maximum",
+    # "variance",
+    # "proportion_missing",
+    # "mean",
+    # "quartiles",
+    # "median",
+    # "sample standard deviation",
+    # "proportion zero",
+    # "residuals",
+    # "population std",
+    # "min",
+    # "unique count",
+    # "population standard deviation",
+    # "standard deviation",
+    # ]
     if clean_func_name == 'max':
         to_call = nimble.calculate.maximum
+    elif clean_func_name == 'min':
+        to_call = nimble.calculate.minimum
     elif clean_func_name == 'mean':
         to_call = nimble.calculate.mean
     elif clean_func_name == 'median':
         to_call = nimble.calculate.median
-    elif clean_func_name == 'min':
-        to_call = nimble.calculate.minimum
+    elif clean_func_name == 'mode':
+        to_call = nimble.calculate.mode
+    elif clean_func_name == 'sum':
+        to_call = nimble.calculate.sum
+    elif clean_func_name == 'variance':
+        to_call = nimble.calculate.variance
+    elif clean_func_name == 'count':
+        to_call = nimble.calculate.count
     elif clean_func_name == 'uniquecount':
         to_call = nimble.calculate.uniqueCount
     elif clean_func_name == 'proportionmissing':
         to_call = nimble.calculate.proportionMissing
     elif clean_func_name == 'proportionzero':
         to_call = nimble.calculate.proportionZero
+    elif clean_func_name == 'quartiles':
+        to_call = nimble.calculate.quartiles
+    elif clean_func_name == 'residuals':
+        to_call = nimble.calculate.residuals
+    elif clean_func_name == 'medianabsolutedeviation':
+        to_call = nimble.calculate.medianAbsoluteDeviation
     elif clean_func_name in ['std', 'standarddeviation', 'samplestd',
                              'samplestandarddeviation']:
         to_call = nimble.calculate.standardDeviation

@@ -1278,8 +1278,11 @@ class Base(ABC):
             'max', 'mean', 'median', 'min', 'unique count',
             'proportion missing', 'proportion zero', 'standard deviation',
             'std', 'population std', 'population standard deviation',
-            'sample std', 'sample standard deviation'
-            ]
+            'sample std', 'sample standard deviation', 'count', 'mode', 
+            'residuals', 'sum', 'variance','median absolute deviation',
+            'quartiles']
+        # new_accepted = ['count', 'mode', 'residuals', 'sum', 'variance', 
+        #                 'median absolute deviation','quartiles']
         
         if countUniqueValueOnly:
             for point in self.points:
