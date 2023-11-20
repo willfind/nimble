@@ -1,3 +1,7 @@
+Features in dataset:
+['Administrative', 'Admin_Duration', 'Informational', 'Info_Duration', 'ProductRelated', 'Product_Duration', 'BounceR
+ates', 'ExitRates', 'PageValues', 'SpecialDay', 'Month', 'OperatingSystems', 'Browser', 'Region', 'TrafficType', 'New
+Visitor', 'Weekend', 'Purchase']
 Page activity features
 12212pt x 6ft
         'Administrative' 'Admin_Duration' 'Informational' 'Info_Duration' 'ProductRelated' 'Product_Duration'

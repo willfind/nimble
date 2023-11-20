@@ -31,6 +31,8 @@ bucket = 'https://storage.googleapis.com/nimble/datasets/'
 visits = nimble.data(bucket + 'online_shoppers_intention_explore.csv',
                      returnType="Matrix")
 featureNames = visits.features.getNames()
+print('Features in dataset: ')
+print(featureNames)
 
 ## Data Overview ##
 
