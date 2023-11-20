@@ -1267,19 +1267,9 @@ class Base(ABC):
         else:
             findKey = findKey2
 
-        #import pdb ; pdb.set_trace()
-
         res = {}
         calc = {}
-        #accepted = nimble.calculate.utility.ACCEPTED_STATS
         accepted = acceptedStats
-        # = [
-        #     'max', 'mean', 'median', 'min', 'unique count',
-        #     'proportion missing', 'proportion zero', 'standard deviation',
-        #     'std', 'population std', 'population standard deviation',
-        #     'sample std', 'sample standard deviation', 'count', 'mode', 
-        #     'residuals', 'sum', 'variance','median absolute deviation',
-        #     'quartiles']
         
         if countUniqueValueOnly:
             for point in self.points:
@@ -1310,14 +1300,7 @@ class Base(ABC):
                     
                     calc[k] = res[k].features._statisticsBackend(cleanFuncName, toCall)
                 
-                # for obj in calc.values():
-                #     obj.features.delete(by, useLog=False)
-                
                 return calc
-
-            # for obj in res.values():
-            #     obj.features.delete(by, useLog=False)
-
         return res
 
     @limitedTo2D
