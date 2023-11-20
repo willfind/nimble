@@ -1295,6 +1295,9 @@ class Base(ABC):
                     res[k] = point.copy()
                 else:
                     res[k].points.append(point.copy(), useLog=False)
+                    
+            for obj in res.values():
+                obj.features.delete(by, useLog=False)
                 
             if calculate is not None:  
                 cleanFuncName = validateInputString(calculate, accepted,
@@ -1307,13 +1310,13 @@ class Base(ABC):
                     
                     calc[k] = res[k].features._statisticsBackend(cleanFuncName, toCall)
                 
-                for obj in calc.values():
-                    obj.features.delete(by, useLog=False)
+                # for obj in calc.values():
+                #     obj.features.delete(by, useLog=False)
                 
                 return calc
 
-            for obj in res.values():
-                obj.features.delete(by, useLog=False)
+            # for obj in res.values():
+            #     obj.features.delete(by, useLog=False)
 
         return res
 
