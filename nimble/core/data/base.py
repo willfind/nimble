@@ -28,7 +28,7 @@ from nimble.match import QueryString
 from nimble._utility import cloudpickle, h5py, plt, IPython
 from nimble._utility import isDatetime
 from nimble._utility import tableString, prettyListString, quoteStrings
-#from nimble.calculate.utility import ACCEPTED_STATS
+from nimble._utility import _getStatsFunction, acceptedStats
 from .stretch import Stretch
 from ._dataHelpers import formatIfNeeded, validateInputString
 from ._dataHelpers import constructIndicesList
@@ -51,8 +51,6 @@ from ._dataHelpers import mergeNames, mergeNonDefaultNames
 from ._dataHelpers import binaryOpNamePathMerge
 from ._dataHelpers import indicesSplit
 from ._dataHelpers import prepLog
-
-from nimble._utility import _getStatsFunction
 
 
 def to2args(f):
@@ -1274,15 +1272,14 @@ class Base(ABC):
         res = {}
         calc = {}
         #accepted = nimble.calculate.utility.ACCEPTED_STATS
-        accepted = [
-            'max', 'mean', 'median', 'min', 'unique count',
-            'proportion missing', 'proportion zero', 'standard deviation',
-            'std', 'population std', 'population standard deviation',
-            'sample std', 'sample standard deviation', 'count', 'mode', 
-            'residuals', 'sum', 'variance','median absolute deviation',
-            'quartiles']
-        # new_accepted = ['count', 'mode', 'residuals', 'sum', 'variance', 
-        #                 'median absolute deviation','quartiles']
+        accepted = acceptedStats
+        # = [
+        #     'max', 'mean', 'median', 'min', 'unique count',
+        #     'proportion missing', 'proportion zero', 'standard deviation',
+        #     'std', 'population std', 'population standard deviation',
+        #     'sample std', 'sample standard deviation', 'count', 'mode', 
+        #     'residuals', 'sum', 'variance','median absolute deviation',
+        #     'quartiles']
         
         if countUniqueValueOnly:
             for point in self.points:
@@ -1303,30 +1300,8 @@ class Base(ABC):
                 cleanFuncName = validateInputString(calculate, accepted,
                                             'statistics') 
                 toCall = _getStatsFunction(cleanFuncName)
-        
-                # if cleanFuncName == 'max':
-                #     toCall = nimble.calculate.maximum
-                # elif cleanFuncName == 'mean':
-                #     toCall = nimble.calculate.mean
-                # elif cleanFuncName == 'median':
-                #     toCall = nimble.calculate.median
-                # elif cleanFuncName == 'min':
-                #     toCall = nimble.calculate.minimum
-                # elif cleanFuncName == 'uniquecount':
-                #     toCall = nimble.calculate.uniqueCount
-                # elif cleanFuncName == 'proportionmissing':
-                #     toCall = nimble.calculate.proportionMissing
-                # elif cleanFuncName == 'proportionzero':
-                #     toCall = nimble.calculate.proportionZero
-                # elif cleanFuncName in ['std', 'standarddeviation', 'samplestd',
-                #                     'samplestandarddeviation']:
-                #     toCall = nimble.calculate.standardDeviation
-                # elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
-
-                #     def populationStandardDeviation(values):
-                #         return nimble.calculate.standardDeviation(values, False)
-
-                #     toCall = populationStandardDeviation
+                # different paradigm that puts accepted also into getStatsFunction 
+                #cleanFuncName, toCall = _getStatsFunction(calculate)
                     
                 for k in list(res.keys()):
                     

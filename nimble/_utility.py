@@ -24,7 +24,12 @@ from nimble._dependencies import checkVersion
 import nimble
 #from data._dataHelpers import validateInputString 
 
-acceptedStats = []
+acceptedStats = ['max', 'mean', 'median', 'min', 'unique count',
+            'proportion missing', 'proportion zero', 'standard deviation',
+            'std', 'population std', 'population standard deviation',
+            'sample std', 'sample standard deviation', 'count', 'mode', 
+            'residuals', 'sum', 'variance','median absolute deviation',
+            'quartiles']
 
 def isFunction(func):
     """
@@ -575,33 +580,6 @@ def tableString(table, rowHeader=True, colHeaders=None, roundDigits=None,
     return out
 
 def _getStatsFunction(clean_func_name):
-    # acceptedStats = [
-    # "count",
-    # "mode",
-    # "proportion_zero",
-    # "unique_count",
-    # "minimum",
-    # "standard_deviation",
-    # "sample std",
-    # "median_absolute_deviation",
-    # "max",
-    # "std",
-    # "sum",
-    # "maximum",
-    # "variance",
-    # "proportion_missing",
-    # "mean",
-    # "quartiles",
-    # "median",
-    # "sample standard deviation",
-    # "proportion zero",
-    # "residuals",
-    # "population std",
-    # "min",
-    # "unique count",
-    # "population standard deviation",
-    # "standard deviation",
-    # ]
     if clean_func_name == 'max':
         to_call = nimble.calculate.maximum
     elif clean_func_name == 'min':
@@ -642,7 +620,7 @@ def _getStatsFunction(clean_func_name):
     else:
         raise ValueError(f"Invalid calculation function name: {clean_func_name}")
 
-    return to_call
+    return to_call #(cleanFuncName, toCall)
 
 
 
