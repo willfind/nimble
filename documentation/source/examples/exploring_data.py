@@ -98,7 +98,11 @@ correlations[:, 'Purchase'].show('Feature correlations with Purchase')
 ## of 1. We might think a special day would increase purchases made on the
 ## site, but we see above that SpecialDay has a negative correlation with
 ## Purchase. Let's investigate. First, we will find what percent of visits were
-## near a special day.
+## near a special day. The 'copy' function accepts a variety of arguments
+## including a 'query'. In Nimble, a query is a string expression that returns
+## a boolean value after the expression is evaluated, in this case for each
+## point in the data. The boolean results will determine if a point should be 
+## copied or not. See Nimble's QueryString documentation for more details.
 special = visits.points.copy('SpecialDay > 0')
 visitPercent = len(special.points) / len(visits.points) * 100
 print(f'{visitPercent:.2f}% of all visits were near a special day')
