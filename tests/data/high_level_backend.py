@@ -4342,7 +4342,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         res = toTest.points.medianAbsoluteDeviation()
         assert exp == res
         
-    @logCountAssertionFactory(0)
+    @logCountAssertionFactory(0) 
     def test_points_quartiles(self):
         raw = [[1, 2, 0], [0,0,5]]
         toTest = self.constructor(raw)
