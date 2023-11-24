@@ -2914,6 +2914,31 @@ class Features(ABC):
         >
         """
         return self._populationStandardDeviation(groupByFeature)
+    
+    @limitedTo2D
+    def count(sel, groupByFeature=None):
+        return self._count(groupByFeature)
+    
+    @limitedTo2D
+    def mode(sel,grouByFeature=None):
+        return self._mode(grouByFeature)
+    
+    @limitedTo2D
+    def sum(self, groupByFeature=None):
+        return self._sum(groupByFeature)
+    
+    @limitedTo2D
+    def variance(self, groupByFeature=None):
+        return self._variance(groupByFeature)
+    
+    @limitedTo2D
+    def medianAbsoluteDeviation(self, groupByFeature=None):
+        return self._medianAbsoluteDeviation(groupByFeature)
+    
+    @limitedTo2D
+    def quartiles(self, groupByFeature=None):
+        return self._quartiles(groupByFeature)
+    
 
     ####################
     # Abstract Methods #
@@ -3072,4 +3097,28 @@ class Features(ABC):
     
     @abstractmethod
     def _populationStandardDeviation(self, groupByFeature=None):
+        pass
+   
+    @abstractmethod
+    def _count(self, groupByFeature=None):
+        pass
+    
+    @abstractmethod
+    def _mode(self, groupByFeature=None):
+        pass
+    
+    @abstractmethod
+    def _sum(self, groupByFeature=None):
+        pass
+    
+    @abstractmethod
+    def _variance(self, groupByFeature=None):
+        pass
+    
+    @abstractmethod
+    def _medianAbsoluteDeviation(self, groupByFeature=None):
+        pass
+    
+    @abstractmethod
+    def _quartiles(self, groupByFeature=None):
         pass

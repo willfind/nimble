@@ -2752,6 +2752,31 @@ class Points(ABC):
         >
         """ 
         return self._populationStandardDeviation()
+    
+    @limitedTo2D
+    def count(self):
+        return self._count()
+    
+    @limitedTo2D
+    def mode(self):
+        return self._mode()
+    
+    @limitedTo2D
+    def sum(self):
+        return self._sum()
+    
+    @limitedTo2D
+    def variance(self):
+        return self._variance()
+    
+    @limitedTo2D
+    def medianAbsoluteDeviation(self):
+        return self._medianAbsoluteDeviation()
+    
+    @limitedTo2D
+    def quartiles(self):
+        return self._quartiles()
+    
 
     ####################
     # Abstract Methods #
@@ -2915,5 +2940,28 @@ class Points(ABC):
     @abstractmethod
     def _populationStandardDeviation(self):
         pass
-
+    
+    @abstractmethod
+    def _count(self):
+        pass
+    
+    @abstractmethod
+    def _mode(self):
+        pass
+    
+    @abstractmethod
+    def _sum(self):
+        pass
+    
+    @abstractmethod
+    def _variance(self):
+        pass
+    
+    @abstractmethod
+    def _medianAbsoluteDeviation(self):
+        pass
+    
+    @abstractmethod
+    def _quartiles(self):
+        pass
    

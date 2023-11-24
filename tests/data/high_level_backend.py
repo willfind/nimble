@@ -4308,6 +4308,56 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         exp = toTest.points.statistics('populationstd')
         res = toTest.points.populationStandardDeviation()
         assert exp == res
+                
+    @logCountAssertionFactory(0)
+    def test_points_count(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = toTest.points.statistics('count')
+        res = toTest.points.count()
+        assert exp == res
+        
+    @logCountAssertionFactory(0)
+    def test_points_mode(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = toTest.points.statistics('mode')
+        res = toTest.points.mode()
+        assert exp == res
+        
+    @logCountAssertionFactory(0)
+    def test_points_sum(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = toTest.points.statistics('sum')
+        res = toTest.points.sum()
+        assert exp == res
+        
+    @logCountAssertionFactory(0)
+    def test_points_variance(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = toTest.points.statistics('variance')
+        res = toTest.points.variance()
+        assert exp == res
+        
+    @logCountAssertionFactory(0)
+    def test_points_medianAbsoluteDeviation(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = toTest.points.statistics('medianAbsoluteDeviation')
+        res = toTest.points.medianAbsoluteDeviation()
+        assert exp == res
+        
+    @logCountAssertionFactory(0)
+    def test_points_quartiles(self):
+        import pdb; pdb.set_trace()
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = toTest.points.statistics('quartiles')
+        res = toTest.points.quartiles()
+        assert exp == res
+    
 
 
     ############################
@@ -4384,6 +4434,54 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         toTest = self.constructor(raw)
         exp = toTest.features.statistics('populationstd')
         res = toTest.features.populationStandardDeviation()
+        assert exp == res
+        
+    @logCountAssertionFactory(0)
+    def test_features_count(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = toTest.features.statistics('count')
+        res = toTest.features.count()
+        assert exp == res
+    
+    @logCountAssertionFactory(0)
+    def test_features_mode(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = toTest.features.statistics('mode')
+        res = toTest.features.mode()
+        assert exp == res
+    
+    @logCountAssertionFactory(0)
+    def test_features_sum(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = toTest.features.statistics('sum')
+        res = toTest.features.sum()
+        assert exp == res
+        
+    @logCountAssertionFactory(0)
+    def test_features_variance(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = toTest.features.statistics('variance')
+        res = toTest.features.variance()
+        assert exp == res
+    
+    @logCountAssertionFactory(0)
+    def test_features_medianAbsoluteDeviation(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = toTest.features.statistics('medianAbsoluteDeviation')
+        res = toTest.features.medianAbsoluteDeviation()
+        assert exp == res
+    
+    @logCountAssertionFactory(0)
+    def test_features_quartiles(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = toTest.features.statistics('quartiles')
+        res = toTest.features.quartiles()
         assert exp == res
 
      ############################
