@@ -883,7 +883,8 @@ class Axis(ABC):
             'max', 'mean', 'median', 'min', 'unique count',
             'proportion missing', 'proportion zero', 'standard deviation',
             'std', 'population std', 'population standard deviation',
-            'sample std', 'sample standard deviation'
+            'sample std', 'sample standard deviation', 'count' 'sum',
+            'mode', 'variance', 'median absolute deviation', 'quartiles',
             ]
         cleanFuncName = validateInputString(statisticsFunction, accepted,
                                             'statistics')
