@@ -903,10 +903,23 @@ class Axis(ABC):
             toCall = nimble.calculate.proportionMissing
         elif cleanFuncName == 'proportionzero':
             toCall = nimble.calculate.proportionZero
+        elif cleanFuncName == 'mode':
+            toCall = nimble.calculate.mode
+        elif cleanFuncName == 'sum':
+            toCall = nimble.calculate.sum
+        elif cleanFuncName == 'count':
+            toCall = nimble.calculate.count
+        elif cleanFuncName == 'variance':
+            toCall = nimble.calculate.variance
+        elif cleanFuncName == 'quartiles':
+            toCall = nimble.calculate.quartiles
+        elif cleanFuncName == 'medianabsolutedeviation':
+            toCall = nimble.calculate.medianAbsoluteDeviation
         elif cleanFuncName in ['std', 'standarddeviation', 'samplestd',
                                'samplestandarddeviation']:
             toCall = nimble.calculate.standardDeviation
         elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
+        
 
             def populationStandardDeviation(values):
                 return nimble.calculate.standardDeviation(values, False)
