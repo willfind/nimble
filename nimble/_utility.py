@@ -579,46 +579,44 @@ def tableString(table, rowHeader=True, colHeaders=None, roundDigits=None,
 
     return out
 
-def _getStatsFunction(clean_func_name):
-    if clean_func_name == 'max':
+def _getStatsFunction(statsFuncName):
+    if statsFuncName == 'max':
         to_call = nimble.calculate.maximum
-    elif clean_func_name == 'min':
+    elif statsFuncName == 'min':
         to_call = nimble.calculate.minimum
-    elif clean_func_name == 'mean':
+    elif statsFuncName == 'mean':
         to_call = nimble.calculate.mean
-    elif clean_func_name == 'median':
+    elif statsFuncName == 'median':
         to_call = nimble.calculate.median
-    elif clean_func_name == 'mode':
+    elif statsFuncName == 'mode':
         to_call = nimble.calculate.mode
-    elif clean_func_name == 'sum':
+    elif statsFuncName == 'sum':
         to_call = nimble.calculate.sum
-    elif clean_func_name == 'variance':
+    elif statsFuncName == 'variance':
         to_call = nimble.calculate.variance
-    elif clean_func_name == 'count':
+    elif statsFuncName == 'count':
         to_call = nimble.calculate.count
-    elif clean_func_name == 'uniquecount':
+    elif statsFuncName == 'uniquecount':
         to_call = nimble.calculate.uniqueCount
-    elif clean_func_name == 'proportionmissing':
+    elif statsFuncName == 'proportionmissing':
         to_call = nimble.calculate.proportionMissing
-    elif clean_func_name == 'proportionzero':
+    elif statsFuncName == 'proportionzero':
         to_call = nimble.calculate.proportionZero
-    elif clean_func_name == 'quartiles':
+    elif statsFuncName == 'quartiles':
         to_call = nimble.calculate.quartiles
-    elif clean_func_name == 'residuals':
-        to_call = nimble.calculate.residuals
-    elif clean_func_name == 'medianabsolutedeviation':
+    elif statsFuncName == 'medianabsolutedeviation':
         to_call = nimble.calculate.medianAbsoluteDeviation
-    elif clean_func_name in ['std', 'standarddeviation', 'samplestd',
+    elif statsFuncName in ['std', 'standarddeviation', 'samplestd',
                              'samplestandarddeviation']:
         to_call = nimble.calculate.standardDeviation
-    elif clean_func_name in ['populationstd', 'populationstandarddeviation']:
+    elif statsFuncName in ['populationstd', 'populationstandarddeviation']:
 
         def populationStandardDeviation(values):
             return nimble.calculate.standardDeviation(values, False)
 
         to_call = populationStandardDeviation
     else:
-        raise ValueError(f"Invalid calculation function name: {clean_func_name}")
+        raise ValueError(f"Invalid calculation function name: {statsFuncName}")
 
     return to_call #(cleanFuncName, toCall)
 
