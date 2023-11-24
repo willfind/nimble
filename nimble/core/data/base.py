@@ -5801,3 +5801,9 @@ class Base(ABC):
         """
         return nimble.calculate.proportionZero(self._vectorize())
     
+     [ 'count', 'mode', 
+             'sum', 'variance','median absolute deviation',
+            'quartiles']
+    
+    
+    

@@ -1638,6 +1638,42 @@ class Axis(ABC):
         toCall = functools.partial(calcSTD, sample=False)
         result = self._process_statistics(FuncName, toCall, groupByFeature)
         return result
+    
+    def _mode(self, groupByFeature=None):
+        FuncName = 'mode'
+        toCall = nimble.calculate.mode
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+    
+    def _count(self, groupByFeature=None):
+        FuncName = 'count'
+        toCall = nimble.calculate.count
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+    
+    def _sum(self, groupByFeature=None):
+        FuncName = 'sum'
+        toCall = nimble.calculate.sum
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+
+    def _variance(self , groupByFeature=None):
+        FuncName = 'variance'
+        toCall = nimble.calculate.variance
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+    
+    def _medianAbsoluteDeviation(self, groupByFeature=None):
+        FuncName = 'mean absolute deviation'
+        toCall = nimble.calculate.medianAbsoluteDeviation
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+    
+    def _quartiles(self, groupByFeature=None):
+        FuncName = 'quartiles'
+        toCall = nimble.calculate.quartiles
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
 
 ###########
 # Helpers #

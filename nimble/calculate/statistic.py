@@ -300,7 +300,6 @@ def variance(values, sample=True):
     >>> variance(vector, sample=False)
     2.9166666666666665
     """
-    #import pdb; pdb.set_trace()
     if values.getTypeString() == 'Sparse':
         nonZero = values._data.data.astype(np.float_)
         numNan = np.sum(np.isnan(nonZero))
