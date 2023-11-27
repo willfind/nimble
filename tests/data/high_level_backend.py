@@ -1598,6 +1598,7 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
     ##################
     @noLogEntryExpected
     def test_points_count(self):
+        #import pdb; pdb.set_trace()
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=['one', 'two', 'three'],
                                   featureNames=['a', 'b', 'c'])
@@ -4308,14 +4309,6 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         exp = toTest.points.statistics('populationstd')
         res = toTest.points.populationStandardDeviation()
         assert exp == res
-                
-    @logCountAssertionFactory(0)
-    def test_points_count(self):
-        raw = [[1, 2, 0], [0,0,5]]
-        toTest = self.constructor(raw)
-        exp = toTest.points.statistics('count')
-        res = toTest.points.count()
-        assert exp == res
         
     @logCountAssertionFactory(0)
     def test_points_mode(self):
@@ -4351,7 +4344,6 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         
     @logCountAssertionFactory(0)
     def test_points_quartiles(self):
-        import pdb; pdb.set_trace()
         raw = [[1, 2, 0], [0,0,5]]
         toTest = self.constructor(raw)
         exp = toTest.points.statistics('quartiles')
@@ -4434,14 +4426,6 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         toTest = self.constructor(raw)
         exp = toTest.features.statistics('populationstd')
         res = toTest.features.populationStandardDeviation()
-        assert exp == res
-        
-    @logCountAssertionFactory(0)
-    def test_features_count(self):
-        raw = [[1, 2, 0], [0,0,5]]
-        toTest = self.constructor(raw)
-        exp = toTest.features.statistics('count')
-        res = toTest.features.count()
         assert exp == res
     
     @logCountAssertionFactory(0)

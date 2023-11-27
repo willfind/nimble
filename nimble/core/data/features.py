@@ -2916,11 +2916,7 @@ class Features(ABC):
         return self._populationStandardDeviation(groupByFeature)
     
     @limitedTo2D
-    def count(sel, groupByFeature=None):
-        return self._count(groupByFeature)
-    
-    @limitedTo2D
-    def mode(sel,grouByFeature=None):
+    def mode(self,grouByFeature=None):
         return self._mode(grouByFeature)
     
     @limitedTo2D
@@ -3097,10 +3093,6 @@ class Features(ABC):
     
     @abstractmethod
     def _populationStandardDeviation(self, groupByFeature=None):
-        pass
-   
-    @abstractmethod
-    def _count(self, groupByFeature=None):
         pass
     
     @abstractmethod

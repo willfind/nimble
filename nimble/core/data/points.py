@@ -2752,11 +2752,7 @@ class Points(ABC):
         >
         """ 
         return self._populationStandardDeviation()
-    
-    @limitedTo2D
-    def count(self):
-        return self._count()
-    
+
     @limitedTo2D
     def mode(self):
         return self._mode()
@@ -2939,10 +2935,6 @@ class Points(ABC):
     
     @abstractmethod
     def _populationStandardDeviation(self):
-        pass
-    
-    @abstractmethod
-    def _count(self):
         pass
     
     @abstractmethod

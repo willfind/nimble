@@ -883,7 +883,7 @@ class Axis(ABC):
             'max', 'mean', 'median', 'min', 'unique count',
             'proportion missing', 'proportion zero', 'standard deviation',
             'std', 'population std', 'population standard deviation',
-            'sample std', 'sample standard deviation', 'count' 'sum',
+            'sample std', 'sample standard deviation', 'sum',
             'mode', 'variance', 'median absolute deviation', 'quartiles',
             ]
         cleanFuncName = validateInputString(statisticsFunction, accepted,
@@ -907,8 +907,8 @@ class Axis(ABC):
             toCall = nimble.calculate.mode
         elif cleanFuncName == 'sum':
             toCall = nimble.calculate.sum
-        elif cleanFuncName == 'count':
-            toCall = nimble.calculate.count
+        # elif cleanFuncName == 'count':
+        #     toCall = nimble.calculate.count
         elif cleanFuncName == 'variance':
             toCall = nimble.calculate.variance
         elif cleanFuncName == 'quartiles':
@@ -1659,12 +1659,6 @@ class Axis(ABC):
         result = self._process_statistics(FuncName, toCall, groupByFeature)
         return result
     
-    def _count(self, groupByFeature=None):
-        FuncName = 'count'
-        toCall = nimble.calculate.count
-        result = self._process_statistics(FuncName, toCall, groupByFeature)
-        return result
-    
     def _sum(self, groupByFeature=None):
         FuncName = 'sum'
         toCall = nimble.calculate.sum
@@ -1678,7 +1672,7 @@ class Axis(ABC):
         return result
     
     def _medianAbsoluteDeviation(self, groupByFeature=None):
-        FuncName = 'mean absolute deviation'
+        FuncName = 'medianabsolutedeviation'
         toCall = nimble.calculate.medianAbsoluteDeviation
         result = self._process_statistics(FuncName, toCall, groupByFeature)
         return result
