@@ -883,7 +883,8 @@ class Axis(ABC):
             'max', 'mean', 'median', 'min', 'unique count',
             'proportion missing', 'proportion zero', 'standard deviation',
             'std', 'population std', 'population standard deviation',
-            'sample std', 'sample standard deviation'
+            'sample std', 'sample standard deviation', 'sum',
+            'mode', 'variance', 'median absolute deviation', 'quartiles',
             ]
         cleanFuncName = validateInputString(statisticsFunction, accepted,
                                             'statistics')
@@ -902,10 +903,23 @@ class Axis(ABC):
             toCall = nimble.calculate.proportionMissing
         elif cleanFuncName == 'proportionzero':
             toCall = nimble.calculate.proportionZero
+        elif cleanFuncName == 'mode':
+            toCall = nimble.calculate.mode
+        elif cleanFuncName == 'sum':
+            toCall = nimble.calculate.sum
+        # elif cleanFuncName == 'count':
+        #     toCall = nimble.calculate.count
+        elif cleanFuncName == 'variance':
+            toCall = nimble.calculate.variance
+        elif cleanFuncName == 'quartiles':
+            toCall = nimble.calculate.quartiles
+        elif cleanFuncName == 'medianabsolutedeviation':
+            toCall = nimble.calculate.medianAbsoluteDeviation
         elif cleanFuncName in ['std', 'standarddeviation', 'samplestd',
                                'samplestandarddeviation']:
             toCall = nimble.calculate.standardDeviation
         elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
+        
 
             def populationStandardDeviation(values):
                 return nimble.calculate.standardDeviation(values, False)
@@ -1636,6 +1650,36 @@ class Axis(ABC):
         FuncName = 'populationstd'
         calcSTD = nimble.calculate.standardDeviation
         toCall = functools.partial(calcSTD, sample=False)
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+    
+    def _mode(self, groupByFeature=None):
+        FuncName = 'mode'
+        toCall = nimble.calculate.mode
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+    
+    def _sum(self, groupByFeature=None):
+        FuncName = 'sum'
+        toCall = nimble.calculate.sum
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+
+    def _variance(self , groupByFeature=None):
+        FuncName = 'variance'
+        toCall = nimble.calculate.variance
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+    
+    def _medianAbsoluteDeviation(self, groupByFeature=None):
+        FuncName = 'medianabsolutedeviation'
+        toCall = nimble.calculate.medianAbsoluteDeviation
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+    
+    def _quartiles(self, groupByFeature=None):
+        FuncName = 'quartiles'
+        toCall = nimble.calculate.quartiles
         result = self._process_statistics(FuncName, toCall, groupByFeature)
         return result
 

@@ -5801,3 +5801,23 @@ class Base(ABC):
         """
         return nimble.calculate.proportionZero(self._vectorize())
     
+    def count(self):
+        return nimble.calculate.count(self._vectorize())
+    
+    def mode(self):
+        return nimble.calculate.mode(self._vectorize())
+    
+    def sum(self):
+        return nimble.calculate.sum(self._vectorize())
+    
+    def variance(self):
+        return nimble.calculate.variance(self._vectorize())
+    
+    def medianAbsoluteDeviation(self):
+        return nimble.calculate.medianAbsoluteDeviation(self._vectorize())
+    
+    def quartiles(self):
+        return nimble.calculate.quartiles(self._vectorize())
+    
+    
+    
