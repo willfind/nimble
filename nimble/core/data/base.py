@@ -2434,9 +2434,10 @@ class Base(ABC):
         fnameSep = '\u2500'
         corner = '\u250C'
         nameHolder = '...'
-        dataOrientation = 'center'
+        dataOrientation = 'rjust'
         pNameOrientation = 'rjust'
-        fNameOrientation = 'center'
+        fNameOrientation = 'rjust'
+        holderOrientation = 'center'
 
         # Resolve default values for points, features, and related
         # variables
@@ -2500,10 +2501,33 @@ class Base(ABC):
         out = ""
         for i, row in enumerate(finalTable):
             for j, val in enumerate(row):
+                # point names
                 if j == 0:
                     padded = getattr(val, pNameOrientation)(finalWidths[j])
+                # feature Names
                 elif i == 0:
                     padded = getattr(val, fNameOrientation)(finalWidths[j])
+                # seperators between names and values (already fully filling
+                # the available space)
+                elif j == 1 or i == 1 and val in [rowHold, colHold]:
+                    padded = val
+                # row placeholder: centered between the width of the adjacent
+                # values in the column
+                elif val == rowHold:
+                    # finalTable is being padded as we go, have to strip the
+                    # previously added whitespace from the row above
+                    aboveVal = (finalTable[i-1][j]).strip()
+                    belowVal = dataTable[i+1][j]
+                    valWidthMax = max(len(aboveVal), len(belowVal))
+                    # if we are in a column with all missing values, align to
+                    # center of the column
+                    if valWidthMax == 0:
+                        valWidthMax = finalWidths[j]
+                    valPadded = getattr(val, holderOrientation)(valWidthMax)
+                    padded = (' ' * (finalWidths[j] - valWidthMax)) + valPadded
+                elif val == colHold:
+                    padded = getattr(val, holderOrientation)(finalWidths[j])
+                # normal values
                 else:
                     padded = getattr(val, dataOrientation)(finalWidths[j])
                 row[j] = padded
