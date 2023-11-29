@@ -1184,6 +1184,9 @@ class Base(ABC):
             * int - the index of the feature to group by
             * str - the name of the feature to group by
             * list - indices or names of features to group by
+        calculate : str, None
+            The name of the statistical function to apply to each group. 
+            If None, the default, no calculation will be applied.
         countUniqueValueOnly : bool
             Return only the count of points in the group
         useLog : bool, None
