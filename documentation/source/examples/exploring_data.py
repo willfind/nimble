@@ -22,7 +22,6 @@ In this example we will learn about:
 [files]: files.rst#exploring-data
 [datasets]: ../datasets.rst#exploring-data
 """
-
 ## Getting Started ##
 
 import nimble
@@ -102,7 +101,7 @@ correlations[:, 'Purchase'].show('Feature correlations with Purchase')
 ## including a 'query'. In Nimble, a query is a string expression that returns
 ## a boolean value after the expression is evaluated, in this case for each
 ## point in the data. The boolean results will determine if a point should be 
-## copied or not. See Nimble's QueryString documentation for more details.
+## copied or not. See Nimble's `QueryString` documentation for more details.
 special = visits.points.copy('SpecialDay > 0')
 visitPercent = len(special.points) / len(visits.points) * 100
 print(f'{visitPercent:.2f}% of all visits were near a special day')
