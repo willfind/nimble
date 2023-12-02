@@ -880,7 +880,6 @@ class Axis(ABC):
         return ret
 
     def _statistics(self, statisticsFunction, groupByFeature=None):
-        
         accepted = acceptedStats
         cleanFuncName = validateInputString(statisticsFunction, accepted,
                                             'statistics')
