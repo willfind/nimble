@@ -4534,3 +4534,232 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         assert exp == res
         assert toTest == self.constructor(raw)
     
+    ##################################
+    # groupByFeature calculate tests #
+    ################################ 
+    
+    def test_groupByFeature_max(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 13, 1], 
+               ['Oklahoma', 12, 2], ['Oklahoma', 12, 1]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)
+        res = toTest.groupByFeature('Location',calculate='max')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 13, 1],['Oklahoma', 12, 2],
+                ['Oklahoma', 12, 1]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)
+        exp1 = toTest1.features.max()
+        exp2 = toTest2.features.max()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+    
+    def test_groupByFeature_min(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 13, 1], 
+               ['Oklahoma', 12, 2], ['Oklahoma', 12, 1]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)
+        res = toTest.groupByFeature('Location',calculate='min')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 13, 1],['Oklahoma', 12, 2],
+                ['Oklahoma', 12, 1]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)
+        exp1 = toTest1.features.min()
+        exp2 = toTest2.features.min()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+
+    def test_groupByFeature_mean(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 13, 1],
+                ['Oklahoma', 12, 2], ['Oklahoma', 12, 1]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)
+        res = toTest.groupByFeature('Location',calculate='mean')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 13, 1],['Oklahoma', 12, 2],
+                ['Oklahoma', 12, 1]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)
+        exp1 = toTest1.features.mean()
+        exp2 = toTest2.features.mean()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+
+    def test_groupByFeature_median(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 13, 1], 
+               ['Oklahoma', 12, 2], ['Oklahoma', 12, 1]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)
+        res = toTest.groupByFeature('Location',calculate='median')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 13, 1],['Oklahoma', 12, 2], 
+                ['Oklahoma', 12, 1]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)
+        exp1 = toTest1.features.median()
+        exp2 = toTest2.features.median()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+    
+    def test_groupByFeature_unique_count(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 13, 1], 
+               ['Oklahoma', 12, 2], ['Oklahoma', 12, 1]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)
+        res = toTest.groupByFeature('Location',calculate='unique count')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 13, 1],['Oklahoma', 12, 2], 
+                ['Oklahoma', 12, 1]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)
+        exp1 = toTest1.features.uniqueCount()
+        exp2 = toTest2.features.uniqueCount()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+        
+    def test_groupByFeature_proportion_missing(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 13, 1], 
+               ['Oklahoma', 12, 2], ['Oklahoma', 12, 1]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)
+        res = toTest.groupByFeature('Location',calculate='proportion missing')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 13, 1],['Oklahoma', 12, 2], 
+                ['Oklahoma', 12, 1]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)
+        exp1 = toTest1.features.proportionMissing()
+        exp2 = toTest2.features.proportionMissing()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+    
+    def test_groupByFeature_proportion_zero(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 13, 1], 
+               ['Oklahoma', 12, 2], ['Oklahoma', 12, 1]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)
+        res = toTest.groupByFeature('Location',calculate='proportion zero')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 13, 1],['Oklahoma', 12, 2], 
+                ['Oklahoma', 12, 1]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)
+        exp1 = toTest1.features.proportionZero()
+        exp2 = toTest2.features.proportionZero()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+    
+    def test_groupByFeature_standard_deviation(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 13, 1], 
+               ['Oklahoma', 12, 2], ['Oklahoma', 12, 1]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)
+        res = toTest.groupByFeature('Location',calculate='standard deviation')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 13, 1],['Oklahoma', 12, 2],
+                ['Oklahoma', 12, 1]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)
+        exp1 = toTest1.features.standardDeviation()
+        exp2 = toTest2.features.standardDeviation()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+    
+    def test_groupByFeature_population_standard_deviation(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 13, 1], 
+               ['Oklahoma', 12, 2], ['Oklahoma', 12, 1]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)        
+        res = toTest.groupByFeature('Location',calculate='population standard deviation')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 13, 1],['Oklahoma', 12, 2],
+                ['Oklahoma', 12, 1]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)
+        exp1 = toTest1.features.populationStandardDeviation()
+        exp2 = toTest2.features.populationStandardDeviation()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+        
+    [ 'mode', 'sum', 'variance', 'medianAbsoluteDeviation', 'quartiles']
+    
+    def test_groupByFeature_mode(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 13, 1], 
+               ['Oklahoma', 12, 2], ['Oklahoma', 12, 1]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)
+        res = toTest.groupByFeature('Location',calculate='mode')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 13, 1],['Oklahoma', 12, 2],
+                ['Oklahoma', 12, 1]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)
+        exp1 = toTest1.features.mode()
+        exp2 = toTest2.features.mode()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+        
+    def test_groupByFeature_sum(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 13, 0], 
+               ['Oklahoma', 12, 2], ['Oklahoma', 12, 1]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)
+        res = toTest.groupByFeature('Location',calculate='sum')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 13, 0],['Oklahoma', 12, 2],
+                ['Oklahoma', 12, 1]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)
+        exp1 = toTest1.features.sum()
+        exp2 = toTest2.features.sum()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+        
+    def test_groupByFeature_variance(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 12, 2], 
+               ['Oklahoma', 12, 1], ['Oklahoma', 13, 0]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)        
+        res = toTest.groupByFeature('Location',calculate='variance')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 12, 2],['Oklahoma', 12, 1],
+                ['Oklahoma', 13, 0]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)        
+        exp1 = toTest1.features.variance()
+        exp2 = toTest2.features.variance()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+        
+    def test_groupByFeature_medianAbsoluteDeviation(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 12, 2], 
+               ['Oklahoma', 12, 1], ['Oklahoma', 13, 0]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)        
+        res = toTest.groupByFeature('Location',calculate='medianAbsoluteDeviation')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 12, 2],['Oklahoma', 12, 1],
+                ['Oklahoma', 13, 0]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)        
+        exp1 = toTest1.features.medianAbsoluteDeviation()
+        exp2 = toTest2.features.medianAbsoluteDeviation()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+        
+    def test_groupByFeature_quartiles(self):
+        raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 12, 2], 
+               ['Oklahoma', 12, 1], ['Oklahoma', 13, 0]]
+        ftNames = ['Location', 'Purchases', 'Returns']
+        toTest = nimble.data(raw, featureNames=ftNames)        
+        res = toTest.groupByFeature('Location',calculate='quartiles')
+        raw1 = [['Clemson', 15, 0], ['Clemson', 14, 1]]
+        raw2 = [['Oklahoma', 12, 2],['Oklahoma', 12, 1],
+                ['Oklahoma', 13, 0]]
+        toTest1 = nimble.data(raw1, featureNames=ftNames)
+        toTest2 = nimble.data(raw2, featureNames=ftNames)        
+        exp1 = toTest1.features.quartiles()
+        exp2 = toTest2.features.quartiles()
+        assert exp1[:,['Purchases','Returns']] == res['Clemson']
+        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']

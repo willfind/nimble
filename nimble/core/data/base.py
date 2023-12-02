@@ -5821,9 +5821,6 @@ class Base(ABC):
         """
         return nimble.calculate.proportionZero(self._vectorize())
     
-    def count(self):
-        return nimble.calculate.count(self._vectorize())
-    
     def mode(self):
         return nimble.calculate.mode(self._vectorize())
     
