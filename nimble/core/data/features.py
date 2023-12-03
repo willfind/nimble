@@ -2882,9 +2882,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.standardDeviation()
         <Matrix 1pt x 3ft
-                   0     1     2
-               ┌──────────────────
-         'std' │ 2.121 0.000 2.121
+                                 0     1     2
+                             ┌──────────────────
+         'standarddeviation' │ 2.121 0.000 2.121
         >
         """
         return self._standardDeviation(groupByFeature)
@@ -2908,9 +2908,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.populationStandardDeviation()
         <Matrix 1pt x 3ft
-                             0     1     2
-                         ┌──────────────────
-         'populationstd' │ 1.500 0.000 1.500
+                                           0     1     2
+                                       ┌──────────────────
+         'populationstandarddeviation' │ 1.500 0.000 1.500
         >
         """
         return self._populationStandardDeviation(groupByFeature)

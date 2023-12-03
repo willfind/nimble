@@ -2725,10 +2725,10 @@ class Points(ABC):
         >>> X = nimble.data(lst)
         >>> X.points.standardDeviation()
         <Matrix 2pt x 1ft
-             'std'
-           ┌───────
-         0 │ 12.166
-         1 │ 10.440
+             'standarddeviation'
+           ┌────────────────────
+         0 │        12.166
+         1 │        10.440
         >
         '''
         return self._standardDeviation()
@@ -2745,10 +2745,10 @@ class Points(ABC):
         >>> X = nimble.data(lst)
         >>> X.points.populationStandardDeviation()
         <Matrix 2pt x 1ft
-             'populationstd'
-           ┌────────────────
-         0 │      9.933
-         1 │      8.524
+             'populationstandarddeviation'
+           ┌──────────────────────────────
+         0 │             9.933
+         1 │             8.524
         >
         """ 
         return self._populationStandardDeviation()
