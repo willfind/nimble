@@ -4709,10 +4709,10 @@ class HighLevelModifyingSparseSafe(DataTestObject):
                 ['Oklahoma', 12, 1]]
         toTest1 = nimble.data(raw1, featureNames=ftNames)
         toTest2 = nimble.data(raw2, featureNames=ftNames)
-        exp1 = toTest1.features.sum()
-        exp2 = toTest2.features.sum()
-        assert exp1[:,['Purchases','Returns']] == res['Clemson']
-        assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+        exp1 = toTest1[:,['Purchases','Returns']].features.sum()
+        exp2 = toTest2[:,['Purchases','Returns']].features.sum()
+        assert exp1 == res['Clemson']
+        assert exp2 == res['Oklahoma']
         
     def test_groupByFeature_variance(self):
         raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 12, 2], 
