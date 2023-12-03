@@ -4298,7 +4298,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
     def test_points_standard_deviation(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
-        exp = toTest.points.statistics('std')
+        exp = toTest.points.statistics('standard deviation')
         res = toTest.points.standardDeviation()
         assert exp == res
 
@@ -4306,7 +4306,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
     def test_points_population_standard_deviation(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
-        exp = toTest.points.statistics('populationstd')
+        exp = toTest.points.statistics('population standard deviation')
         res = toTest.points.populationStandardDeviation()
         assert exp == res
         
@@ -4416,7 +4416,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
     def test_features_standard_deviation(self):
         raw = [[1, 2, 0], [0,0,5]]
         toTest = self.constructor(raw)
-        exp = toTest.features.statistics('std')
+        exp = toTest.features.statistics('standard deviation')
         res = toTest.features.standardDeviation()
         assert exp == res
 
@@ -4424,7 +4424,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
     def test_features_population_standard_deviation(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
-        exp = toTest.features.statistics('populationstd')
+        exp = toTest.features.statistics('population standard deviation')
         res = toTest.features.populationStandardDeviation()
     
     @logCountAssertionFactory(0)
@@ -4681,9 +4681,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         exp2 = toTest2.features.populationStandardDeviation()
         assert exp1[:,['Purchases','Returns']] == res['Clemson']
         assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
-        
-    [ 'mode', 'sum', 'variance', 'medianAbsoluteDeviation', 'quartiles']
-    
+            
     def test_groupByFeature_mode(self):
         raw = [['Clemson', 15, 0], ['Clemson', 14, 1], ['Oklahoma', 13, 1], 
                ['Oklahoma', 12, 2], ['Oklahoma', 12, 1]]
