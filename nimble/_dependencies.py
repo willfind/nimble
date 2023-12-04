@@ -4,7 +4,7 @@ Store dependency versions requirements.
 Also includes helpers for validating optional dependency versions at
 runtime.
 """
-import importlib
+import importlib.metadata
 import tomli
 import os
 import inspect
