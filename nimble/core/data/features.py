@@ -2918,22 +2918,132 @@ class Features(ABC):
     
     @limitedTo2D
     def mode(self,grouByFeature=None):
+        """
+        Returns a nimble object representing the mode along 
+        the features axis.
+        
+        Parameters
+        ----------
+        groupByFeature : identifier, None
+            An optional index or name of the feature that makes
+            the result grouped by the point values along the chosen
+            feature axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 2, 2], [0, 2, 5], [2, 3, 2]]
+        >>> X = nimble.data(lst)
+        >>> X.features.mode()
+        <Matrix 1pt x 3ft
+                  0 1  2
+                ┌───────
+         'mode' │ 0 2 2
+        >
+        """
         return self._mode(grouByFeature)
     
     @limitedTo2D
     def sum(self, groupByFeature=None):
+        """
+        Returns a nimble object representing the sum along
+        the features axis.
+        
+        Parameters
+        ----------
+        groupByFeature : identifier, None
+            An optional index or name of the feature that makes
+            the result grouped by the point values along the chosen
+            feature axis.
+            
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.features.sum()
+        <Matrix 1pt x 3ft
+                0 1  2
+              ┌───────
+        'sum' │ 3 44 7
+        >
+        """
         return self._sum(groupByFeature)
     
     @limitedTo2D
     def variance(self, groupByFeature=None):
+        """
+        Returns a nimble object representing the variance
+        along the features axis.
+        
+        Parameters
+        ----------
+        groupByFeature : identifier, None
+            An optional index or name of the feature that makes
+            the result grouped by the point values along the chosen
+            feature axis.
+            
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.features.variance()
+        <Matrix 1pt x 3ft
+                        0     1     2
+                    ┌──────────────────
+         'variance' │ 4.500 0.000 4.500
+        >
+        """
         return self._variance(groupByFeature)
     
     @limitedTo2D
     def medianAbsoluteDeviation(self, groupByFeature=None):
+        """
+        Returns a nimble object representing the median absolute
+        deviation along the features axis.
+        
+        Parameters
+        ----------
+        groupByFeature : identifier, None
+            An optional index or name of the feature that makes
+            the result grouped by the point values along the chosen
+            feature axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.features.medianAbsoluteDeviation()
+        <Matrix 1pt x 3ft
+                                       0     1     2
+                                   ┌──────────────────
+         'medianabsolutedeviation' │ 1.500 0.000 1.500
+        >
+        """
         return self._medianAbsoluteDeviation(groupByFeature)
     
     @limitedTo2D
     def quartiles(self, groupByFeature=None):
+        """
+        Returns a nimble object representing the quartiles
+        along the features axis.
+        
+        Parameters
+        ----------
+        groupByFeature : identifier, None
+            An optional index or name of the feature that makes
+            the result grouped by the point values along the chosen
+            feature axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.features.quartiles()
+        <Matrix 1pt x 3ft
+                      0     1     2
+                 ┌──────────────────
+            'Q1' │ 0.750 22.000 2.750
+        >
+        """
         return self._quartiles(groupByFeature)
     
 

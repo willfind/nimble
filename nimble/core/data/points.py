@@ -2755,22 +2755,102 @@ class Points(ABC):
 
     @limitedTo2D
     def mode(self):
+        '''
+        Retirms a nimble object representing the mode along 
+        the points axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 2, 2], [3, 3, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.mode()
+        <Matrix 2pt x 1ft
+             'mode'
+           ┌───────
+         0 │ 3.000
+         1 │ 3.000
+        >
+        '''
         return self._mode()
     
     @limitedTo2D
     def sum(self):
+        '''
+        Returns a nimble object representing the sum along the points
+        axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.sum()
+        <Matrix 2pt x 1ft
+             'sum'
+           ┌───────
+         0 │  24
+         1 │  30
+        >
+        '''
         return self._sum()
     
     @limitedTo2D
     def variance(self):
+        '''
+        Returns a nimble object representing the variance along the
+        points axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.variance()
+        <Matrix 2pt x 1ft
+                'variance'
+              ┌────────────
+            0 │   147.000
+            1 │   109.333
+        >
+        '''
         return self._variance()
     
     @limitedTo2D
     def medianAbsoluteDeviation(self):
+        '''
+        Returns a nimble object representing the median absolute
+        deviation along the points axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.medianAbsoluteDeviation()
+        <Matrix 2pt x 1ft
+             'medianabsolutedeviation'
+           ┌──────────────────────────
+         0 │        1.482
+         1 │        2.965
+        >
+        '''
         return self._medianAbsoluteDeviation()
     
     @limitedTo2D
     def quartiles(self):
+        ''' 
+        Returns a nimble object representing the quartiles along
+        the points axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.quartiles()
+        <Matrix 2pt x 3ft
+                'quartile1' 'quartile2' 'quartile3'
+              ┌──────────────────────────────────────
+            0 │       1.000      2.000      11.000
+            1 │       3.000      5.000      13.000
+        >
+        '''
         return self._quartiles()
     
 
