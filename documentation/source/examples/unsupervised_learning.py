@@ -37,10 +37,11 @@ visits = nimble.data(bucket + 'online_shoppers_intention_clean.csv',
 
 ## We are going to focus on categorizing our visitors that made a purchase.
 ## First, we will copy any data points for visits that resulted in a purchase
-## into a new object. The 'copy' method accepts a variety of arguments including
-## functions. In this case of 'points.copy', the function must accept each
-## element of the points axis and return a boolean value, this will determine if
-## the point should be copied or not.
+## into a new object. The `points.copy` method accepts a variety of arguments
+## including user defined functions. In that case, the function must accept
+## an object that represents a single point (as if grabbing a single slice
+## out of the points axis) and return a boolean indicating if
+## that point should be copied or not.
 purchaseOnly = visits.points.copy(lambda pt: pt['Purchase'])
 
 ## The Purchase feature in `purchaseOnly` now only contains the value `True`.
