@@ -2935,8 +2935,8 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.mode()
         <Matrix 1pt x 3ft
-                  0 1  2
-                ┌───────
+                  0 1 2
+                ┌──────
          'mode' │ 0 2 2
         >
         """
@@ -2961,9 +2961,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.sum()
         <Matrix 1pt x 3ft
-                0 1  2
-              ┌───────
-        'sum' │ 3 44 7
+                 0 1  2
+               ┌───────
+         'sum' │ 3 44 7
         >
         """
         return self._sum(groupByFeature)

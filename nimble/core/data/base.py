@@ -5822,18 +5822,70 @@ class Base(ABC):
         return nimble.calculate.proportionZero(self._vectorize())
     
     def mode(self):
+        """
+        Returns a number representing the mode of the nimble object.
+        
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.mode()
+        0
+        """
         return nimble.calculate.mode(self._vectorize())
     
     def sum(self):
+        """
+        Returns a number representing the sum of the nimble object.
+        
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.sum()
+        8
+        """
         return nimble.calculate.sum(self._vectorize())
     
     def variance(self):
+        """
+        Returns a number representing the variance of the nimble object.
+        
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.variance()
+        3.866666666666667
+        """
         return nimble.calculate.variance(self._vectorize())
     
     def medianAbsoluteDeviation(self):
+        """
+        Returns a number representing the median absolute deviation 
+        of the nimble object.
+        
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.medianAbsoluteDeviation()
+        0.5
+        """
         return nimble.calculate.medianAbsoluteDeviation(self._vectorize())
     
     def quartiles(self):
+        """
+        Returns a list of numbers representing the quartiles of 
+        the nimble object.
+        
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.quartiles()
+        (0.0, 1.0, 2.0)
+        """
         return nimble.calculate.quartiles(self._vectorize())
     
     

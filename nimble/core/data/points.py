@@ -2767,8 +2767,8 @@ class Points(ABC):
         <Matrix 2pt x 1ft
              'mode'
            ┌───────
-         0 │ 3.000
-         1 │ 3.000
+         0 │   2
+         1 │   3
         >
         '''
         return self._mode()
@@ -2786,9 +2786,9 @@ class Points(ABC):
         >>> X.points.sum()
         <Matrix 2pt x 1ft
              'sum'
-           ┌───────
-         0 │  24
-         1 │  30
+           ┌──────
+         0 │   24
+         1 │   30
         >
         '''
         return self._sum()
@@ -2805,10 +2805,10 @@ class Points(ABC):
         >>> X = nimble.data(lst)
         >>> X.points.variance()
         <Matrix 2pt x 1ft
-                'variance'
-              ┌────────────
-            0 │   147.000
-            1 │   109.333
+             'variance'
+           ┌───────────
+         0 │  148.000
+         1 │  109.000
         >
         '''
         return self._variance()
@@ -2827,8 +2827,8 @@ class Points(ABC):
         <Matrix 2pt x 1ft
              'medianabsolutedeviation'
            ┌──────────────────────────
-         0 │        1.482
-         1 │        2.965
+         0 │           2.000
+         1 │           2.000
         >
         '''
         return self._medianAbsoluteDeviation()

@@ -134,7 +134,8 @@ base_notLogged = [
     'plotFeatureGroupMeans', 'plotFeatureGroupStatistics', 'pointView',
     'save', 'show', 'solveLinearSystem', 'toString', 'checkInvariants', 'view',
     'max', 'min', 'mean', 'median', 'uniqueCount', 'proportionMissing',
-    'proportionZero'
+    'proportionZero', 'mode', 'sum', 'quartiles', 'medianAbsoluteDeviation',
+    'variance'
     ]
 base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))
@@ -148,7 +149,8 @@ features_notLogged = [
     'count', 'getIndex', 'getIndices', 'getName', 'getNames', 'hasName',
     'plot', 'plotMeans', 'plotStatistics', 'similarities', 'statistics',
     'unique', 'max', 'min', 'mean', 'median', 'uniqueCount', 'proportionMissing',
-    'proportionZero', 'standardDeviation', 'populationStandardDeviation'
+    'proportionZero', 'standardDeviation', 'populationStandardDeviation',
+    'mode', 'sum', 'quartiles', 'medianAbsoluteDeviation', 'variance'
     ]
 features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
@@ -163,7 +165,8 @@ points_notLogged = [
     'count', 'getIndex', 'getIndices', 'getName', 'getNames', 'hasName',
     'plot', 'plotMeans', 'plotStatistics', 'similarities', 'statistics',
     'unique', 'max', 'min', 'mean', 'median', 'uniqueCount', 'proportionMissing',
-    'proportionZero', 'standardDeviation', 'populationStandardDeviation'
+    'proportionZero', 'standardDeviation', 'populationStandardDeviation',
+    'mode', 'sum', 'quartiles', 'medianAbsoluteDeviation', 'variance'
     ]
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))
