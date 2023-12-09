@@ -896,11 +896,16 @@ class Axis(ABC):
 
     def _statisticsBackend(self, cleanFuncName, toCall):
         ret = self._calculate(toCall, limitTo=None)
+        oldNames = 0
+        if cleanFuncName == 'quartiles':
+            retNames = ['quartile1', 'quartile2', 'quartile3']
+            oldNames = [0, 1, 2]
+            cleanFuncName = retNames
         if self._isPoint:
             ret.points.setNames(self._getNames(), useLog=False)
-            ret.features.setNames(cleanFuncName, oldIdentifiers=0, useLog=False)
+            ret.features.setNames(cleanFuncName, oldIdentifiers=oldNames, useLog=False)
         else:
-            ret.points.setNames(cleanFuncName, oldIdentifiers=0, useLog=False)
+            ret.points.setNames(cleanFuncName, oldIdentifiers=oldNames, useLog=False)
             ret.features.setNames(self._getNames(), useLog=False)
 
         return ret
