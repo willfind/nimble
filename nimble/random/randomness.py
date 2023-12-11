@@ -185,7 +185,7 @@ def data(numPoints, numFeatures, sparsity, pointNames='automatic',
                 # The feature value is determined by counting the offset from
                 # each point edge.
                 featureIndices = nzLocation % numFeatures
-                randData = scipy.sparse.coo.coo_matrix(
+                randData = scipy.sparse.coo_matrix(
                     (dataVector, (pointIndices, featureIndices)),
                     (numPoints, numFeatures))
             else:

@@ -1357,7 +1357,7 @@ class QueryBackendSparseSafe(DataTestObject):
             retSplit = ret.split('\n')[:-1]
             sepRow = int((mh - 2) / 2) + 2
             assert len(retSplit) == mh
-            rowSepPattern = re.compile(u'[\s\u2502] +')
+            rowSepPattern = re.compile(u'[\\s\u2502] +')
             assert re.match(rowSepPattern, retSplit[sepRow])
         # height 11 can accommodate all data
         # 2 header lines, 8 data lines, 1 blankline
@@ -1578,8 +1578,8 @@ class QueryBackendSparseSafe(DataTestObject):
                 assert defaults == 'all' # validates defaults value
                 assert name in fNames
 
-        assert re.match(u'\s*\u250C\u2500+$', retSplit[2])
-        dataMatch = re.compile(u"( +| +[0-9]+| +'[pf]t[0-9]+'| +\u2502) \u2502($| [-0-9\. \u2502\u2500]+)")
+        assert re.match(u'\\s*\u250C\u2500+$', retSplit[2])
+        dataMatch = re.compile(u"( +| +[0-9]+| +'[pf]t[0-9]+'| +\u2502) \u2502($| [-0-9\\. \u2502\u2500]+)")
         for line in retSplit[3:-1]:
             assert re.match(dataMatch, line)
             pName = line.split(u'\u2502')[0].strip()
@@ -1606,7 +1606,7 @@ class QueryBackendSparseSafe(DataTestObject):
         else:
             assert retSplit[-1] == '>'
 
-        addIdxMatch = re.compile(u' [ 0-9\u2502]+? \u2502( +\u2502?| +[pf]t[0-9]+) \u2502($| [-0-9\. \u2502\u2500]+)')
+        addIdxMatch = re.compile(u' [ 0-9\u2502]+? \u2502( +\u2502?| +[pf]t[0-9]+) \u2502($| [-0-9\\. \u2502\u2500]+)')
         for axis, length in [(data.points, numPts), (data.features, numFts)]:
             axRepr = repr(axis)
             axSplit = axRepr.split('\n')
