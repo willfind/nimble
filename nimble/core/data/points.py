@@ -2845,10 +2845,10 @@ class Points(ABC):
         >>> X = nimble.data(lst)
         >>> X.points.quartiles()
         <Matrix 2pt x 3ft
-                'quartile1' 'quartile2' 'quartile3'
-              ┌──────────────────────────────────────
-            0 │       1.000      2.000      11.000
-            1 │       3.000      5.000      13.000
+             'quartile1' 'quartile2' 'quartile3'
+           ┌───────────────────────────────────-
+         0 │    1.000      2.000      12.000
+         1 │    4.000      5.000      13.000
         >
         '''
         return self._quartiles()

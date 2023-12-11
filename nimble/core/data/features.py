@@ -3038,10 +3038,12 @@ class Features(ABC):
         >>> lst = [[0, 22, 2], [3, 22, 5]]
         >>> X = nimble.data(lst)
         >>> X.features.quartiles()
-        <Matrix 1pt x 3ft
-                      0     1     2
-                 ┌──────────────────
-            'Q1' │ 0.750 22.000 2.750
+        <Matrix 3pt x 3ft
+                         0     1      2
+                     ┌───────────────────
+         'quartile1' │ 0.750 22.000 2.750
+         'quartile2' │ 1.500 22.000 3.500   
+         'quartile3' │ 2.250 22.000 4.250
         >
         """
         return self._quartiles(groupByFeature)
