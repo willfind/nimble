@@ -28,7 +28,8 @@ NimbleParentDirPath = os.path.dirname(os.path.dirname(os.path.dirname(confFilePa
 sys.path.insert(0, NimbleParentDirPath)
 
 os.environ['PYTHONPATH'] = NimbleParentDirPath
-
+nbsphinx_allow_errors = True
+html_theme_styling = True
 # -- General configuration ------------------------------------------------
 # If your documentation needs a minimal Sphinx version, state it here.
 needs_sphinx = '3.3'
