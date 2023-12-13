@@ -2832,7 +2832,7 @@ class Points(ABC):
         >
         '''
         return self._medianAbsoluteDeviation()
-    
+
     @limitedTo2D
     def quartiles(self):
         ''' 
@@ -2848,11 +2848,10 @@ class Points(ABC):
              'quartile1' 'quartile2' 'quartile3'
            ┌────────────────────────────────────
          0 │    1.000       2.000       12.000
-         1 │    4.000       5.000       13.000
+         1 │    4.000       5.000       13.500
         >
         '''
         return self._quartiles()
-    
 
     ####################
     # Abstract Methods #

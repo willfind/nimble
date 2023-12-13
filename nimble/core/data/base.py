@@ -5884,9 +5884,6 @@ class Base(ABC):
         >>> lst = [[1, 2, 0], [0, 0, 5]]
         >>> X = nimble.data(lst)
         >>> X.quartiles()
-        (0.0, 1.0, 2.0)
+        (0.0, 0.5, 1.75)
         """
         return nimble.calculate.quartiles(self._vectorize())
-    
-    
-    
