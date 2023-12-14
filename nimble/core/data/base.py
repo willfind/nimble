@@ -2507,9 +2507,9 @@ class Base(ABC):
                 # feature Names
                 elif i == 0:
                     padded = getattr(val, fNameOrientation)(finalWidths[j])
-                # seperators between names and values (already fully filling
+                # seperators between pnames and values (already fully filling
                 # the available space)
-                elif j == 1 or i == 1 and val in [rowHold, colHold]:
+                elif j == 1 and val == rowHold:
                     padded = val
                 # row placeholder: centered between the width of the adjacent
                 # values in the column
@@ -2517,7 +2517,12 @@ class Base(ABC):
                     # finalTable is being padded as we go, have to strip the
                     # previously added whitespace from the row above
                     aboveVal = (finalTable[i-1][j]).strip()
-                    belowVal = dataTable[i+1][j]
+                    # in certain height limited conditions, the holder row may
+                    # be the last, so there is no value below. Only check if
+                    # we're sure there's another row.
+                    belowVal = aboveVal
+                    if i < len(finalTable)-1:
+                        belowVal = finalTable[i+1][j]
                     valWidthMax = max(len(aboveVal), len(belowVal))
                     # if we are in a column with all missing values, align to
                     # center of the column

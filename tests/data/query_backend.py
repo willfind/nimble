@@ -1393,7 +1393,7 @@ class QueryBackendSparseSafe(DataTestObject):
                     # separator for ftNames and data
                     assert line.strip() == u'\u250C' + u'\u2500' * 8
                 else:
-                    assert line.strip() == u'{} \u2502  a   \u2500\u2500'.format(i - 2)
+                    assert line.strip() == u'{} \u2502    a \u2500\u2500'.format(i - 2)
 
         # width of 16 will return first ft, colHold, last ft ('a  -- cc')
         # 1 for point name, 1 for point separator, 8 for feature column data,
@@ -1408,7 +1408,7 @@ class QueryBackendSparseSafe(DataTestObject):
                 # separator for ftNames and data
                 assert line.strip() == u'\u250C' + u'\u2500' * 13
             else:
-                assert line .strip() == u'{} \u2502  a   \u2500\u2500  cc'.format(i - 2)
+                assert line .strip() == u'{} \u2502    a \u2500\u2500   cc'.format(i - 2)
 
         # width of 18 can accommodate all data ('a  bbb cc')
         # 1 for point name, 1 for point separator, 12 for feature column data,
@@ -1423,7 +1423,7 @@ class QueryBackendSparseSafe(DataTestObject):
                 # separator for ftNames and data
                 assert line.strip() == u'\u250C' + u'\u2500' * 15
             else:
-                assert line.strip() == '{} \u2502  a   bbb   cc'.format(i - 2)
+                assert line.strip() == '{} \u2502    a  bbb   cc'.format(i - 2)
 
     def test_toString_knownHeights(self):
         """ Test max string height reaches but does not exceed max height """
