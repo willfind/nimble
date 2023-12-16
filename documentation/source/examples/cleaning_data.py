@@ -79,7 +79,9 @@ report.show("Feature statistics")
 
 ## Let's extract (i.e., separate from the rest of the data) any rows with the
 ## value 0 in `temp` or 9831.3 in `rain_1h` since they seem very unlikely to be
-## accurate, then we can reevaluate the statistics without those values.
+## accurate, then we can reevaluate the statistics without those values. Because
+## 'extract' modifies the original base object, traffic will lose the points we
+## find with 'badPointIdentifier'. 
 
 def badPointIdentifier(pt):
     return pt['temp'] == 0 or pt['rain_1h'] == 9831.3

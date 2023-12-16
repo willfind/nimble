@@ -135,7 +135,7 @@ base_notLogged = [
     'save', 'show', 'solveLinearSystem', 'toString', 'checkInvariants', 'view',
     'max', 'min', 'mean', 'median', 'uniqueCount', 'proportionMissing',
     'proportionZero', 'mode', 'sum', 'quartiles', 'medianAbsoluteDeviation',
-    'variance'
+    'variance',
     ]
 base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))
@@ -150,7 +150,7 @@ features_notLogged = [
     'plot', 'plotMeans', 'plotStatistics', 'similarities', 'statistics',
     'unique', 'max', 'min', 'mean', 'median', 'uniqueCount', 'proportionMissing',
     'proportionZero', 'standardDeviation', 'populationStandardDeviation',
-    'mode', 'sum', 'quartiles', 'medianAbsoluteDeviation', 'variance'
+    'mode', 'medianAbsoluteDeviation', 'variance', 'sum', 'quartiles',
     ]
 features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
@@ -166,7 +166,7 @@ points_notLogged = [
     'plot', 'plotMeans', 'plotStatistics', 'similarities', 'statistics',
     'unique', 'max', 'min', 'mean', 'median', 'uniqueCount', 'proportionMissing',
     'proportionZero', 'standardDeviation', 'populationStandardDeviation',
-    'mode', 'sum', 'quartiles', 'medianAbsoluteDeviation', 'variance'
+    'mode', 'medianAbsoluteDeviation', 'variance', 'sum', 'quartiles',
     ]
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))

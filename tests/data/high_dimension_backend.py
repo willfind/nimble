@@ -703,7 +703,8 @@ class HighDimensionModifyingSparseSafe(DataTestObject):
             'checkInvariants', 'containsZero', 'save', 'toString', 'show',
             'copy', 'flatten', 'unflatten',
             'min', 'max', 'mean', 'median', 'uniqueCount',
-            'proportionMissing', 'proportionZero'
+            'proportionMissing', 'proportionZero',
+            'mode', 'quartiles', 'medianAbsoluteDeviation', 'sum', 'variance',
             ))
         baseDisallowed = baseUser.difference(baseAllowed)
 

@@ -5,14 +5,15 @@ Nimble can be installed in a variety of ways and strives for flexibility
 during the install process. To avoid requiring packages that may never be used,
 Nimble only has only three required dependencies, `Numpy`_, `packaging`_,
 and `tomli`_.
-`NumPy`, provides access to a limited portion of the API and additional
-functionality is accessed by installing third-party :ref:`optional-packages`.
-The `packaging` dependency is used to validate the installed versions of any
-optional packages. The `tomli` dependency is a fallback for certain dependency
-checks of the optional dependencies.
+`NumPy`_ enables a baseline portion of the data manipulation API.
+The `packaging`_ dependency is used to validate the installed versions of any
+optional packages. The `tomli`_ dependency is a fallback for certain dependency
+checks of the optional dependencies. All further functionality is accessed by
+installing third-party :ref:`optional-packages`.
+
 For convenience, installing optional packages can also be
 triggered while installing Nimble. We recommend the :ref:`quickstart-install`
-to make much of Nimble's functionality available with a single command.
+to make almost all of Nimble's functionality available with a single command.
 
 Note that downloading and/or installing Nimble constitutes agreement to the
 Nimble :doc:`License Agreement<legal>`.
@@ -29,19 +30,11 @@ Install Methods
 Nimble Install Quickstart
 -------------------------
 
-..
-  To install a selection of :ref:`optional-packages` while installing Nimble,
-  both ``pip`` and ``conda`` installs offer a quickstart option. Quickstart
-  installs all :ref:`operational-support` packages and SciKit-Learn from the
-  :ref:`ml-interfaces`. These packages were chosen because they are reliably
-  installable through ``pip`` and ``conda`` and provide access to the majority
-  of Nimble's functionality.
-
-To install a selection of :ref:`optional-packages` while installing Nimble,
-``pip`` offers a quickstart option. Quickstart
+To install a curated selection of :ref:`optional-packages` while installing Nimble,
+both ``pip`` and ``conda`` installs offer a quickstart option. Quickstart
 installs all :ref:`operational-support` packages and SciKit-Learn from the
 :ref:`ml-interfaces`. These packages were chosen because they are reliably
-installable through ``pip`` across many systems and provide access to the
+installable through ``pip`` and ``conda`` and provide access to the
 majority of Nimble's functionality.
 
 **With pip:**
@@ -60,31 +53,26 @@ Nimble uses extras to provide the ``quickstart`` shortcut
 
     pip install nimble\[quickstart\] --find-links=https://willfind.github.io/nimble/install
 
-..
-  **With conda:**
+**With conda:**
 
-  The nimble-data channel provides an alternative package, ``nimble-quickstart``.
-  Once installed, import still occurs with ``import nimble``, the name
-  ``nimble-quickstart`` serves to install nimble and the other included
-  packages.
+The nimble-data channel available through this website provides a package with expanded
+dependencies, ``nimble-quickstart``. Once installed, import still occurs with
+``import nimble``, the name ``nimble-quickstart`` only serves to install nimble and the
+other desired packages.
 
-  .. code-block::
+.. code-block::
 
-    conda install -c nimble-data nimble-quickstart
+  conda install nimble-quickstart -c https://willfind.github.io/nimble/nimble-data/
 
 .. _specific-install:
 
 Install with Specific Packages
 ------------------------------
 
-..
-  :ref:`optional-packages` can always be installed separately with ``pip`` or
-  ``conda``, for example: ``pip install scipy`` or ``conda install scipy``.
-  However, both package managers offer ways to install optional packages while
-
-:ref:`optional-packages` can always be installed separately via ``pip``
-using the command ``pip install scipy``.
-However, this can also be accomplished in the same step as installing nimble.
+:ref:`optional-packages` can always be installed separately with ``pip`` or
+``conda``, for example: ``pip install scipy`` or ``conda install scipy``.
+However, both package managers offer ways to install optional packages in
+the same step as installing nimble.
 
 .. warning:: Installs will fail if any package fails to install.
 
@@ -115,23 +103,23 @@ install.
 
    - The brackets may need to be escaped in some shells.
 
-..
-  **With conda:**
 
-  For ``conda``, :ref:`optional-packages` must be installed manually. However,
-  ``conda`` allows for multiple packages to be installed at the same time so
-  they can be listed alongside ``nimble``, provided they are available in the
-  available channels.
+**With conda:**
 
-  .. code-block::
+For ``conda``, :ref:`optional-packages` must be installed manually. However,
+``conda`` allows for multiple packages to be installed at the same time so
+they can be listed alongside ``nimble``, provided they are available in the
+known channels.
 
-    conda install -c nimble-data nimble matplotlib scikit-learn
+.. code-block::
 
-  .. note::
-    - The package names used for the installation do not always match the
-      names displayed in the "Package" columns in :ref:`optional-packages`,
-      for example, "scikit-learn" is used to install the ``sklearn`` package and
-      "python-dateutil" is used to install the ``dateutil`` package.
+  conda install nimble matplotlib scikit-learn -c https://willfind.github.io/nimble/nimble-data/
+
+.. note::
+  - The package names used for the installation do not always match the
+    python importable names displayed in the "Package" columns in :ref:`optional-packages`,
+    for example, "scikit-learn" is used to install the ``sklearn`` package and
+    "python-dateutil" is used to install the ``dateutil`` package.
 
 .. _basic-install:
 
@@ -147,25 +135,18 @@ operations requiring an optional package that is not installed.
 
   pip install nimble --find-links=https://willfind.github.io/nimble/install
 
-..
-  **With conda**::
 
-    conda install -c nimble-data nimble
+**With conda**::
 
+  conda install nimble -c https://willfind.github.io/nimble/nimble-data
 
 .. _optional-packages:
 
 Optional Packages
 -----------------
 
-..
-  Many components of Nimble rely on the following third-party packages.
-  Most packages are ``pip`` and ``conda`` installable, but install
-  recommendations vary and some offer further optimizations. **Reading the
-  linked installation instructions for each package is highly recommended.**
-
 Many components of Nimble rely on the following third-party packages.
-Most packages are ``pip`` installable, but install
+Most packages are ``pip`` and ``conda`` installable, but install
 recommendations vary and some offer further optimizations. **Reading the
 linked installation instructions for each package is highly recommended.**
 
@@ -192,30 +173,6 @@ Operational Support
    :align: left
    :widths: auto
 
-   +----------------+----------------------------------------------+------+
-   | Package        | Supports                                     | pip  |
-   +================+==============================================+======+
-   | `scipy`_       | Nimble's ``Sparse`` object and various       | |cm| |
-   |                | scientific calculations.                     |      |
-   +----------------+----------------------------------------------+------+
-   | `pandas`_      | Nimble's ``DataFrame`` object.               | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `matplotlib`_  | Plotting.                                    | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `requests`_    | Retrieving data from the web.                | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `cloudpickle`_ | Saving Nimble data objects.                  | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `dateutil`_    | Parsing strings to `datetime`_ objects.      | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `h5py`_        | Loading hdf5 files.                          | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `hyperopt`_    | Bayesian method for hyperparameter tuning.   | |cm| |
-   +----------------+----------------------------------------------+------+
-   | `storm_tuner`_ | StochasticRandomMutator for hyperparameter   | |cm| |
-   |                | tuning.                                      |      |
-   +----------------+----------------------------------------------+------+
-..
    +----------------+----------------------------------------------+------+-------+
    | Package        | Supports                                     | pip  | conda |
    +================+==============================================+======+=======+
@@ -240,7 +197,6 @@ Operational Support
    |                | tuning.                                      |      |       |
    +----------------+----------------------------------------------+------+-------+
 
-
 .. _sklearn: https://scikit-learn.org/stable/install.html
 .. _tensorflow: https://www.tensorflow.org/install
 .. _autoimpute: https://autoimpute.readthedocs.io/en/latest/user_guide/getting_started.html
@@ -254,19 +210,6 @@ Machine-Learning Interfaces
    :align: left
    :widths: auto
 
-   +----------------+--------------------------------------------------+------+
-   | Package        | Provides                                         | pip  |
-   +================+==================================================+======+
-   | `sklearn`_     | Machine Learning.                                | |cm| |
-   +----------------+--------------------------------------------------+------+
-   | `tensorflow`_/ | Neural Networks.                                 | |cm| |
-   | `keras`_       | See :ref:`install note <tensorflow-note>` below. |      |
-   +----------------+--------------------------------------------------+------+
-   | `autoimpute`_  | Imputation. Machine Learning with missing data.  | |cm| |
-   +----------------+--------------------------------------------------+------+
-
-
-..
    +----------------+--------------------------------------------------+------+----------------------------+
    | Package        | Provides                                         | pip  | conda                      |
    +================+==================================================+======+============================+
@@ -288,12 +231,9 @@ Machine-Learning Interfaces
    - Windows: https://github.com/fo40225/tensorflow-windows-wheel
 
 
-
-
 Binary Wheels
 -------------
 
-The installation commands we document on this page will automatically find the correct
+The installation commands for pip we document on this page will automatically find the correct
 precompiled binary wheel from the possible options in the table below. Not all
 systems and python versions are supported.
-

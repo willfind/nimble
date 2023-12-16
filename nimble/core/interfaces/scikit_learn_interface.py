@@ -371,12 +371,13 @@ class SciKitLearn(_SciKitLearnAPI):
         def mockWalkPackages(*args, **kwargs):
             packages = walkPackages(*args, **kwargs)
             ret = []
-            # ignore anything that imports libraries that are not installed
-            # each pkg is a tuple (importer, moduleName, isPackage)
+            # ignore anything that imports libraries that are not installed,
+            # test modules, and experimental modules.
             for pkg in packages:
+                # each pkg is a tuple (importer, moduleName, isPackage)
                 module = pkg[1]
                 # no need to search tests and can fail in unexpected ways
-                if 'tests' in module.split('.'):
+                if 'tests' in module or 'experimental' in module:
                     continue
                 try:
                     _ = importlib.import_module(module)
