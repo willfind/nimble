@@ -156,7 +156,7 @@ Some verions of the software have active licenses only when indicated as such in
    +--------------+----------------+
    | Version      | License Status |
    +==============+================+
-   | <= 0.4.2     | ACTIVE         |
+   | <= 0.4.4     | ACTIVE         |
    +--------------+----------------+
 
 (When the license is no longer actve, the License Status column will indicate "TERMINATED")
