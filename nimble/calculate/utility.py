@@ -14,6 +14,12 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.random import numpyRandom
 
+ACCEPTED_STATS = [
+            'max', 'mean', 'median', 'min', 'unique count',
+            'proportion missing', 'proportion zero', 'standard deviation',
+            'std', 'population std', 'population standard deviation',
+            'sample std', 'sample standard deviation'
+            ]
 
 def detectBestResult(functionToCheck):
     """

@@ -31,6 +31,7 @@ from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
 from nimble._utility import prettyListString
 from nimble._utility import inspectArguments
 from nimble._utility import tableString
+from nimble._utility import _getStatsFunction, acceptedStats
 from .points import Points
 from .features import Features
 from ._dataHelpers import valuesToPythonList, constructIndicesList
@@ -879,53 +880,11 @@ class Axis(ABC):
         return ret
 
     def _statistics(self, statisticsFunction, groupByFeature=None):
-        accepted = [
-            'max', 'mean', 'median', 'min', 'unique count',
-            'proportion missing', 'proportion zero', 'standard deviation',
-            'std', 'population std', 'population standard deviation',
-            'sample std', 'sample standard deviation', 'sum',
-            'mode', 'variance', 'median absolute deviation', 'quartiles',
-            ]
+        accepted = acceptedStats
         cleanFuncName = validateInputString(statisticsFunction, accepted,
                                             'statistics')
-
-        if cleanFuncName == 'max':
-            toCall = nimble.calculate.maximum
-        elif cleanFuncName == 'mean':
-            toCall = nimble.calculate.mean
-        elif cleanFuncName == 'median':
-            toCall = nimble.calculate.median
-        elif cleanFuncName == 'min':
-            toCall = nimble.calculate.minimum
-        elif cleanFuncName == 'uniquecount':
-            toCall = nimble.calculate.uniqueCount
-        elif cleanFuncName == 'proportionmissing':
-            toCall = nimble.calculate.proportionMissing
-        elif cleanFuncName == 'proportionzero':
-            toCall = nimble.calculate.proportionZero
-        elif cleanFuncName == 'mode':
-            toCall = nimble.calculate.mode
-        elif cleanFuncName == 'sum':
-            toCall = nimble.calculate.sum
-        # elif cleanFuncName == 'count':
-        #     toCall = nimble.calculate.count
-        elif cleanFuncName == 'variance':
-            toCall = nimble.calculate.variance
-        elif cleanFuncName == 'quartiles':
-            toCall = nimble.calculate.quartiles
-        elif cleanFuncName == 'medianabsolutedeviation':
-            toCall = nimble.calculate.medianAbsoluteDeviation
-        elif cleanFuncName in ['std', 'standarddeviation', 'samplestd',
-                               'samplestandarddeviation']:
-            toCall = nimble.calculate.standardDeviation
-        elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
+        toCall = _getStatsFunction(cleanFuncName)
         
-
-            def populationStandardDeviation(values):
-                return nimble.calculate.standardDeviation(values, False)
-
-            toCall = populationStandardDeviation
-
         if self._axis == 'point' or groupByFeature is None:
             return self._statisticsBackend(cleanFuncName, toCall)
         # groupByFeature is only a parameter for .features
@@ -937,11 +896,16 @@ class Axis(ABC):
 
     def _statisticsBackend(self, cleanFuncName, toCall):
         ret = self._calculate(toCall, limitTo=None)
+        oldNames = 0
+        if cleanFuncName == 'quartiles':
+            retNames = ['quartile1', 'quartile2', 'quartile3']
+            oldNames = [0, 1, 2]
+            cleanFuncName = retNames
         if self._isPoint:
             ret.points.setNames(self._getNames(), useLog=False)
-            ret.features.setNames(cleanFuncName, oldIdentifiers=0, useLog=False)
+            ret.features.setNames(cleanFuncName, oldIdentifiers=oldNames, useLog=False)
         else:
-            ret.points.setNames(cleanFuncName, oldIdentifiers=0, useLog=False)
+            ret.points.setNames(cleanFuncName, oldIdentifiers=oldNames, useLog=False)
             ret.features.setNames(self._getNames(), useLog=False)
 
         return ret
@@ -1641,13 +1605,13 @@ class Axis(ABC):
         return result
 
     def _standardDeviation(self, groupByFeature=None):
-        FuncName = 'std'
+        FuncName = 'standarddeviation'
         toCall = nimble.calculate.standardDeviation
         result = self._process_statistics(FuncName, toCall, groupByFeature)
         return result
 
     def _populationStandardDeviation(self, groupByFeature=None):
-        FuncName = 'populationstd'
+        FuncName = 'populationstandarddeviation'
         calcSTD = nimble.calculate.standardDeviation
         toCall = functools.partial(calcSTD, sample=False)
         result = self._process_statistics(FuncName, toCall, groupByFeature)

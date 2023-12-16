@@ -20,6 +20,13 @@ import numpy as np
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._dependencies import checkVersion
+import nimble
+
+acceptedStats = ['max', 'mean', 'median', 'min', 'unique count',
+            'proportion missing', 'proportion zero', 'standard deviation',
+            'std', 'population std', 'population standard deviation',
+            'sample std', 'sample standard deviation', 'count', 'mode', 
+            'sum', 'variance','median absolute deviation', 'quartiles']
 
 def isFunction(func):
     """
@@ -568,6 +575,47 @@ def tableString(table, rowHeader=True, colHeaders=None, roundDigits=None,
         out += '\n'
 
     return out
+
+def _getStatsFunction(statsFuncName):
+    if statsFuncName == 'max':
+        toCall = nimble.calculate.maximum
+    elif statsFuncName == 'min':
+        toCall = nimble.calculate.minimum
+    elif statsFuncName == 'mean':
+        toCall = nimble.calculate.mean
+    elif statsFuncName == 'median':
+        toCall = nimble.calculate.median
+    elif statsFuncName == 'mode':
+        toCall = nimble.calculate.mode
+    elif statsFuncName == 'sum':
+        toCall = nimble.calculate.sum
+    elif statsFuncName == 'variance':
+        toCall = nimble.calculate.variance
+    elif statsFuncName == 'uniquecount':
+        toCall = nimble.calculate.uniqueCount
+    elif statsFuncName == 'proportionmissing':
+        toCall = nimble.calculate.proportionMissing
+    elif statsFuncName == 'proportionzero':
+        toCall = nimble.calculate.proportionZero
+    elif statsFuncName == 'quartiles':
+        toCall = nimble.calculate.quartiles
+    elif statsFuncName == 'medianabsolutedeviation':
+        toCall = nimble.calculate.medianAbsoluteDeviation
+    elif statsFuncName in ['std', 'standarddeviation', 'samplestd',
+                             'samplestandarddeviation']:
+        toCall = nimble.calculate.standardDeviation
+    elif statsFuncName in ['populationstd', 'populationstandarddeviation']:
+
+        def populationStandardDeviation(values):
+            return nimble.calculate.standardDeviation(values, False)
+
+        toCall = populationStandardDeviation
+    else:
+        raise ValueError(f"Invalid statistical method name: {statsFuncName}")
+
+    return toCall
+
+
 
 ############################
 # Unavailable ML Methods  #

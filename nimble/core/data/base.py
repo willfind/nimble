@@ -28,8 +28,9 @@ from nimble.match import QueryString
 from nimble._utility import cloudpickle, h5py, plt, IPython
 from nimble._utility import isDatetime
 from nimble._utility import tableString, prettyListString, quoteStrings
+from nimble._utility import _getStatsFunction, acceptedStats
 from .stretch import Stretch
-from ._dataHelpers import formatIfNeeded
+from ._dataHelpers import formatIfNeeded, validateInputString
 from ._dataHelpers import constructIndicesList
 from ._dataHelpers import createListOfDict, createDictOfList
 from ._dataHelpers import createDataNoValidation
@@ -50,6 +51,7 @@ from ._dataHelpers import mergeNames, mergeNonDefaultNames
 from ._dataHelpers import binaryOpNamePathMerge
 from ._dataHelpers import indicesSplit
 from ._dataHelpers import prepLog
+
 
 def to2args(f):
     """
@@ -1171,7 +1173,7 @@ class Base(ABC):
 
     @limitedTo2D
     @prepLog
-    def groupByFeature(self, by, countUniqueValueOnly=False, *,
+    def groupByFeature(self, by, calculate=None, countUniqueValueOnly=False, *,
                        useLog=None): # pylint: disable=unused-argument
         """
         Group data object by one or more features.
@@ -1182,6 +1184,9 @@ class Base(ABC):
             * int - the index of the feature to group by
             * str - the name of the feature to group by
             * list - indices or names of features to group by
+        calculate : str, None
+            The name of the statistical function to apply to each group. 
+            If None, the default, no calculation will be applied.
         countUniqueValueOnly : bool
             Return only the count of points in the group
         useLog : bool, None
@@ -1266,6 +1271,9 @@ class Base(ABC):
             findKey = findKey2
 
         res = {}
+        calc = {}
+        accepted = acceptedStats
+        
         if countUniqueValueOnly:
             for point in self.points:
                 k = findKey(point, by)
@@ -1280,10 +1288,22 @@ class Base(ABC):
                     res[k] = point.copy()
                 else:
                     res[k].points.append(point.copy(), useLog=False)
-
+                    
             for obj in res.values():
                 obj.features.delete(by, useLog=False)
-
+                
+            if calculate is not None:  
+                cleanFuncName = validateInputString(calculate, accepted,
+                                            'statistics') 
+                toCall = _getStatsFunction(cleanFuncName)
+                # different paradigm that puts accepted also into getStatsFunction 
+                #cleanFuncName, toCall = _getStatsFunction(calculate)
+                    
+                for k in list(res.keys()):
+                    
+                    calc[k] = res[k].features._statisticsBackend(cleanFuncName, toCall)
+                
+                return calc
         return res
 
     @limitedTo2D
@@ -5802,19 +5822,68 @@ class Base(ABC):
         return nimble.calculate.proportionZero(self._vectorize())
     
     def mode(self):
+        """
+        Returns a number representing the mode of the nimble object.
+        
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.mode()
+        0
+        """
         return nimble.calculate.mode(self._vectorize())
     
     def sum(self):
+        """
+        Returns a number representing the sum of the nimble object.
+        
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.sum()
+        8
+        """
         return nimble.calculate.sum(self._vectorize())
     
     def variance(self):
+        """
+        Returns a number representing the variance of the nimble object.
+        
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.variance()
+        3.866666666666667
+        """
         return nimble.calculate.variance(self._vectorize())
     
     def medianAbsoluteDeviation(self):
+        """
+        Returns a number representing the median absolute deviation 
+        of the nimble object.
+        
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.medianAbsoluteDeviation()
+        0.5
+        """
         return nimble.calculate.medianAbsoluteDeviation(self._vectorize())
     
     def quartiles(self):
+        """
+        Returns a list of numbers representing the quartiles of 
+        the nimble object.
+        
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.quartiles()
+        (0.0, 0.5, 1.75)
+        """
         return nimble.calculate.quartiles(self._vectorize())
-    
-    
-    

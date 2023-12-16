@@ -134,8 +134,8 @@ base_notLogged = [
     'plotFeatureGroupMeans', 'plotFeatureGroupStatistics', 'pointView',
     'save', 'show', 'solveLinearSystem', 'toString', 'checkInvariants', 'view',
     'max', 'min', 'mean', 'median', 'uniqueCount', 'proportionMissing',
-    'proportionZero',
-    'mode', 'medianAbsoluteDeviation', 'variance', 'sum', 'quartiles',
+    'proportionZero', 'mode', 'sum', 'quartiles', 'medianAbsoluteDeviation',
+    'variance',
     ]
 base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))

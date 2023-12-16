@@ -2725,10 +2725,10 @@ class Points(ABC):
         >>> X = nimble.data(lst)
         >>> X.points.standardDeviation()
         <Matrix 2pt x 1ft
-             'std'
-           ┌───────
-         0 │ 12.166
-         1 │ 10.440
+             'standarddeviation'
+           ┌────────────────────
+         0 │        12.166
+         1 │        10.440
         >
         '''
         return self._standardDeviation()
@@ -2745,34 +2745,113 @@ class Points(ABC):
         >>> X = nimble.data(lst)
         >>> X.points.populationStandardDeviation()
         <Matrix 2pt x 1ft
-             'populationstd'
-           ┌────────────────
-         0 │      9.933
-         1 │      8.524
+             'populationstandarddeviation'
+           ┌──────────────────────────────
+         0 │             9.933
+         1 │             8.524
         >
         """ 
         return self._populationStandardDeviation()
 
     @limitedTo2D
     def mode(self):
+        '''
+        Retirms a nimble object representing the mode along 
+        the points axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 2, 2], [3, 3, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.mode()
+        <Matrix 2pt x 1ft
+             'mode'
+           ┌───────
+         0 │   2
+         1 │   3
+        >
+        '''
         return self._mode()
     
     @limitedTo2D
     def sum(self):
+        '''
+        Returns a nimble object representing the sum along the points
+        axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.sum()
+        <Matrix 2pt x 1ft
+             'sum'
+           ┌──────
+         0 │   24
+         1 │   30
+        >
+        '''
         return self._sum()
     
     @limitedTo2D
     def variance(self):
+        '''
+        Returns a nimble object representing the variance along the
+        points axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.variance()
+        <Matrix 2pt x 1ft
+             'variance'
+           ┌───────────
+         0 │  148.000
+         1 │  109.000
+        >
+        '''
         return self._variance()
     
     @limitedTo2D
     def medianAbsoluteDeviation(self):
+        '''
+        Returns a nimble object representing the median absolute
+        deviation along the points axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.medianAbsoluteDeviation()
+        <Matrix 2pt x 1ft
+             'medianabsolutedeviation'
+           ┌──────────────────────────
+         0 │           2.000
+         1 │           2.000
+        >
+        '''
         return self._medianAbsoluteDeviation()
-    
+
     @limitedTo2D
     def quartiles(self):
+        ''' 
+        Returns a nimble object representing the quartiles along
+        the points axis.
+        
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.quartiles()
+        <Matrix 2pt x 3ft
+             'quartile1' 'quartile2' 'quartile3'
+           ┌────────────────────────────────────
+         0 │    1.000       2.000       12.000
+         1 │    4.000       5.000       13.500
+        >
+        '''
         return self._quartiles()
-    
 
     ####################
     # Abstract Methods #
