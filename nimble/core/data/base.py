@@ -2246,9 +2246,10 @@ class Base(ABC):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def toString(self, maxWidth=79, maxHeight=30, sigDigits=3,
-                 maxColumnWidth=19, includePointNames=True,
-                 includeFeatureNames=True, indent='', quoteNames=True):
+    def toString(self, points=None, features=None, lineLimit=30,
+                 lineWidthLimit=79,  sigDigits=3, columnWidthLimit=19,
+                 includePointNames=True, includeFeatureNames=True,
+                 indent='', quoteNames=True):
         """
         A string representation of this object.
 
@@ -2260,15 +2261,21 @@ class Base(ABC):
 
         Parameters
         ----------
-        maxWidth : int
-            A bound on the maximum number of characters allowed on each
-            line of the output.
-        maxHeight : int
+        points : range, int, None
+            A filter for specifying a specific range or number of points.
+            If None, lineLimit will determine what is shown.
+        features : range, int, None
+            A filter for specifying a specific range or number of features.
+            If None, lineWidthLimit will determine what is shown.
+        lineLimit : int
             A bound on the maximum number of lines allowed for the
             output.
+        lineWidthLimit : int
+            A bound on the maximum number of characters allowed on each
+            line of the output.
         sigDigits : int
             The number of significant digits to display in the output.
-        maxColumnWidth : int
+        columnWidthLimit : int
             A bound on the maximum number of characters allowed for the
             width of single column (feature) in each line.
         includePointNames : bool
@@ -2281,6 +2288,8 @@ class Base(ABC):
             of the features will be displayed instead of the names.
         indent : str
             The string to use as indentation.
+        quoteNames : bool
+            Whether single quotes are included around the axis names.
 
         See Also
         --------
@@ -2304,22 +2313,22 @@ class Base(ABC):
 
         # setup a bundle of default values
         numPoints = len(self.points)
-        if maxHeight is None:
+        if lineLimit is None:
             maxDataRows = numPoints
-            maxHeight = maxDataRows + 2
         else:
-            maxDataRows = min(maxHeight - 2, numPoints)
+            maxDataRows = min(lineLimit - 2, numPoints)
             if maxDataRows <= 1 and numPoints > maxDataRows:
-                msg = 'The minimum maxHeight for this data is '
+                msg = 'The minimum lineLimit for this data is '
                 msg += str(2 + min(numPoints, 2))
                 raise InvalidArgumentValue(msg)
 
-        maxWidth = float('inf') if maxWidth is None else maxWidth
-        maxDataWidth = maxWidth - len(indent)
+        if lineWidthLimit is None:
+            lineWidthLimit = float('inf')
+        maxDataWidth = lineWidthLimit - len(indent)
         # we want to only prepare pointNames if "include=True"
-        # else table should include data but no pointnames + space for it 
+        # else table should include data but no pointnames + space for it
         pnames, pnamesWidth = self._arrangePointNames(
-            maxDataRows, maxColumnWidth, rowHold, nameHolder, includePointNames,
+            maxDataRows, columnWidthLimit, rowHold, nameHolder, includePointNames,
             quoteNames)
         # The available space for the data is reduced by the width of the
         # pnames, a column separator, the pnames separator, and another
@@ -2329,7 +2338,7 @@ class Base(ABC):
         # Set up data values to fit in the available space
         with self._treatAs2D():
             dataTable, colWidths, fnames = self._arrangeDataWithLimits(
-                maxDataWidth, maxDataRows, sigDigits, maxColumnWidth, colSep,
+                maxDataWidth, maxDataRows, sigDigits, columnWidthLimit, colSep,
                 colHold, rowHold, nameHolder, includeFeatureNames, quoteNames)
         # combine names into finalized table
         finalTable, finalWidths = arrangeFinalTable(
@@ -2367,10 +2376,11 @@ class Base(ABC):
         return (117, 30)
 
 
-    def _show(self, description=None, includeObjectName=True,
-              maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-              maxColumnWidth='automatic', includePointNames=True,
-              includeFeatureNames=True, indent='', quoteNames=True):
+    def _show(self, description=None, points=None, features=None,
+              lineLimit='automatic', lineWidthLimit='automatic',
+              sigDigits=3, columnWidthLimit='automatic',
+              includePointNames=True, includeFeatureNames=True,
+              includeObjectName=True, indent='', quoteNames=True):
 
         # Check if we're in IPython / a Notebook
         if IPython.nimbleAccessible():
@@ -2379,32 +2389,35 @@ class Base(ABC):
             shell = IPython.core.getipython.get_ipython()
         else:
             shell = None
-        
-        # Resolve the 'automatic' values for maxWidth and maxHeight
+
+        # Resolve the 'automatic' values for lineWidthLimit and lineLimit
         if shell is not None:
             terminalSize = self._getNotebookTerminalSize(shell)
         else:
             terminalSize = shutil.get_terminal_size()
 
-        if maxWidth == 'automatic':
-            maxWidth = max(79, terminalSize[0] - 1)
-        if maxHeight == 'automatic':
-            maxHeight = max(30, terminalSize[1] - 1)
-        if maxHeight is not None:
+        if features is None and lineWidthLimit == 'automatic':
+            lineWidthLimit = max(79, terminalSize[0] - 1)
+        else:
+            lineWidthLimit = None
+
+        if lineLimit == 'automatic':
+            lineLimit = max(30, terminalSize[1] - 1)
+        if lineLimit is not None:
             # subtract lines for data details and last line
-            maxHeight -= 2
+            lineLimit -= 2
 
         ret = ''
         if description is not None:
             ret += indent + description + '\n'
-            if maxHeight is not None:
-                maxHeight -= 1
-        
-        if maxColumnWidth == 'automatic':
-            maxColumnWidth = (maxWidth // len(self.features)) + 7
-            if maxColumnWidth < 8:
-                maxColumnWidth = 8 # lower limit for dynamic column width
-            
+            if lineLimit is not None:
+                lineLimit -= 1
+
+        if columnWidthLimit == 'automatic':
+            columnWidthLimit = (lineWidthLimit // len(self.features)) + 7
+            if columnWidthLimit < 8:
+                columnWidthLimit = 8 # lower limit for dynamic column width
+
         if includeObjectName and self.name is not None:
             ret += f'"{self._name}" '
         if len(self._dims) > 2:
@@ -2414,9 +2427,10 @@ class Base(ABC):
         ret += str(len(self.features)) + "ft"
         ret += '\n'
 
-        ret += self.toString(maxWidth, maxHeight, sigDigits, maxColumnWidth,
-                              includePointNames=includePointNames, includeFeatureNames=includeFeatureNames,
-                              indent=indent, quoteNames=quoteNames)
+        ret += self.toString(points, features, lineLimit, lineWidthLimit,
+            sigDigits, columnWidthLimit, includePointNames=includePointNames,
+            includeFeatureNames=includeFeatureNames, indent=indent,
+            quoteNames=quoteNames)
 
         return ret
 
@@ -2434,11 +2448,10 @@ class Base(ABC):
             ret += '>'
 
         return ret
-
-    def show(self, description=None, includeObjectName=True,
-             maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-             maxColumnWidth='automatic', includePointNames=True,
-             includeFeatureNames=True):
+    def show(self, description=None, points=None, features=None,
+             lineLimit='automatic', lineWidthLimit='automatic', sigDigits=3,
+             columnWidthLimit='automatic', includePointNames=True,
+             includeFeatureNames=True, includeObjectName=True):
         """
         A printed representation of the data.
 
@@ -2452,27 +2465,40 @@ class Base(ABC):
         ----------
         description : str, None
             Printed as-is before the rest of the output, unless None.
-        includeObjectName : bool
-            True will include printing of the object's ``name``
-            attribute, False will not print the object's name.
-        maxWidth : 'automatic', int, None
+        points : range, int, None
+            A filter for which points to include in the output. If given
+            a range, only those those within the range will be output. An
+            int will allow up to that amount of points to be shown,
+            working inwards from the first and last point. If None (default),
+            there is no specification, and points will be chosen according to
+            lineLimit.
+        features : range, int, None
+            A filter for which features to include in the output. If given
+            a range, only those those within the range will be output. An
+            int will allow up to that int's amount of features to be shown,
+            working inwards from the first and last feature. If None (default),
+            there is no specification, and features will be chosen according to
+            lineWidthLimit.
+        lineLimit : 'automatic', int, None
+            A bound on the maximum number of lines allowed for the
+            output.  The default, 'automatic', enforces a minimum
+            height of 30 lines but expands dynamically when the height
+            of the terminal is greater than 30, or will be ignored if
+            the points parameter is specified. None will disable the
+            bound on height.
+        lineWidthLimit : 'automatic', int, None
             A bound on the maximum number of characters allowed on each line
             of the output. In CPython, the default value 'automatic', resolves
             to a width of 79 but expands dynamically when the width of the
             terminal is greater than 80 characters. In IPython / Notebooks
-            'automatic' always resolves to 117. A value of None will allow an
+            'automatic' always resolves to 117. This limit will be ignored if
+            the features parameter is specified. A value of None will allow an
             unbounded width.
-        maxHeight : 'automatic', int, None
-            A bound on the maximum number of lines allowed for the
-            output.  The default, 'automatic', enforces a minimum
-            height of 30 lines but expands dynamically when the height
-            of the terminal is greater than 30. None will disable the
-            bound on height.
         sigDigits : int
             The number of significant digits to display in the output.
-        maxColumnWidth : int
+        columnWidthLimit : int
             A bound on the maximum number of characters allowed for the
-            width of single column (feature) in each line. 
+            width of single printed column (feature) in each line. 
             If the column text is too long for the set bound, 3 characters
             will be used up for the ellipses during truncation.
         includePointNames : bool
@@ -2483,15 +2509,19 @@ class Base(ABC):
             Used to control whether the feature names are printed alongside 
             the data in the features column. If set to 'False' the indices
             of the features will be displayed instead of the names.
+        includeObjectName : bool
+            True will include printing of the object's ``name``
+            attribute, False will not print the object's name.
             
         Keywords
         --------
         print, representation, visualize, out, stdio, visualize, output,
         write, text, repr, represent, display, terminal
         """
-        print(self._show(description, includeObjectName, maxWidth, maxHeight,
-                         sigDigits, maxColumnWidth, includePointNames,
-                         includeFeatureNames))
+        print(self._show(description, points, features, lineLimit,
+                         lineWidthLimit, sigDigits, columnWidthLimit,
+                         includePointNames, includeFeatureNames,
+                         includeObjectName))
 
     @limitedTo2D
     def plotHeatMap(self, includeColorbar=False, outPath=None, show=True,

@@ -1262,7 +1262,7 @@ class QueryBackendSparseSafe(DataTestObject):
 
                 for mw in [40, 60, 80, None]:
                     for mh in [5, 7, 10, None]:
-                        ret = data.toString(maxWidth=mw, maxHeight=mh)
+                        ret = data.toString(lineLimit=mh, lineWidthLimit=mw)
                         checkToStringRet(ret, data, mw, mh)
 
     def test_toString_lazyNameGeneration(self):
@@ -1286,7 +1286,7 @@ class QueryBackendSparseSafe(DataTestObject):
 
         for mw in [40, 60, 80, None]:
             for mh in [5, 7, 10, None]:
-                ret = data.toString(maxWidth=mw, maxHeight=mh)
+                ret = data.toString(lineLimit=mh, lineWidthLimit=mw)
                 checkToStringRet(ret, data, mw, mh)
 
     def test_toString_knownWidths(self):
@@ -1302,7 +1302,7 @@ class QueryBackendSparseSafe(DataTestObject):
         data = self.constructor(raw, featureNames=ftNames)
         # width of 9 to 11 will return first feature and colHold ('a  --')
         for mw in range(11, 16):
-            ret = data.toString(maxWidth=mw)
+            ret = data.toString(lineWidthLimit=mw)
             # ignore last index since ret always ends with \n
             retSplit = ret.split('\n')[:-1]
             for i, line in enumerate(retSplit):
@@ -1317,7 +1317,7 @@ class QueryBackendSparseSafe(DataTestObject):
         # width of 16 will return first ft, colHold, last ft ('a  -- cc')
         # 1 for point name, 1 for point separator, 8 for feature column data,
         # 2 for colHold, and 4 separating space characters
-        ret = data.toString(maxWidth=16)
+        ret = data.toString(lineWidthLimit=16)
         # ignore last index since ret always ends with \n
         retSplit = ret.split('\n')[:-1]
         for i, line in enumerate(retSplit):
@@ -1332,7 +1332,7 @@ class QueryBackendSparseSafe(DataTestObject):
         # width of 18 can accommodate all data ('a  bbb cc')
         # 1 for point name, 1 for point separator, 12 for feature column data,
         # 4 separating space characters
-        ret = data.toString(maxWidth=18)
+        ret = data.toString(lineWidthLimit=18)
         # ignore last index since ret always ends with \n
         retSplit = ret.split('\n')[:-1]
         for i, line in enumerate(retSplit):
@@ -1352,7 +1352,7 @@ class QueryBackendSparseSafe(DataTestObject):
 
         # for height in range 4 to 10, row separator should be present
         for mh in range(4, 11):
-            ret = data.toString(maxHeight=mh)
+            ret = data.toString(lineLimit=mh)
             # ignore last index since ret always ends with \n
             retSplit = ret.split('\n')[:-1]
             sepRow = int((mh - 2) / 2) + 2
@@ -1361,7 +1361,7 @@ class QueryBackendSparseSafe(DataTestObject):
             assert re.match(rowSepPattern, retSplit[sepRow])
         # height 11 can accommodate all data
         # 2 header lines, 8 data lines, 1 blankline
-        ret = data.toString(maxHeight=11)
+        ret = data.toString(lineLimit=11)
         # ignore headers and blankline
         retSplit = ret.split('\n')[2:-1]
         for line in retSplit:
