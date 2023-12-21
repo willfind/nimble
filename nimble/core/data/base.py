@@ -2314,13 +2314,21 @@ class Base(ABC):
         # Resolve default values for points, features, and related
         # variables
         if isinstance(points, range):
+            truePoints = len(self.points)
+            if points.stop > truePoints:
+                points = range(points.start, truePoints)
             numPoints = len(points)
+            pRange = points
         elif isinstance(points, int):
-            numPoints = points
+            numPoints = min(points, len(self.points))
+            pRange = range(len(self.points))
         # points is None
-        else:
+        elif points is None:
             points = len(self.points)
             numPoints = points
+            pRange = range(len(self.points))
+        else:
+            raise Exception()
 
         if features is None:
             features = len(self.features)
@@ -2339,7 +2347,7 @@ class Base(ABC):
         maxDataWidth = lineWidthLimit - len(indent)
         # we want to only prepare pointNames if "include=True"
         # else table should include data but no pointnames + space for it
-        pnames, pnamesWidth = self._arrangePointNames(points,
+        pnames, pnamesWidth = self._arrangePointNames(pRange,
             maxDataRows, columnWidthLimit, rowHold, nameHolder, includePointNames,
             quoteNames)
         # The available space for the data is reduced by the width of the
@@ -5358,7 +5366,7 @@ class Base(ABC):
         # pylint: disable=unused-argument
         self.__init__(**kwargs)
 
-    def _arrangePointNames(self, points, maxRows, nameLength, rowHolder, nameHold,
+    def _arrangePointNames(self, pRange, maxRows, nameLength, rowHolder, nameHold,
                            includePointNames, quoteNames):
         """
         Prepare point names for string output. Grab only section of
@@ -5373,48 +5381,40 @@ class Base(ABC):
         pnamesWidth = 0
         nameCutIndex = nameLength - len(nameHold)
 
-        # At the beginning of this method, points may only be a
-        # range or an int
-        if isinstance(points, range):
-            numPts = len(points)
-            pOffset = points[0]
-        else:
-            numPts = points
-            pOffset = 0
+        tRowIDs, bRowIDs = indicesSplit(maxRows, pRange)
 
-        tRowIDs, bRowIDs = indicesSplit(maxRows, numPts, pOffset)
-
-        if self.points._allDefaultNames() or includePointNames is False:
-            pnames = list(map(str, range(len(self.points))))
-        else:
-            pnames = []
-            for i, name in enumerate(self.points.getNames()):
-                if name is None:
-                    if quoteNames:
-                        pnames.append(str(i))
-                    else:
-                        pnames.append('')
-                elif quoteNames:
-                    if len(name) <= nameLength - 2:
-                        finalName = name
-                    else:
-                        finalName = name[:nameCutIndex - 2] + nameHold
-                    pnames.append("'" + finalName + "'")
+        def getNameString(index):
+            if self.points._allDefaultNames() or includePointNames is False:
+                return str(index)
+                    
+            name = self.points.getName(index)
+            if name is None:
+                if quoteNames:
+                    return str(index)
                 else:
-                    if len(name) <= nameLength:
-                        finalName = name
-                    else:
-                        finalName = name[:nameCutIndex] + nameHold
-                    pnames.append(finalName)
+                    return ''
+            
+            if quoteNames:
+                if len(name) <= nameLength - 2:
+                    finalName = name
+                else:
+                    finalName = name[:nameCutIndex - 2] + nameHold
+                return "'" + finalName + "'"
+            else:
+                if len(name) <= nameLength:
+                    finalName = name
+                else:
+                    finalName = name[:nameCutIndex] + nameHold
+                return (finalName)
 
-        topNames = [pnames[i] for i in tRowIDs]
-        bottomNames = [pnames[i] for i in bRowIDs]
+        topNames = list(map(getNameString, tRowIDs))
+        bottomNames = list(map(getNameString, bRowIDs))
         maxWidth = max(map(len, topNames))
         if bottomNames:
             maxWidth = max(maxWidth, max(map(len, bottomNames)))
         pnamesWidth = min(nameLength, maxWidth)
         names = topNames
-        if len(topNames) + len(bottomNames) < len(self.points):
+        if len(topNames) + len(bottomNames) < len(pRange):
             names.append(rowHolder)
         names.extend(bottomNames)
 
@@ -5455,10 +5455,10 @@ class Base(ABC):
         # range or an int
         if isinstance(points, range):
             numPts = len(points)
-            pOffset = points[0]
+            pRange = points
         else:
             numPts = points
-            pOffset = 0
+            pRange = range(len(self.points))
         if isinstance(features, range):
             numFts = len(features)
             fOffset = features[0]
@@ -5479,7 +5479,7 @@ class Base(ABC):
             return [[]] * maxDataRows, [], []
 
         if numPts > 0:
-            tRowIDs, bRowIDs = indicesSplit(maxDataRows, numPts, pOffset)
+            tRowIDs, bRowIDs = indicesSplit(maxDataRows, pRange)
         else:
             tRowIDs, bRowIDs = [], []
         combinedRowIDs = tRowIDs + bRowIDs

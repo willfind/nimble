@@ -141,7 +141,7 @@ def formatIfNeeded(value, sigDigits):
     return str(value)
 
 
-def indicesSplit(allowed, total, offset=0):
+def indicesSplit(allowed, iRange):
     """
     Given the total length of a list, and a limit to
     how many indices we are allowed to display, return
@@ -150,6 +150,7 @@ def indicesSplit(allowed, total, offset=0):
     growing up from zero. The second list are negative indices
     growing up to negative one.
     """
+    total = len(iRange)
     if total > allowed:
         allowed -= 1
 
@@ -168,8 +169,8 @@ def indicesSplit(allowed, total, offset=0):
     if fIndices[len(fIndices) - 1] == bIndices[0]:
         bIndices = bIndices[1:]
 
-    fIndices = list(map(lambda x: x+offset, fIndices))
-    bIndices = list(map(lambda x: x+offset, bIndices))
+    fIndices = list(map(lambda x: iRange.start + x, fIndices))
+    bIndices = list(map(lambda x: iRange.start + x, bIndices))
 
     return (fIndices, bIndices)
 
