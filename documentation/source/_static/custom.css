@@ -25,14 +25,16 @@ table.align-default {
   background-color: white;
 }
 
+/* css elements for nimble classes and class methods */ 
 .nimble-hyperlink {
-  color: inherit;
+  color: blue;
   text-decoration: inherit;
+  border-bottom: 1px dotted #000;
 }
 
 .nimble-hyperlink:hover {
-  color: inherit;
-  text-decoration: underline;
+  color: goldenrod;
+  text-decoration: inherit;
 }
 
 /* Mirrors Bootstrap grid system, move table to the right on large screens */
