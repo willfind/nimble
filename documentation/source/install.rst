@@ -238,12 +238,3 @@ The installation commands for pip we document on this page will automatically fi
 precompiled binary wheel from the possible options in the table below. Not all
 systems and python versions are supported.
 
-.. flat-table::
-  :align: left
-  :widths: auto
-  :header-rows: 1
-
-  * - OS
-    - Python Version
-    - Architecture
-
