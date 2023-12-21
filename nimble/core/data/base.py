@@ -2311,8 +2311,20 @@ class Base(ABC):
         pNameOrientation = 'rjust'
         fNameOrientation = 'center'
 
-        # setup a bundle of default values
-        numPoints = len(self.points)
+        # Resolve default values for points, features, and related
+        # variables
+        if isinstance(points, range):
+            numPoints = len(points)
+        elif isinstance(points, int):
+            numPoints = points
+        # points is None
+        else:
+            points = len(self.points)
+            numPoints = points
+
+        if features is None:
+            features = len(self.features)
+
         if lineLimit is None:
             maxDataRows = numPoints
         else:
@@ -2327,7 +2339,7 @@ class Base(ABC):
         maxDataWidth = lineWidthLimit - len(indent)
         # we want to only prepare pointNames if "include=True"
         # else table should include data but no pointnames + space for it
-        pnames, pnamesWidth = self._arrangePointNames(
+        pnames, pnamesWidth = self._arrangePointNames(points,
             maxDataRows, columnWidthLimit, rowHold, nameHolder, includePointNames,
             quoteNames)
         # The available space for the data is reduced by the width of the
@@ -2338,6 +2350,7 @@ class Base(ABC):
         # Set up data values to fit in the available space
         with self._treatAs2D():
             dataTable, colWidths, fnames = self._arrangeDataWithLimits(
+                points, features,
                 maxDataWidth, maxDataRows, sigDigits, columnWidthLimit, colSep,
                 colHold, rowHold, nameHolder, includeFeatureNames, quoteNames)
         # combine names into finalized table
@@ -5345,7 +5358,7 @@ class Base(ABC):
         # pylint: disable=unused-argument
         self.__init__(**kwargs)
 
-    def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold,
+    def _arrangePointNames(self, points, maxRows, nameLength, rowHolder, nameHold,
                            includePointNames, quoteNames):
         """
         Prepare point names for string output. Grab only section of
@@ -5359,7 +5372,17 @@ class Base(ABC):
         names = []
         pnamesWidth = 0
         nameCutIndex = nameLength - len(nameHold)
-        tRowIDs, bRowIDs = indicesSplit(maxRows, len(self.points))
+
+        # At the beginning of this method, points may only be a
+        # range or an int
+        if isinstance(points, range):
+            numPts = len(points)
+            pOffset = points[0]
+        else:
+            numPts = points
+            pOffset = 0
+
+        tRowIDs, bRowIDs = indicesSplit(maxRows, numPts, pOffset)
 
         if self.points._allDefaultNames() or includePointNames is False:
             pnames = list(map(str, range(len(self.points))))
@@ -5397,7 +5420,8 @@ class Base(ABC):
 
         return names, pnamesWidth
 
-    def _arrangeDataWithLimits(self, maxWidth, maxHeight, sigDigits,
+    def _arrangeDataWithLimits(self, points, features,
+                               maxWidth, maxHeight, sigDigits,
                                maxStrLength, colSep, colHold, rowHold,
                                strHold, includeFeatureNames, quoteNames):
         """
@@ -5426,9 +5450,23 @@ class Base(ABC):
         cHoldWidth = len(colHold)
         cHoldTotal = len(colSep) + cHoldWidth
         nameCutIndex = maxStrLength - len(strHold)
+
+        # At the beginning of this method, points and features may only be a
+        # range or an int
+        if isinstance(points, range):
+            numPts = len(points)
+            pOffset = points[0]
+        else:
+            numPts = points
+            pOffset = 0
+        if isinstance(features, range):
+            numFts = len(features)
+            fOffset = features[0]
+        else:
+            numFts = features
+            fOffset = 0
+
         #setup a bundle of default values
-        numPts = len(self.points)
-        numFts = len(self.features)
         if maxHeight is None:
             maxHeight = numPts
         if maxWidth is None:
@@ -5441,7 +5479,7 @@ class Base(ABC):
             return [[]] * maxDataRows, [], []
 
         if numPts > 0:
-            tRowIDs, bRowIDs = indicesSplit(maxDataRows, numPts)
+            tRowIDs, bRowIDs = indicesSplit(maxDataRows, numPts, pOffset)
         else:
             tRowIDs, bRowIDs = [], []
         combinedRowIDs = tRowIDs + bRowIDs
@@ -5471,6 +5509,12 @@ class Base(ABC):
         currIndex = 0
         numAdded = 0
 
+        # due to the possibility of ranges that don't start at zero,
+        # we define the access index to be the absolute position in
+        # the object, not the numerical position relative to within
+        # the possible range.
+        accessIndex = fOffset
+
         if self.features._allDefaultNames() or includeFeatureNames is False:
             fnames = None
         else:
@@ -5484,13 +5528,10 @@ class Base(ABC):
             if fnames is None:
                 currFName = None
             else:
-                currFName = fnames[currIndex]
+                currFName = fnames[accessIndex]
             if currFName is None:
                 if quoteNames:
-                    if currIndex < 0:
-                        currFName = str(numFts + currIndex)
-                    else:
-                        currFName = str(currIndex)
+                    currFName = str(accessIndex)
                 else:
                     currFName = ''
             elif quoteNames:
@@ -5506,7 +5547,7 @@ class Base(ABC):
             # check all values in this column (in the accepted rows)
             i = 0
             for rID in combinedRowIDs:
-                val = self[rID, currIndex]
+                val = self[rID, accessIndex]
                 valFormed = formatIfNeeded(val, sigDigits)
                 if len(valFormed) <= maxStrLength:
                     valLimited = valFormed
@@ -5540,10 +5581,12 @@ class Base(ABC):
                 if currIndex < 0:
                     rFNames.append(currFName)
                     currIndex = abs(currIndex)
+                    accessIndex = fOffset + currIndex
                     rColWidths.append(currWidth)
                 else:
                     lFNames.append(currFName)
                     currIndex = (-1 * currIndex) - 1
+                    accessIndex = fOffset + numFts + currIndex
                     lColWidths.append(currWidth)
 
             # ignore column separator if the next column is the last
