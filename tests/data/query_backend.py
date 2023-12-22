@@ -1474,7 +1474,7 @@ class QueryBackendSparseSafe(DataTestObject):
     @raises(InvalidArgumentValue)
     def test_arrangeDataWithLimits_exception_maxH(self):
         randGen = nimble.random.data(5, 5, 0, elementType='int')
-        randGen._arrangeDataWithLimits(range(5), range(5), maxHeight=1, maxWidth=120, sigDigits=3,
+        randGen._arrangeDataWithLimits(5, range(5), range(5), maxHeight=1, maxWidth=120, sigDigits=3,
                                        maxStrLength=19, colSep=" ",
                                        colHold=u"\u2500\u2500", rowHold=u"\u2502",
                                        strHold="...", includeFeatureNames=True,
@@ -1515,7 +1515,7 @@ class QueryBackendSparseSafe(DataTestObject):
                 data.features.setNames(fNames)
                 #			raw = data.data
             ret, widths, fNames = data._arrangeDataWithLimits(
-                range(pNum), range(fNum),
+                pNum, range(pNum), range(fNum),
                 maxW, maxH, sigDigits=3, maxStrLength=19, colSep=colSep,
                 colHold=u"\u2500\u2500", rowHold=u"\u2502", strHold="...",
                 includeFeatureNames=True, quoteNames=quoteNames)

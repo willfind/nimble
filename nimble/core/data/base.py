@@ -2313,25 +2313,30 @@ class Base(ABC):
 
         # Resolve default values for points, features, and related
         # variables
+        pointsLen = len(self.points)
+        featuresLen = len(self.features)
+        msg = "The {} argument may only be a range, an int, or None"
         if isinstance(points, range):
-            truePoints = len(self.points)
-            if points.stop > truePoints:
-                points = range(points.start, truePoints)
+            points = self._validateAndTruncatePrintTarget(points, pointsLen)
             numPoints = len(points)
             pRange = points
         elif isinstance(points, int):
-            numPoints = min(points, len(self.points))
-            pRange = range(len(self.points))
-        # points is None
+            numPoints = min(points, pointsLen)
+            pRange = range(pointsLen)
         elif points is None:
-            points = len(self.points)
-            numPoints = points
-            pRange = range(len(self.points))
+            numPoints = pointsLen
+            pRange = range(pointsLen)
         else:
-            raise Exception()
+            raise InvalidArgumentType(msg.format("points"))
 
-        if features is None:
+        if isinstance(features, range):
+            features = self._validateAndTruncatePrintTarget(features, featuresLen)
+        elif isinstance(features, int):
+            pass # no action needed
+        elif features is None:
             features = len(self.features)
+        else:
+            raise InvalidArgumentType(msg.format("features"))
 
         if lineLimit is None:
             maxDataRows = numPoints
@@ -2358,7 +2363,7 @@ class Base(ABC):
         # Set up data values to fit in the available space
         with self._treatAs2D():
             dataTable, colWidths, fnames = self._arrangeDataWithLimits(
-                points, features,
+                numPoints, pRange, features,
                 maxDataWidth, maxDataRows, sigDigits, columnWidthLimit, colSep,
                 colHold, rowHold, nameHolder, includeFeatureNames, quoteNames)
         # combine names into finalized table
@@ -2385,6 +2390,26 @@ class Base(ABC):
                 out += blank + corner + fnameSep + sepStr + '\n'
 
         return out
+
+    def _validateAndTruncatePrintTarget(self, target, axisLength):
+        """
+        Validate that given target argument for printing is
+        a contiguous range of indices within the length of
+        the axis. If it extends out from the available indices,
+        return a truncated version.
+        """
+
+        if target.step != 1:
+            msg = "range inputs for printing must have a step of 1, not "
+            msg += f"{target.step}"
+
+        desired = (target.start, target.stop)
+        if desired[0] < 0:
+            desired[0] = 0
+        if desired[1] > axisLength:
+            desired[1] = axisLength
+
+        return range(start=desired[0], stop=desired[1])
 
     def _getNotebookTerminalSize(self, _):
         """
@@ -2435,9 +2460,12 @@ class Base(ABC):
                 lineLimit -= 1
 
         if columnWidthLimit == 'automatic':
-            columnWidthLimit = (lineWidthLimit // len(self.features)) + 7
-            if columnWidthLimit < 8:
-                columnWidthLimit = 8 # lower limit for dynamic column width
+            if isinstance(lineWidthLimit, int):
+                columnWidthLimit = (lineWidthLimit // len(self.features)) + 7
+                if columnWidthLimit < 8:
+                    columnWidthLimit = 8 # lower limit for dynamic column width
+            else:
+                columnWidthLimit = 19 # sane default, matches toString
 
         if includeObjectName and self.name is not None:
             ret += f'"{self._name}" '
@@ -5420,7 +5448,7 @@ class Base(ABC):
 
         return names, pnamesWidth
 
-    def _arrangeDataWithLimits(self, points, features,
+    def _arrangeDataWithLimits(self, numPts, pRange, features,
                                maxWidth, maxHeight, sigDigits,
                                maxStrLength, colSep, colHold, rowHold,
                                strHold, includeFeatureNames, quoteNames):
@@ -5451,17 +5479,14 @@ class Base(ABC):
         cHoldTotal = len(colSep) + cHoldWidth
         nameCutIndex = maxStrLength - len(strHold)
 
-        # At the beginning of this method, points and features may only be a
+        # At the beginning of this method,features may only be a
         # range or an int
-        if isinstance(points, range):
-            numPts = len(points)
-            pRange = points
-        else:
-            numPts = points
-            pRange = range(len(self.points))
         if isinstance(features, range):
             numFts = len(features)
-            fOffset = features[0]
+            if numFts != 0:
+                fOffset = features[0]
+            else:
+                fOffset = 0
         else:
             numFts = features
             fOffset = 0
