@@ -96,7 +96,7 @@ wifi = nimble.data(paths[0], name='wifiData')
 ## feature.
 headers = ['source' + str(i) for i in range(7)] + ['room']
 wifi.features.setNames(headers)
-wifi.show('wifi signal strengths', maxHeight=12)
+wifi.show('wifi signal strengths', points=7)
 
 ## Logging ##
 
@@ -155,7 +155,7 @@ nimble.showLog()
 ## across runs multiple runs of this script. However, what you see may not
 ## match, for example, the ordering shown on the website.
 wifi.points.permute()
-wifi.show('randomly permuted', maxHeight=12)
+wifi.show('randomly permuted', points=7)
 
 ## Nimble uses its `nimble.random.setSeed` function on import to control the
 ## random state, but this function is also publicly available to set a new seed

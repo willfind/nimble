@@ -1,7 +1,7 @@
 Features in dataset:
 ['Administrative', 'Admin_Duration', 'Informational', 'Info_Duration', 'ProductRelated', 'Product_Duration', 'BounceRates', 'ExitRates', 'PageValues', 'SpecialDay', 'Month', 'OperatingSystems', 'Browser', 'Region', 'TrafficType', 'NewVisitor', 'Weekend', 'Purchase']
 Page activity features
-12212pt x 6ft
+12212pt x 18ft
         'Administrative' 'Admin_Duration' 'Informational' 'Info_Duration' 'ProductRelated' 'Product_Duration'
       ┌──────────────────────────────────────────────────────────────────────────────────────────────────────
     0 │        0              0.000              0             0.000             1               0.000
@@ -13,7 +13,7 @@ Page activity features
 12211 │        0              0.000              0             0.000             3               21.250
 
 Website analytic features
-12212pt x 3ft
+12212pt x 18ft
         'BounceRates' 'ExitRates' 'PageValues'
       ┌───────────────────────────────────────
     0 │     0.200        0.200       0.000
@@ -25,7 +25,7 @@ Website analytic features
 12211 │     0.000        0.067       0.000
 
 Visit detail features
-12212pt x 9ft
+12212pt x 18ft
         'SpecialDay' 'Month' 'OperatingSystems' 'Browser' 'Region' 'TrafficType' 'NewVisitor' 'Weekend' 'Purchase'
       ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────
     0 │    0.000        0            1              1        1           1          False       False     False

@@ -42,7 +42,7 @@ images = nimble.data(paths[0], returnType="Matrix")
 ## `features.extract` performs this separation. New labels are placed in the
 ## `labels` object and our `images` object now only contains our image data.
 labels = images.features.extract(range(256, len(images.features)))
-labels.show('one-hot encoded labels', maxHeight=12)
+labels.show('one-hot encoded labels', points=7)
 
 ## Rather than 10 one-hot encoded features, we need our labels to be a single
 ## feature with the values 0-9 for our neural network. We can perform this
@@ -54,7 +54,7 @@ labels.show('one-hot encoded labels', maxHeight=12)
 ## the label's `1` value. So, we quickly create a 1593 x 1 object with our
 ## labels as the integers 0 through 9.
 intLabels = labels @ nimble.data(range(10)).T
-intLabels.show('integer labels', maxHeight=12)
+intLabels.show('integer labels', points=7)
 
 ## Now that we have a single feature of labels, we can randomly partition our
 ## data into training and testing sets.

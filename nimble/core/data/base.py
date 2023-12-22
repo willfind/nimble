@@ -2409,7 +2409,7 @@ class Base(ABC):
         if desired[1] > axisLength:
             desired[1] = axisLength
 
-        return range(start=desired[0], stop=desired[1])
+        return range(desired[0], desired[1])
 
     def _getNotebookTerminalSize(self, _):
         """

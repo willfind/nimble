@@ -42,16 +42,13 @@ print(featureNames)
 ## webpages (Admininstrative, Informational, and Product Related). Our first 6
 ## features record the counts and durations of time spent on each page type for
 ## each visit.
-pageActivityFts = featureNames[:6]
-visits[:, pageActivityFts].show('Page activity features', maxHeight=12)
+visits.show('Page activity features', points=7, features=range(0,6))
 
 ## The next 3 features are website analytics collected during the visit.
-analyticFts = featureNames[6:9]
-visits[:, analyticFts].show('Website analytic features', maxHeight=12)
+visits.show('Website analytic features', points=7, features=range(6,9))
 
 ## The last 9 features are details about the visit or visitor.
-visitDetailFts = featureNames[9:]
-visits[:, visitDetailFts].show('Visit detail features', maxHeight=12)
+visits.show('Visit detail features', points=7, features=range(9,18))
 
 ## Now that we have a better understanding of our data, let's see what we can
 ## learn from it.
