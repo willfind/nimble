@@ -2547,7 +2547,7 @@ class Base(ABC):
             The number of significant digits to display in the output.
         columnWidthLimit : int
             A bound on the maximum number of characters allowed for the
-            width of single printed column (feature) in each line. 
+            width of single printed column (feature) in each line.
             If the column text is too long for the set bound, 3 characters
             will be used up for the ellipses during truncation.
         includePointNames : bool
@@ -5414,14 +5414,14 @@ class Base(ABC):
         def getNameString(index):
             if self.points._allDefaultNames() or includePointNames is False:
                 return str(index)
-                    
+
             name = self.points.getName(index)
             if name is None:
                 if quoteNames:
                     return str(index)
                 else:
                     return ''
-            
+
             if quoteNames:
                 if len(name) <= nameLength - 2:
                     finalName = name
