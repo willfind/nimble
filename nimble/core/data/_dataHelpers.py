@@ -141,24 +141,23 @@ def formatIfNeeded(value, sigDigits):
     return str(value)
 
 
-def indicesSplit(allowed, iRange):
+def indicesSplit(numAllow, iRange):
     """
-    Given the total length of a list, and a limit to
-    how many indices we are allowed to display, return
-    two lists of indices defining a middle ommision.
+    Given a limit to how many indices we are allowed to display and a range of
+    possible indices, return two lists of indices defining a middle ommision.
     In the tupple return, the first list are positive indices
     growing up from zero. The second list are negative indices
     growing up to negative one.
     """
     total = len(iRange)
-    if total > allowed:
-        allowed -= 1
+    if total > numAllow:
+        numAllow -= 1
 
-    if allowed == 1 or total == 1:
+    if numAllow == 1 or total == 1:
         return ([0], [])
 
-    forward = int(math.ceil(allowed / 2.0))
-    backward = int(math.floor(allowed / 2.0))
+    forward = int(math.ceil(numAllow / 2.0))
+    backward = int(math.floor(numAllow / 2.0))
 
     fIndices = list(range(forward))
     bIndices = list(range(-backward, 0))
