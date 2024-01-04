@@ -54,12 +54,14 @@ traffic = traffic[2557:, :]
 ## The `show` method provides more flexibility for the printed output than
 ## using `print` or `repr`. It prints a description, the `name` and `shape` of
 ## the object and the object data (truncating if necessary) given the
-## parameters. The `maxWidth` and `maxHeight` parameters control the number of
-## characters printed horizontally and vertically, respectively. By default
-## these are set dynamically based on the terminal size, but more or less of
-## the data can be displayed by setting them manually. To preview our data, we
-## will limit the output to 16 lines.
-traffic.show("Raw traffic data", maxHeight=16)
+## parameters. The points and features parameters control the number (or
+## range) of rows and columns of data shown in the printed table. Also,
+## the lineLimit and lineWidthLimit parameters can place caps on the how
+## many lines are displayed and how many characters may be in a line.
+## In the absence of any of those parameters, the displayed data is determined
+## dynamically based on the terminal size. To do a simple preview our data, we
+## will limit the output to only 10 of the points.
+traffic.show("Raw traffic data", points=10)
 
 ## The machine learning algorithms we plan to use require numeric data and can
 ## be sensitive to outliers. Our data contains 48,204 points and 9 features,
@@ -112,7 +114,7 @@ traffic.features.splitByParsing('date_time', dateTimeSplitter,
 
 ## Now let's take a look at our data again after splitting a single feature
 ## of text into 5 numeric features.
-traffic.show('New parsed features in traffic data', maxHeight=16)
+traffic.show('New parsed features in traffic data', points=10)
 
 ## The `holiday` feature is extremely idiosyncratic, so it will require a
 ## complex function to transform. Since this case this unique to this dataset,
@@ -137,7 +139,7 @@ def holidayToBinary(point):
 dateInfoFeatures = ['holiday', 'year', 'month', 'day', 'hour']
 traffic.points.transform(holidayToBinary)
 sample = traffic[:, dateInfoFeatures]
-sample.show('Data sample with converted holiday feature', maxHeight=16)
+sample.show('Data sample with converted holiday feature', points=10)
 
 ## We have two features related to categorizing the weather conditions. We saw
 ## in our first look at the data that the `weather_description` feature is more
@@ -156,12 +158,12 @@ traffic.features.delete('weather_description')
 newCols = traffic.replaceFeatureWithBinaryFeatures('weather_main')
 sampleFts = ['weather_main=Clouds', 'weather_main=Clear', 'weather_main=Mist']
 traffic[:, sampleFts].show('Sample of binary weather features',
-                                           maxHeight=16)
+                                           points=10)
 
 ## Now that we have removed any bad points and transformed all of our data to
 ## numeric values, our dataset is ready for machine learning. We will be using
 ## this data to predict the `traffic_volume` feature from the other features.
-traffic.show('Cleaned traffic data', maxHeight=16)
+traffic.show('Cleaned traffic data', points=10)
 
 ## Writing to a file ##
 

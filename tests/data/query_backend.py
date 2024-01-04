@@ -1262,7 +1262,7 @@ class QueryBackendSparseSafe(DataTestObject):
 
                 for mw in [40, 60, 80, None]:
                     for mh in [5, 7, 10, None]:
-                        ret = data.toString(maxWidth=mw, maxHeight=mh)
+                        ret = data.toString(lineLimit=mh, lineWidthLimit=mw)
                         checkToStringRet(ret, data, mw, mh)
 
     def test_toString_lazyNameGeneration(self):
@@ -1286,7 +1286,7 @@ class QueryBackendSparseSafe(DataTestObject):
 
         for mw in [40, 60, 80, None]:
             for mh in [5, 7, 10, None]:
-                ret = data.toString(maxWidth=mw, maxHeight=mh)
+                ret = data.toString(lineLimit=mh, lineWidthLimit=mw)
                 checkToStringRet(ret, data, mw, mh)
 
     def test_toString_knownWidths(self):
@@ -1302,7 +1302,7 @@ class QueryBackendSparseSafe(DataTestObject):
         data = self.constructor(raw, featureNames=ftNames)
         # width of 9 to 11 will return first feature and colHold ('a  --')
         for mw in range(11, 16):
-            ret = data.toString(maxWidth=mw)
+            ret = data.toString(lineWidthLimit=mw)
             # ignore last index since ret always ends with \n
             retSplit = ret.split('\n')[:-1]
             for i, line in enumerate(retSplit):
@@ -1317,7 +1317,7 @@ class QueryBackendSparseSafe(DataTestObject):
         # width of 16 will return first ft, colHold, last ft ('a  -- cc')
         # 1 for point name, 1 for point separator, 8 for feature column data,
         # 2 for colHold, and 4 separating space characters
-        ret = data.toString(maxWidth=16)
+        ret = data.toString(lineWidthLimit=16)
         # ignore last index since ret always ends with \n
         retSplit = ret.split('\n')[:-1]
         for i, line in enumerate(retSplit):
@@ -1332,7 +1332,7 @@ class QueryBackendSparseSafe(DataTestObject):
         # width of 18 can accommodate all data ('a  bbb cc')
         # 1 for point name, 1 for point separator, 12 for feature column data,
         # 4 separating space characters
-        ret = data.toString(maxWidth=18)
+        ret = data.toString(lineWidthLimit=18)
         # ignore last index since ret always ends with \n
         retSplit = ret.split('\n')[:-1]
         for i, line in enumerate(retSplit):
@@ -1352,7 +1352,7 @@ class QueryBackendSparseSafe(DataTestObject):
 
         # for height in range 4 to 10, row separator should be present
         for mh in range(4, 11):
-            ret = data.toString(maxHeight=mh)
+            ret = data.toString(lineLimit=mh)
             # ignore last index since ret always ends with \n
             retSplit = ret.split('\n')[:-1]
             sepRow = int((mh - 2) / 2) + 2
@@ -1361,7 +1361,7 @@ class QueryBackendSparseSafe(DataTestObject):
             assert re.match(rowSepPattern, retSplit[sepRow])
         # height 11 can accommodate all data
         # 2 header lines, 8 data lines, 1 blankline
-        ret = data.toString(maxHeight=11)
+        ret = data.toString(lineLimit=11)
         # ignore headers and blankline
         retSplit = ret.split('\n')[2:-1]
         for line in retSplit:
@@ -1388,8 +1388,7 @@ class QueryBackendSparseSafe(DataTestObject):
         assert ftString[3] == "'n2' " + u"\u2502"
         assert ftString[4] == "'n3' " + u"\u2502"
 
-    # _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold)
-    def test_arrangePointNames_correctSplit(self):
+    def test_arrangePointNames_correctSplit_lineLimited(self):
         rowHolder = u'\u2502'
         nameHold = '...'
 
@@ -1398,20 +1397,47 @@ class QueryBackendSparseSafe(DataTestObject):
         initnames = ['zero', 'one', 'two', 'three', 'four']
         obj = self.constructor(raw, pointNames=initnames)
 
-        pnames, bound = obj._arrangePointNames(2, 11, rowHolder, nameHold, True, True)
+        pRange = range(len(obj.points))
+
+        pnames, bound = obj._arrangePointNames(pRange, 2, 11, rowHolder, nameHold, True, True)
         assert pnames == ["'zero'", rowHolder]
         assert bound == len("'zero'")
 
-        pnames, bound = obj._arrangePointNames(3, 11, rowHolder, nameHold, True, True)
+        pnames, bound = obj._arrangePointNames(pRange, 3, 11, rowHolder, nameHold, True, True)
         assert pnames == ["'zero'", rowHolder, "'four'"]
         assert bound == len("'four'")
 
-        pnames, bound = obj._arrangePointNames(4, 11, rowHolder, nameHold, True, False)
+        pnames, bound = obj._arrangePointNames(pRange, 4, 11, rowHolder, nameHold, True, False)
         assert pnames == ['zero', 'one', rowHolder, 'four']
         assert bound == len('four')
 
-        pnames, bound = obj._arrangePointNames(5, 11, rowHolder, nameHold, True, False)
+        pnames, bound = obj._arrangePointNames(pRange, 5, 11, rowHolder, nameHold, True, False)
         assert pnames == ['zero', 'one', 'two', 'three', 'four']
+        assert bound == len('three')
+
+    def test_arrangePointNames_correctSplit_rangeLimited(self):
+        rowHolder = u'\u2502'
+        nameHold = '...'
+
+        raw = [[300, 310, 320], [301, 311, 321], [302, 312, 312],
+               [303, 313, 313], [303, 313, 313]]
+        initnames = ['zero', 'one', 'two', 'three', 'four']
+        obj = self.constructor(raw, pointNames=initnames)
+
+        pnames, bound = obj._arrangePointNames(range(3), 2, 11, rowHolder, nameHold, True, True)
+        assert pnames == ["'zero'", rowHolder]
+        assert bound == len("'zero'")
+
+        pnames, bound = obj._arrangePointNames(range(5), 3, 11, rowHolder, nameHold, True, True)
+        assert pnames == ["'zero'", rowHolder, "'four'"]
+        assert bound == len("'four'")
+
+        pnames, bound = obj._arrangePointNames(range(1,5), 3, 11, rowHolder, nameHold, True, False)
+        assert pnames == ['one', rowHolder, 'four']
+        assert bound == len('four')
+
+        pnames, bound = obj._arrangePointNames(range(4), 4, 11, rowHolder, nameHold, True, False)
+        assert pnames == ['zero', 'one', 'two', 'three']
         assert bound == len('three')
 
 
@@ -1423,7 +1449,7 @@ class QueryBackendSparseSafe(DataTestObject):
         initnames = ['zerooo', 'one', 'two', 'threee']
         obj = self.constructor(raw, pointNames=initnames)
 
-        pnames, bound = obj._arrangePointNames(4, 3, rowHolder, nameHold, True, False)
+        pnames, bound = obj._arrangePointNames(range(4), 4, 3, rowHolder, nameHold, True, False)
         assert pnames == ['...', 'one', 'two', '...']
         assert bound == 3
 
@@ -1437,18 +1463,18 @@ class QueryBackendSparseSafe(DataTestObject):
         obj = self.constructor(raw, pointNames=initnames)
 
         # when quoteNames is True use index
-        pnames, bound = obj._arrangePointNames(4, 11, rowHolder, nameHold, True, True)
+        pnames, bound = obj._arrangePointNames(range(4), 4, 11, rowHolder, nameHold, True, True)
         assert pnames == ['0', "'one'", '2', "'three'"]
         assert bound == len("'three'")
         # when quoteNames is False, leave blank
-        pnames, bound = obj._arrangePointNames(4, 11, rowHolder, nameHold, True, False)
+        pnames, bound = obj._arrangePointNames(range(4), 4, 11, rowHolder, nameHold, True, False)
         assert pnames == ['', 'one', '', 'three']
         assert bound == len('three')
 
     @raises(InvalidArgumentValue)
     def test_arrangeDataWithLimits_exception_maxH(self):
         randGen = nimble.random.data(5, 5, 0, elementType='int')
-        randGen._arrangeDataWithLimits(maxHeight=1, maxWidth=120, sigDigits=3,
+        randGen._arrangeDataWithLimits(5, range(5), range(5), maxHeight=1, maxWidth=120, sigDigits=3,
                                        maxStrLength=19, colSep=" ",
                                        colHold=u"\u2500\u2500", rowHold=u"\u2502",
                                        strHold="...", includeFeatureNames=True,
@@ -1456,7 +1482,7 @@ class QueryBackendSparseSafe(DataTestObject):
 
     @pytest.mark.slow
     def test_arrangeDataWithLimits(self):
-        def makeUniformLength(rType, p, f, l):
+        def makeUniformLength(p, f, l):
             raw = []
             if l is not None:
                 val = 10 ** (l - 1)
@@ -1471,24 +1497,25 @@ class QueryBackendSparseSafe(DataTestObject):
 
         def runTrial(pNum, fNum, valLen, maxW, maxH, colSep, quoteNames):
             if pNum == 0 and fNum == 0:
-                data = makeUniformLength("List", 0, 0, valLen)
+                data = makeUniformLength(0, 0, valLen)
             elif pNum == 0:
-                data = makeUniformLength("List", 1, fNum, valLen)
+                data = makeUniformLength(1, fNum, valLen)
                 data.points.delete(0)
                 fNames = ['ft' + str(i) for i in range(fNum)]
                 data.features.setNames(fNames)
             elif fNum == 0:
-                data = makeUniformLength("List", pNum, 1, valLen)
+                data = makeUniformLength(pNum, 1, valLen)
                 data.features.delete(0)
             else:
                 if valLen is None:
                     data = nimble.random.data(pNum, fNum, .25, elementType='int')
                 else:
-                    data = makeUniformLength("List", pNum, fNum, valLen)
+                    data = makeUniformLength(pNum, fNum, valLen)
                 fNames = ['ft' + str(i) for i in range(fNum)]
                 data.features.setNames(fNames)
                 #			raw = data.data
             ret, widths, fNames = data._arrangeDataWithLimits(
+                pNum, range(pNum), range(fNum),
                 maxW, maxH, sigDigits=3, maxStrLength=19, colSep=colSep,
                 colHold=u"\u2500\u2500", rowHold=u"\u2502", strHold="...",
                 includeFeatureNames=True, quoteNames=quoteNames)
