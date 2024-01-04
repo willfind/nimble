@@ -176,8 +176,8 @@ def percentileNormalize(values1, values2=None):
     The percentile is equal to ``(k - 1) / (n - 1)`` where ``k`` is the
     element rank in the sorted data and ``n`` is the number of values in
     the vector, providing elements a range of 0 to 1. When the data
-    contains equalivent elements, the calculated percentile is the mean
-    (equalivent to the median) of the percentiles calculated at each
+    contains equivalent elements, the calculated percentile is the mean
+    (equivalent to the median) of the percentiles calculated at each
     equal element.
 
     For elements in ``values2`` that are not in ``values1``, any
