@@ -1847,7 +1847,8 @@ class Features(ABC):
         Normalize the data by a function that adjusts each feature
         based on the provided function. If the function allows, the
         normalization can also be applied to a second object. [Make
-        some mention of the link and maybe an example!]
+        some mention of the link and maybe an example!] 
+        meanNormalize, percentileNormalize
 
         Parameters
         ----------
@@ -1938,19 +1939,29 @@ class Features(ABC):
         >>> pts = ['user1', 'user2', 'user3', 'user4', 'user5']
         >>> fts = ['miles']
         >>> train = nimble.data(lstTrain, pts, fts)
+        >>> train
+        <Matrix 5pt x 1ft
+                   'miles'
+                 ┌────────
+         'user1' │   482
+         'user2' │  30000
+         'user3' │   7900
+         'user4' │    35
+         'user5' │   600
+        >
         >>> def logNormalize(ft):
         ...     return np.log(ft)
         >>> train.features.normalize(logNormalize)
         >>> train
         <Matrix 5pt x 1ft
                    'miles'
-                 ┌─────────
-         'user1' │ 6.178
-         'user2' │ 10.309
-         'user3' │ 8.975
-         'user4' │ 3.555
-         'user5' │ 6.397
-         >
+                 ┌────────
+         'user1' │  6.178
+         'user2' │  10.309
+         'user3' │  8.975
+         'user4' │  3.555
+         'user5' │  6.397
+        >
 
         Keywords
         --------
