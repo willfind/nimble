@@ -1846,9 +1846,11 @@ class Features(ABC):
 
         Normalize the data by a function that adjusts each feature
         based on the provided function. If the function allows, the
-        normalization can also be applied to a second object. [Make
-        some mention of the link and maybe an example!] 
-        meanNormalize, percentileNormalize
+        normalization can also be applied to a second object. Examples
+        of normalizations provided in Nimble are ``meanNormalize``, 
+        ``percentileNormalize``, and the others in the examples below.
+        See nimble.calculate.normalize for all the default provided 
+        types of normalization.
 
         Parameters
         ----------
