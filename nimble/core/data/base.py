@@ -1251,9 +1251,12 @@ class Base(ABC):
         # Numbers coming from a float dtyped object that are equivalent to
         # ints are assumed to be int valued labels, and formatted as such.
         def prettyKey(val):
+            undefined = ['', np.NaN, None, np.nan, np.NAN]
             if isinstance(val, str):
                 return val
             if isinstance(val, numbers.Number):
+                if val in undefined:
+                    return val
                 iVal = int(val)
                 return iVal if iVal == val else val
             return val
