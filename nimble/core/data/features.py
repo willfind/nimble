@@ -1846,7 +1846,11 @@ class Features(ABC):
 
         Normalize the data by a function that adjusts each feature
         based on the provided function. If the function allows, the
-        normalization can also be applied to a second object.
+        normalization can also be applied to a second object. Examples
+        of normalizations provided in Nimble are ``meanNormalize``, 
+        ``percentileNormalize``, and the others in the examples below.
+        See nimble.calculate.normalize for all the default provided 
+        types of normalization.
 
         Parameters
         ----------
@@ -1857,7 +1861,8 @@ class Features(ABC):
             accept a second feature view and return a two-tuple
             (normalized feature from the calling object,
             normalized feature from applyResultTo).
-            Common normalizations can be found in nimble.calculate.
+            Common normalizations can be found in 
+            nimble.calculate.normalize.
         applyResultTo : nimble Base object, None
             The secondary object to apply the the normalization to.
             Must have the same number of features as the calling object.
@@ -1927,6 +1932,37 @@ class Features(ABC):
                   ┌──────────────────────────────
          'movie4' │   0.535     0.996     -0.307
          'movie5' │   -0.267    -0.444    1.031
+        >
+        
+        With user defined normalization function.
+
+        >>> import numpy as np
+        >>> lstTrain = [[482], [30000], [7900], [35],[600]]
+        >>> pts = ['user1', 'user2', 'user3', 'user4', 'user5']
+        >>> fts = ['miles']
+        >>> train = nimble.data(lstTrain, pts, fts)
+        >>> train
+        <Matrix 5pt x 1ft
+                   'miles'
+                 ┌────────
+         'user1' │   482
+         'user2' │  30000
+         'user3' │   7900
+         'user4' │    35
+         'user5' │   600
+        >
+        >>> def logNormalize(ft):
+        ...     return np.log(ft)
+        >>> train.features.normalize(logNormalize)
+        >>> train
+        <Matrix 5pt x 1ft
+                   'miles'
+                 ┌────────
+         'user1' │  6.178
+         'user2' │  10.309
+         'user3' │  8.975
+         'user4' │  3.555
+         'user5' │  6.397
         >
 
         Keywords
