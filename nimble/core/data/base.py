@@ -184,6 +184,10 @@ class Base(ABC):
         if len(self._dims) > 2:
             return self._dims[0], np.prod(self._dims[1:])
         return self._dims[0], self._dims[1]
+    
+    @shape.setter
+    def shape(self, value):
+        raise AttributeError("User cannot directly set 'shape'. The shape of a base object is determined by the points and features.")
 
     @property
     def dimensions(self):
@@ -195,6 +199,11 @@ class Base(ABC):
         shape, flatten, unflatten
         """
         return tuple(self._dims)
+    
+    @dimensions.setter
+    def dimensions(self, value):
+        raise AttributeError("User cannot directly set 'dimensions'. The dimensions of a base object are determined by its shape.")
+    
 
     @property
     def points(self):
@@ -238,6 +247,10 @@ class Base(ABC):
         """
         return self._points
 
+    @points.setter
+    def points(self, value):
+        raise AttributeError("User cannot directly set 'points' of a base object.")
+
     @property
     def features(self):
         """
@@ -279,6 +292,10 @@ class Base(ABC):
         items
         """
         return self._features
+
+    @features.setter
+    def features(self, value):
+        raise AttributeError("User cannot directly set 'features' of a base object.")
 
     @property
     def name(self):
