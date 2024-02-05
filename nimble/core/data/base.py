@@ -1256,7 +1256,8 @@ class Base(ABC):
                 return val
             if isinstance(val, numbers.Number):
                 if val in undefined:
-                    return val
+                    # check that the feature axis doesn't have that string.
+                    return "NaN"
                 iVal = int(val)
                 return iVal if iVal == val else val
             return val
