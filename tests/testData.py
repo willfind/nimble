@@ -1297,6 +1297,41 @@ def test_data_objName_and_path_MTXCoo():
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
 
+###################################
+#  Error setting base properties  #
+###################################
+
+def test_errorSettingPoints():
+    rawData = [[1, 2, 3], [2, 4, 6]]
+    data = nimble.data(rawData)
+    try:
+        data.points = [[2, 3, 4], [3, 4, 5]]
+    except AttributeError as e:
+        assert "User cannot directly set 'points' of a base object." in str(e)
+        
+def test_errorSettingFeatures():
+    rawData = [[1, 2, 3], [2, 4, 6]]
+    data = nimble.data(rawData)
+    try:
+        data.features = [[2, 3], [3, 4],[4, 5]]
+    except AttributeError as e:
+        assert "User cannot directly set 'features' of a base object." in str(e)
+
+def test_errorSettingDimensions():
+    rawData = [[1, 2, 3], [2, 4, 6]]
+    data = nimble.data(rawData)
+    try:
+        data.dimensions = (5, 5)
+    except AttributeError as e:
+        assert "User cannot directly set 'dimensions'. The dimensions of a base object are determined by its shape." in str(e)
+
+def test_errorSettingShape():
+    rawData = [[1, 2, 3], [2, 4, 6]]
+    data = nimble.data(rawData)
+    try:
+        data.shape = (5, 5)
+    except AttributeError as e:
+        assert "User cannot directly set 'shape'. The shape of a base object is determined by the points and features." in str(e)
 
 ###################################
 # Point / Feature names from File #
