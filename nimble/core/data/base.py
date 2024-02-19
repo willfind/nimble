@@ -1244,7 +1244,7 @@ class Base(ABC):
          0 │     SEC        LSU     10
          1 │     SEC      Florida   10
          2 │     SEC      Georgia   11
-        > 
+        >
         
         Using the calculate parameter we can find the maximum of 
         other features within each group.
