@@ -1250,36 +1250,27 @@ class Base(ABC):
         other features within each group.
         
         >>> top10.groupByFeature('conference', calculate='max')  
-        'ACC':
-        <DataFrame 1pt x 3ft
-                'team'  'wins'
-              ┌──────────────── 
-        'max' │           15    
-        
-        'SEC':
-        <DataFrame 1pt x 3ft
-                'team'  'wins' 
-              ┌────────────────
-        'max' │           14   
-        
-        'Big 10':
-        <DataFrame 1pt x 3ft
-                'team'  'wins' 
-              ┌────────────────
-        'max' │           13
-        
-        'Big 12':
-        <DataFrame 1pt x 3ft
-             'team'  'wins' 
-           ┌────────────────
-         0 │           12
-        
-        'Independent':
-        <DataFrame 1pt x 3ft
-             'team'  'wins' 
-           ┌────────────────
-         0 │           12
-        >
+        {'ACC': <DataFrame 1pt x 3ft
+                 'team' 'wins' 'losses'
+               ┌───────────────────────
+         'max' │        15.000  0.000
+        >, 'SEC': <DataFrame 1pt x 3ft
+                 'team' 'wins' 'losses'
+               ┌───────────────────────
+         'max' │        14.000  3.000
+        >, 'Big 10': <DataFrame 1pt x 3ft
+                 'team' 'wins' 'losses'
+               ┌───────────────────────
+         'max' │        13.000  1.000
+        >, 'Big 12': <DataFrame 1pt x 3ft
+                 'team' 'wins' 'losses'
+               ┌───────────────────────
+         'max' │        12.000  2.000
+        >, 'Independent': <DataFrame 1pt x 3ft
+                 'team' 'wins' 'losses'
+               ┌───────────────────────
+         'max' │        12.000  1.000
+        >}
         
         Adding a new point to the data object with a missing value
         in a target feature will result in a new group with the key
@@ -1287,45 +1278,34 @@ class Base(ABC):
         >>> lst.append(['', 'Auburn', 9, 4])
         >>> top10 = nimble.data(lst, featureNames=ftNames)
         >>> top10.groupByFeature('conference')
-        'ACC':
-        <DataFrame 1pt x 3ft
-                'team'  'wins' 'losses'
-                ┌───────────────────────
-              0 |         15       0 
-        
-        'SEC':
-        <DataFrame 4pt x 3ft
-                   'team'  'wins' 'losses'
-              ┌───────────────────────---
-            0 |     Alabama      14    1
-            1 |       LSU        10    3
-            2 |      Florida     10    3
-            3 |      Georgia     11    3
-
-        'Big 10':
-        <DataFrame 1pt x 3ft
-               'team'  'wins' 'losses'
-           ┌───────────────────────
-         0 | Ohio State   13    1 
-              
-        'Big 12':
-        <DataFrame 1pt x 3ft
+        {'ACC': <DataFrame 1pt x 3ft
+              'team' 'wins' 'losses'
+           ┌────────────────────────
+         0 │ Clemson   15      0
+        >, 'SEC': <DataFrame 4pt x 3ft
+              'team' 'wins' 'losses'
+           ┌────────────────────────
+         0 │ Alabama   14      1
+         1 │   LSU     10      3
+         2 │ Florida   10      3
+         3 │ Georgia   11      3
+        >, 'Big 10': <DataFrame 1pt x 3ft
+               'team'   'wins' 'losses'
+           ┌───────────────────────────
+         0 │ Ohio State   13      1
+        >, 'Big 12': <DataFrame 1pt x 3ft
               'team'  'wins' 'losses'
+           ┌─────────────────────────
+         0 │ Oklahoma   12      2
+        >, 'Independent': <DataFrame 1pt x 3ft
+               'team'   'wins' 'losses'
+           ┌───────────────────────────
+         0 │ Notre Dame   12      1
+        >, 'NaN': <DataFrame 1pt x 3ft
+             'team' 'wins' 'losses'
            ┌───────────────────────
-         0 | Oklahoma   12      2
-              
-        'Independent':
-        <DataFrame 1pt x 3ft
-                'team'  'wins' 'losses'
-           ┌───────────────────────        
-         0 | Notre Dame   12    1
-                
-        'NaN':  
-        <DataFrame 1pt x 3ft
-             'team'  'wins' 'losses' 
-           ┌───────────────────────    
-         0 |  Auburn    9       4      
-        
+         0 │ Auburn   9       4
+        >}
 
         Keywords
         --------
