@@ -329,6 +329,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'nbsphinx',
     'linuxdoc.rstFlatTable',
+    'sphinx_copybutton',
     #    'sphinx.ext.coverage',
     #    'sphinx.ext.ifconfig',
 ]
