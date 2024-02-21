@@ -1,6 +1,7 @@
 # Requirements needed to build the docs and examples.
 sphinx
 nbsphinx
+sphinx-copybutton
 numpydoc
 weasyprint
 pytest
