@@ -628,7 +628,7 @@ def validateAxisFunction(func, axis, allowedLength=None):
                 #oppositeAxis = 'point' if axis == 'feature' else 'feature'
                 msg = "'function' returns a string instead of an iterable with as many "
                 #msg += f"elements as {oppositeAxis}s ({allowedLength}) in this object"
-                raise InvalidArgumentValue(msg)
+                raise InvalidArgumentValue(msg+endmsg)
             if ((not hasattr(ret, '__len__')
                         or len(ret) != allowedLength)):
                 #oppositeAxis = 'point' if axis == 'feature' else 'feature'
