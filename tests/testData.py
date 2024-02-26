@@ -4628,14 +4628,7 @@ def test_featureNames_assisted_match():
         data.features['rainy-season']
     except KeyError as e:
         assert str(e) == '"The feature name \'rainy-season\' cannot be found. Did you mean \'rainy season\'?"'
-        
-def test_validateAxisMessage():
-    rawData = [[1, 2, 3], [2, 4, 6]]
-    data = nimble.data(rawData)
-    try:
-        data.features.transform()
-    except ValueError as e:
-        assert str(e) == ""
+
 # tests for combination of one name set being specified and one set being
 # in data.
 

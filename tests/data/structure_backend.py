@@ -9308,6 +9308,15 @@ class StructureModifyingSparseSafe(StructureShared):
     ######################
     # points.transform() #
     ######################
+    
+    @raises(InvalidArgumentValue)
+    def test_points_transform_stringReturn(self):
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        
+        def stringReturn(ft):
+            return "X" * len(ft)
+        
+        orig.points.transform(stringReturn)
 
     @raises(InvalidArgumentType)
     def test_points_transform_exceptionInputNone(self):
