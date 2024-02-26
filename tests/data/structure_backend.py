@@ -9505,6 +9505,15 @@ class StructureModifyingSparseSafe(StructureShared):
     ########################
     # features.transform() #
     ########################
+    
+    @raises(InvalidArgumentValue)
+    def test_features_transform_stringReturn(self):
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        
+        def stringReturn(ft):
+            return "X" * len(ft)
+        
+        orig.features.transform(stringReturn)
 
     @raises(ImproperObjectAction)
     def test_features_transform_exceptionPEmpty(self):
