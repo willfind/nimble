@@ -9,12 +9,27 @@ on:
 jobs:
 
   build-wheels:
-    uses: ./.github/workflows/buildWheels.yml
-    with:
-      saveNameWheel: built_wheel
-      saveNameConda: built_channel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Build wheels
+        run: |
+          # Your commands to build wheels here
+          echo "Building wheels..."
+          # Example:
+          pip install wheel
+          python setup.py bdist_wheel
 
   test:
+    needs: build-wheels
     runs-on: ubuntu-latest
 
     steps:
@@ -27,8 +42,8 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
 
-      - name: install nimble and dependencies
-        run: 
+      - name: Install dependencies
+        run: |
           pip install pytest
           pip install keras tensorflow
           pip install nimble[quickstart] --find-links=./documentation/source/wheels # Only if needed 
