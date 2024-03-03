@@ -7,6 +7,13 @@ on:
       - nini/githubActionsTests
 
 jobs:
+
+  build-wheels:
+    uses: ./.github/workflows/buildWheels.yml
+    with:
+      saveNameWheel: built_wheel
+      saveNameConda: built_channel
+
   test:
     runs-on: ubuntu-latest
 
