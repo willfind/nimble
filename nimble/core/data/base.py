@@ -1986,6 +1986,9 @@ class Base(ABC):
                 x = key
                 y = 0
             else:
+                # do search to see if key is unique across the points and
+                # features
+                # do not allow non string values
                 msg = "Must include both a point and feature index; or, "
                 msg += "if this is vector shaped, a single index "
                 msg += "into the axis whose length > 1"
