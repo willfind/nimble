@@ -4761,3 +4761,34 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         exp2 = toTest2.features.quartiles()
         assert exp1[:,['Purchases','Returns']] == res['Clemson']
         assert exp2[:,['Purchases','Returns']] == res['Oklahoma']
+    
+    #######################
+    # groupByFeature NaN #
+    ######################
+    
+    def test_groupByFeature_missing_values(self):
+        raw = [['aa', '3'], ['aaa', '1'], ['aaa', '2'], 
+               ['aaa', '3'], ['aa', '1'], [float('nan'), 'Missing22'],
+               ['', 'Missing44'], ['aaa', '1'], ['aaa', '2']]
+        ftNames = ['1st', '2nd']
+        toTest = nimble.data(raw, featureNames=ftNames)
+        res = toTest.groupByFeature('1st')
+        rawMissing = [['Missing22'], ['Missing44']]
+        toTestMissing = nimble.data(rawMissing, featureNames=['2nd'])
+        assert toTestMissing == res['NaN']
+        
+        
+    def test_groupByFeature_missing_values_NaN_present(self):
+        raw = [['aa', '3'], ['aaa', '1'], ['aaa', '2'], 
+               ['aaa', '3'], ['aa', '1'], [float('nan'), 'Missing22'],
+               ['', 'Missing44'], ['aaa', '1'], ['aaa', '2'],
+               ['NaN', 'NO44']]
+        ftNames = ['1st', '2nd']
+        toTest = nimble.data(raw, featureNames=ftNames)
+        res = toTest.groupByFeature('1st')
+        rawMissing = [['Missing22'], ['Missing44']]
+        rawNaN = [['NO44']]
+        toTestMissing = nimble.data(rawMissing, featureNames=['2nd'])
+        toTestNaN = nimble.data(rawNaN, featureNames=['2nd'])
+        assert toTestMissing == res['numpy.nan']
+        assert toTestNaN == res['NaN']

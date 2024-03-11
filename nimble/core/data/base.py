@@ -1193,7 +1193,10 @@ class Base(ABC):
     def groupByFeature(self, by, calculate=None, countUniqueValueOnly=False, *,
                        useLog=None): # pylint: disable=unused-argument
         """
-        Group data object by one or more features.
+        Group data object by one or more features. This results in a 
+        dictionary where the keys are the unique values of the target
+        feature(s) and the values are the nimble base objects that
+        correspond to the group.
 
         Parameters
         ----------
@@ -1238,7 +1241,7 @@ class Base(ABC):
         ...        ['SEC', 'LSU', 10, 3],
         ...        ['SEC', 'Florida', 10, 3],
         ...        ['SEC', 'Georgia', 11, 3]]
-        >>> ftNames = ['conference', 'team', 'wins', 'losses']
+        >>> ftNames = ['conference', 'team', 'wins', 'losses']  
         >>> top10 = nimble.data(lst, featureNames=ftNames)
         >>> groupByLosses = top10.groupByFeature('losses')
         >>> list(groupByLosses.keys())
@@ -1259,6 +1262,67 @@ class Base(ABC):
          1 │     SEC      Florida   10
          2 │     SEC      Georgia   11
         >
+        
+        Using the calculate parameter we can find the maximum of 
+        other features within each group.
+        
+        >>> top10.groupByFeature('conference', calculate='max')  
+        {'ACC': <DataFrame 1pt x 3ft
+                 'team' 'wins' 'losses'
+               ┌───────────────────────
+         'max' │        15.000  0.000
+        >, 'SEC': <DataFrame 1pt x 3ft
+                 'team' 'wins' 'losses'
+               ┌───────────────────────
+         'max' │        14.000  3.000
+        >, 'Big 10': <DataFrame 1pt x 3ft
+                 'team' 'wins' 'losses'
+               ┌───────────────────────
+         'max' │        13.000  1.000
+        >, 'Big 12': <DataFrame 1pt x 3ft
+                 'team' 'wins' 'losses'
+               ┌───────────────────────
+         'max' │        12.000  2.000
+        >, 'Independent': <DataFrame 1pt x 3ft
+                 'team' 'wins' 'losses'
+               ┌───────────────────────
+         'max' │        12.000  1.000
+        >}
+        
+        Adding a new point to the data object with a missing value
+        in a target feature will result in a new group with the key
+        'NaN'.
+        >>> lst.append(['', 'Auburn', 9, 4])
+        >>> top10 = nimble.data(lst, featureNames=ftNames)
+        >>> top10.groupByFeature('conference')
+        {'ACC': <DataFrame 1pt x 3ft
+              'team' 'wins' 'losses'
+           ┌────────────────────────
+         0 │ Clemson   15      0
+        >, 'SEC': <DataFrame 4pt x 3ft
+              'team' 'wins' 'losses'
+           ┌────────────────────────
+         0 │ Alabama   14      1
+         1 │   LSU     10      3
+         2 │ Florida   10      3
+         3 │ Georgia   11      3
+        >, 'Big 10': <DataFrame 1pt x 3ft
+               'team'   'wins' 'losses'
+           ┌───────────────────────────
+         0 │ Ohio State   13      1
+        >, 'Big 12': <DataFrame 1pt x 3ft
+              'team'  'wins' 'losses'
+           ┌─────────────────────────
+         0 │ Oklahoma   12      2
+        >, 'Independent': <DataFrame 1pt x 3ft
+               'team'   'wins' 'losses'
+           ┌───────────────────────────
+         0 │ Notre Dame   12      1
+        >, 'NaN': <DataFrame 1pt x 3ft
+             'team' 'wins' 'losses'
+           ┌───────────────────────
+         0 │ Auburn   9       4
+        >}
 
         Keywords
         --------
@@ -1268,9 +1332,15 @@ class Base(ABC):
         # Numbers coming from a float dtyped object that are equivalent to
         # ints are assumed to be int valued labels, and formatted as such.
         def prettyKey(val):
+            undefined = ['', np.NaN, None, np.nan, np.NAN]
             if isinstance(val, str):
                 return val
             if isinstance(val, numbers.Number):
+                if val in undefined:
+                    # check that the feature axis doesn't have that string.
+                    if "NaN" not in list(self.features.copy(by)):
+                        return "NaN"
+                    return 'numpy.nan'
                 iVal = int(val)
                 return iVal if iVal == val else val
             return val
