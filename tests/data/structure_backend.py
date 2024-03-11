@@ -9309,14 +9309,17 @@ class StructureModifyingSparseSafe(StructureShared):
     # points.transform() #
     ######################
     
-    @raises(InvalidArgumentValue)
     def test_points_transform_stringReturn(self):
         orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         
         def stringReturn(ft):
             return "X" * len(ft)
-        
-        orig.points.transform(stringReturn)
+
+        try:
+            orig.points.transform(stringReturn)
+            assert False
+        except InvalidArgumentValue as iae:
+            assert "with as many elements as features (3)" in str(iae)
 
     @raises(InvalidArgumentType)
     def test_points_transform_exceptionInputNone(self):
@@ -9515,14 +9518,17 @@ class StructureModifyingSparseSafe(StructureShared):
     # features.transform() #
     ########################
     
-    @raises(InvalidArgumentValue)
     def test_features_transform_stringReturn(self):
         orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         
         def stringReturn(ft):
             return "X" * len(ft)
         
-        orig.features.transform(stringReturn)
+        try:
+            orig.features.transform(stringReturn)
+            assert False
+        except InvalidArgumentValue as iae:
+            assert "with as many elements as points (3)" in str(iae)
 
     @raises(ImproperObjectAction)
     def test_features_transform_exceptionPEmpty(self):
