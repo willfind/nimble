@@ -620,13 +620,21 @@ def validateAxisFunction(func, axis, allowedLength=None):
         # for transform, we need to validate the function's returned values
         # for calculate, the validation occurs when the new object is created
         if allowedLength:
-            if (isinstance(ret, str)
-                    or (not hasattr(ret, '__len__')
+            # need specific information if return is string
+            # need to say length of return is mismatched with axis length
+            oppositeAxis = 'point' if axis == 'feature' else 'feature'
+            endmsg = f"elements as {oppositeAxis}s ({allowedLength}) in this object"
+            if (isinstance(ret, str)):
+                #oppositeAxis = 'point' if axis == 'feature' else 'feature'
+                msg = "'function' returns a string instead of an iterable with as many "
+                #msg += f"elements as {oppositeAxis}s ({allowedLength}) in this object"
+                raise InvalidArgumentValue(msg+endmsg)
+            if ((not hasattr(ret, '__len__')
                         or len(ret) != allowedLength)):
-                oppositeAxis = 'point' if axis == 'feature' else 'feature'
+                #oppositeAxis = 'point' if axis == 'feature' else 'feature'
                 msg = "'function' must return an iterable with as many "
-                msg += f"elements as {oppositeAxis}s in this object"
-                raise InvalidArgumentValue(msg)
+                #msg += f"elements as {oppositeAxis}s ({allowedLength}) in this object"
+                raise InvalidArgumentValue(msg+endmsg)
             if isAllowedSingleElement(ret):
                 wrappedAxisFunc.updateConvertType(type(ret))
                 return ret
