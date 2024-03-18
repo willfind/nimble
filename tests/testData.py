@@ -4645,8 +4645,8 @@ def test_nonUnique_singleID_access():
     data = nimble.data(rawData, pointNames=pointNames, featureNames=featureNames)
     try:
         data['Double']
-    except ValueError as e:
-        assert str(e) == "Using 'Double' as an identifier is ambiguous as  it is both a point and feature name."
+    except InvalidArgumentType as iae:
+        assert "Using 'Double' as an identifier is ambiguous as  it is both a point and feature name." in str(iae)
         #str(e) == "Using 'Double' as an identifier is ambiguous as  it is both a point and feature name."
 
 def test_numeric_singleID_access():

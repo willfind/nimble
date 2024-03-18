@@ -2007,20 +2007,10 @@ class Base(ABC):
                 msg = f"Using '{key}' as an identifier is ambiguous as" 
                 msg += " it is both a point and feature name."
                 raise InvalidArgumentType(msg)    
-            
             else:
-                # do search to see if key is unique across the points and
-                # features
-                # do not allow non string values
-                # are we accounting for multiple feature calls 
-                #if key in pointsNamesList and key in featuresNamesList:
-                
-                    # what happens in the case of a view, does it suddenly become fine
-                    # to refer to an axis with a now seemingly unique value?
-                    # must happen only when a number is used for access.
                 msg = "Must include both a point and feature index; or, "
-                msg += "if this is vector shaped, a single index "
-                msg += "into the axis whose length > 1"
+                msg += "if this is a one-dimensional data object, a single index "
+                msg += "for the axis with length greater than 1."
                 raise InvalidArgumentType(msg)
                 
 
