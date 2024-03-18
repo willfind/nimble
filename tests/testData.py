@@ -4629,6 +4629,49 @@ def test_featureNames_assisted_match():
     except KeyError as e:
         assert str(e) == '"The feature name \'rainy-season\' cannot be found. Did you mean \'rainy season\'?"'
 
+def test_unique_singleID_access():
+    rawData = [[1, 2, 3], [2, 4, 6]]
+    pointNames =  ['Single', 'Double']
+    featureNames = ['1st', '2nd', '3rd']
+    data = nimble.data(rawData, pointNames=pointNames, featureNames=featureNames)
+    print(data['Single'])
+    assert data['Single'] == data['Single', :]
+    #assert data.points['Single'] == [1, 2, 3]
+    
+def test_nonUnique_singleID_access():
+    rawData = [[1, 2, 3], [2, 4, 6]]
+    pointNames =  ['Single', 'Double']
+    featureNames = ['1st', 'Double', '3rd']
+    data = nimble.data(rawData, pointNames=pointNames, featureNames=featureNames)
+    try:
+        data['Double']
+    except ValueError as e:
+        assert str(e) == "Using 'Double' as an identifier is ambiguous as  it is both a point and feature name."
+        #str(e) == "Using 'Double' as an identifier is ambiguous as  it is both a point and feature name."
+
+def test_numeric_singleID_access():
+    rawData = [[1, 2, 3], [2, 4, 6]]
+    pointNames =  ['Single', 'Double']
+    featureNames = ['1st', '2nd', '3rd']
+    data = nimble.data(rawData, pointNames=pointNames, featureNames=featureNames) 
+    print(data[1]) 
+    #== data['Single']
+# def test_unique_multiID_access():
+#     rawData = [[1, 2, 3], [2, 4, 6]]
+#     pointNames =  ['Single', 'Double']
+#     featureNames = ['1st', '2nd', '3rd']
+#     data = nimble.data(rawData, pointNames=pointNames, featureNames=featureNames)
+#     assert data['Single', '1st'] == 1 
+    
+# def test_nonUnique_multiID_access():
+#     rawData = [[1, 2, 3], [2, 4, 6]]
+#     pointNames =  ['Single', 'Single']
+#     featureNames = ['1st', '2nd', '3rd']
+#     data = nimble.data(rawData, pointNames=pointNames, featureNames=featureNames)
+#     try:
+#         data['Single', '1st']
+#     except ValueError as e:
+#         assert str(e) == "The point name 'Single' is not unique. Use the index to access the data."
 # tests for combination of one name set being specified and one set being
 # in data.
 

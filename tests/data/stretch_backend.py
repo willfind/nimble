@@ -243,7 +243,7 @@ class StretchDataSafeSparseSafe(DataTestObject):
         assert ret2.isIdentical(exp)
         assertNoNamesGenerated(base)
 
-    def test_handmade_Base_Stretch_xor_point(self):
+    def test_handmade_Base_Stretch_xor_point(self):    
         base = self.constructor([[True, False, True, False],
                                  [True, True, True, True],
                                  [False, False, False, False]])

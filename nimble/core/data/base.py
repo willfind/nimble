@@ -1975,6 +1975,16 @@ class Base(ABC):
 
         *Note: slices are inclusive; index 2 ('pam') was included*
         """
+        # if axis names do not exist provide a list to 
+        # compare with. calling ._getNames() creates default names
+        # and breaks some tests that rely on the absence of names
+        pointsNamesList = []
+        featuresNamesList = []
+        if self._points._namesCreated():
+            pointsNamesList = self._points._getNames()
+        if self._features._namesCreated():
+            featuresNamesList = self._features._getNames()
+            
         # Make it a tuple if it isn't one
         if key.__class__ is tuple:
             x, y = key
@@ -1984,15 +1994,35 @@ class Base(ABC):
                 y = key
             elif len(self.features) == 1:
                 x = key
-                y = 0
+                y = 0 
+            elif key in pointsNamesList and key not in featuresNamesList:
+                    x = key
+                    y = slice(None)
+                    key = (x, y)
+            elif key in featuresNamesList and key not in pointsNamesList:
+                    y = key
+                    x = slice(None)
+                    key = (x, y)
+            elif key in pointsNamesList and key in featuresNamesList:
+                msg = f"Using '{key}' as an identifier is ambiguous as" 
+                msg += " it is both a point and feature name."
+                raise InvalidArgumentType(msg)    
+            
             else:
                 # do search to see if key is unique across the points and
                 # features
                 # do not allow non string values
+                # are we accounting for multiple feature calls 
+                #if key in pointsNamesList and key in featuresNamesList:
+                
+                    # what happens in the case of a view, does it suddenly become fine
+                    # to refer to an axis with a now seemingly unique value?
+                    # must happen only when a number is used for access.
                 msg = "Must include both a point and feature index; or, "
                 msg += "if this is vector shaped, a single index "
                 msg += "into the axis whose length > 1"
                 raise InvalidArgumentType(msg)
+                
 
         #process x
         singleX = False
