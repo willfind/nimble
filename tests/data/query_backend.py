@@ -847,6 +847,7 @@ class QueryBackendSparseSafe(DataTestObject):
         assert ret == exp
 
 
+
     ###############################
     # points/features.__getitem__ #
     ###############################
@@ -951,6 +952,69 @@ class QueryBackendSparseSafe(DataTestObject):
         exp = self.constructor(expData)
 
         assert ret == exp
+
+    #####################################################
+    # data / points / features .__getitem__ ease of use #
+    #####################################################
+
+    def test_pointNames_assisted_match(self):
+        rawData = [[1, 2, 3], [2, 4, 6]]
+        pointNames = ['Single', 'Double']
+        data = self.constructor(rawData, pointNames=pointNames)
+        try:
+            data.points['Singel']
+        except KeyError as e:
+            assert str(e) == '"The point name \'Singel\' cannot be found. Did you mean \'Single\'?"'
+        try:
+            data['Singel',:]
+        except KeyError as e:
+            assert str(e) == '"The point name \'Singel\' cannot be found. Did you mean \'Single\'?"'
+
+    def test_featureNames_assisted_match(self):
+        rawData = [[1, 2, 3], [2, 4, 6]]
+        featureNames = ["rainy season", "rain season", "wet season"]
+        data = self.constructor(rawData, featureNames=featureNames)
+        try:
+            data.features['rainy-season']
+        except KeyError as e:
+            assert str(e) == '"The feature name \'rainy-season\' cannot be found. Did you mean \'rainy season\'?"'
+        try:
+            data[:, 'rainy-season']
+        except KeyError as e:
+            assert str(e) == '"The feature name \'rainy-season\' cannot be found. Did you mean \'rainy season\'?"'
+
+    def test_unique_singleID_access(self):
+        rawData = [[1, 2, 3], [2, 4, 6]]
+        pointNames =  ['Single', 'Double']
+        featureNames = ['1st', '2nd', '3rd']
+        data = self.constructor(rawData, pointNames=pointNames, featureNames=featureNames)
+
+        assert data['Single'] == data['Single', :]
+        assert data.points['Single'] == data['Single']
+
+        assert data['1st'] == data[:, '1st']
+        assert data.features['1st'] == data['1st']
+
+    def test_nonUnique_singleID_access(self):
+        rawData = [[1, 2, 3], [2, 4, 6]]
+        pointNames =  ['Single', 'Double']
+        featureNames = ['1st', 'Double', '3rd']
+        data = self.constructor(rawData, pointNames=pointNames, featureNames=featureNames)
+        try:
+            data['Double']
+        except InvalidArgumentType as iae:
+            expectedMsg = "Using 'Double' as an identifier is ambiguous as it is both a point and feature name."
+            assert expectedMsg == str(iae)
+
+    @raises(InvalidArgumentType)
+    def test_numeric_singleID_access(self):
+        rawData = [[1, 2, 3], [2, 4, 6]]
+        pointNames =  ['Single', 'Double']
+        featureNames = ['1st', '2nd', '3rd']
+        data = self.constructor(rawData, pointNames=pointNames, featureNames=featureNames)
+        # technically unambiguous, but we disallow this
+        _ = data[2]
+
 
     ################
     # pointView #
