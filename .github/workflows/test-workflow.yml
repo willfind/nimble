@@ -1,21 +1,20 @@
 name: Test Workflow
 
 on:
-  pull_request:
-    branches:
-      - dev
-      - nini/githubActionsTests
+  workflow_call:
+    inputs:
+      # The name of the artifact containing the wheels
+      saveNameWheel:
+        required: true
+        type: string
+      # The name of the artifact containing the conda channel
+      saveNameConda:
+        required: true
+        type: string
 
 jobs:
 
-  build-wheels:
-    uses: ./.github/workflows/buildWheels.yml
-    with:
-      saveNameWheel: built_wheel
-      saveNameConda: built_channel
-
-  test:
-    needs: build-wheels
+  test-workflow:
     runs-on: ubuntu-latest
 
     steps:
