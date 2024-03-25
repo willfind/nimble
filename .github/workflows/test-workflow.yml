@@ -33,7 +33,7 @@ jobs:
           name: ${{inputs.saveNameWheel}}
     
       - name: Move Wheels to docs source
-        run: mv *.whl ./documentation/source/wheels
+        run: mv wheelhouse/*.whl ./documentation/source/wheels
 
       - name: install nimble and dependencies
         run: 
