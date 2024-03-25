@@ -28,6 +28,13 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
 
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{inputs.saveNameWheel}}
+    
+      - name: Move Wheels to docs source
+        run: mv *.whl ./documentation/source/wheels
+
       - name: install nimble and dependencies
         run: 
           pip install pytest
