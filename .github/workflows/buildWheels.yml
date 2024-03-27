@@ -27,7 +27,7 @@ jobs:
     runs-on: ${{ matrix.os}}
     strategy:
       matrix:
-        os: ["ubuntu-latest", "windows-latest"]
+        os: ["windows-latest"]
         #os: ["ubuntu-latest"]
         pyVer: ["cp3*"]
         #pyVer: ["cp3*", "cp39", "cp310", "cp311"]
@@ -40,9 +40,7 @@ jobs:
       # pipeline; unclear to what extent what is here accomplishes that.
       - uses: actions/setup-python@v4
         with:
-          python-version: |
-            3.9
-            3.10
+          python-version: 3.9
           cache: 'pip'
           cache-dependency-path: pyproject.toml
 
