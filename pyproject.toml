@@ -15,7 +15,7 @@ authors = [
         ]
 description = "Interfaces and tools for data science."
 requires-python = ">=3.8, <3.12"
-license = {text = "Proprietary"}
+license = {text = "Apache 2.0"}
 classifiers = [
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3',
@@ -24,7 +24,7 @@ classifiers = [
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Operating System :: OS Independent',
-        'License :: Other/Proprietary License',
+        'License :: OSI Approved :: Apache Software License',
         ]
 dynamic = ['version']
 dependencies = [
