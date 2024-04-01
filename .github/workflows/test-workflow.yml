@@ -42,4 +42,4 @@ jobs:
           pip install nimble[quickstart] --find-links=./documentation/source/wheels # Only if needed 
 
       - name: Run pytest
-        run: pytest
+        run: pytest -vv
