@@ -27,8 +27,8 @@ jobs:
     runs-on: ${{ matrix.os}}
     strategy:
       matrix:
-        os: ["windows-latest"]
-        #os: ["ubuntu-latest"]
+        #os: ["windows-latest"]
+        os: ["ubuntu-latest"]
         pyVer: ["cp3*"]
         #pyVer: ["cp3*", "cp39", "cp310", "cp311"]
         #pyVer: ["cp310"]
