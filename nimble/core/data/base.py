@@ -2538,8 +2538,6 @@ class Base(ABC):
                     padded = getattr(val, holderOrientation)(max(finalWidths[j]))
                 # normal values
                 else:
-                    #import pdb
-                    #pdb.set_trace()
                     padded = getattr(val, dataRelativeOrientation)(finalWidths[j][1])
                     padded = getattr(padded, dataOrientation)(max(finalWidths[j]))
                 row[j] = padded
