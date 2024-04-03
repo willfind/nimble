@@ -1554,9 +1554,9 @@ class QueryBackendSparseSafe(DataTestObject):
         pnames, bound = obj._arrangePointNames(range(4), 4, 11, rowHolder, nameHold, True, True)
         assert pnames == ['0', "'one'", '2', "'three'"]
         assert bound == len("'three'")
-        # when quoteNames is False, leave blank
+        # when quoteNames is False, also use index
         pnames, bound = obj._arrangePointNames(range(4), 4, 11, rowHolder, nameHold, True, False)
-        assert pnames == ['', 'one', '', 'three']
+        assert pnames == ['0', 'one', '2', 'three']
         assert bound == len('three')
 
     @raises(InvalidArgumentValue)
@@ -1746,7 +1746,7 @@ class QueryBackendSparseSafe(DataTestObject):
             assert retSplit[-1] == '>'
 
         # check repr of .points and .features
-        addIdxMatch = re.compile(u' [ 0-9\u2502]+? \u2502( +\u2502?| +[pf]t[0-9]+) \u2502($| [-0-9\\. \u2502\u2500]+)')
+        addIdxMatch = re.compile(u' [ 0-9\u2502]+? \u2502 +([pf]t[0-9]+|[0-9]+)? \u2502?($| [-0-9\\. \u2502\u2500]+)')
         for axis, length in [(data.points, numPts), (data.features, numFts)]:
             axRepr = repr(axis)
             axSplit = axRepr.split('\n')
