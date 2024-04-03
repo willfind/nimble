@@ -824,13 +824,7 @@ def arrangeFinalTable(pnames, pnamesWidth, dataTable, dataWidths, fnames,
     fnames = ['', ''] + fnames
 
     # glue feature names onto the top of the data
-#    fnamesWidth = list(map(len, fnames))
     dataTable = [fnames] + dataTable
-#    # finalize widths by taking the largest of the two possibilities
-#    for i in range(len(fnames)):
-#        nameWidth = fnamesWidth[i]
-#        valWidth = dataWidths[i]
-#        dataWidths[i] = (nameWidth, valWidth)
 
     return dataTable, dataWidths
 

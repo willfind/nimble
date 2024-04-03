@@ -1325,8 +1325,6 @@ class QueryBackendSparseSafe(DataTestObject):
         old_output = sys.stdout
         temp_output = StringIO()
         sys.stdout = temp_output
-#        import pdb
-#        pdb.set_trace()
         testData.show(includePointNames=True, includeFeatureNames=False)
         sys.stdout = old_output
 

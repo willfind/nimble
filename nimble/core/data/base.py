@@ -2477,9 +2477,6 @@ class Base(ABC):
                 msg += str(2 + min(numPoints, 2))
                 raise InvalidArgumentValue(msg)
 
-#        import pdb
-#        pdb.set_trace()
-
         if lineWidthLimit is None:
             lineWidthLimit = float('inf')
         maxDataWidth = lineWidthLimit - len(indent)
