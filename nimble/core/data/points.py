@@ -1615,9 +1615,11 @@ class Points(ABC):
     def mapReduce(self, mapper, reducer, *,
                   useLog=None): # pylint: disable=unused-argument
         """
-        Apply a mapper and reducer function to the Points in this object.
+        Transforms each point in this object using a specified mapper
+        function and then aggregates the data using the specified reducer
+        function.
 
-        Return a new object containing the results of the given mapper
+        Returns a new object containing the aggregated results of the given mapper
         and reducer functions along the Points axis.
 
         Parameters
@@ -1653,6 +1655,17 @@ class Points(ABC):
         ...               ['Texas', 3, 45]]
         >>> fts = ['STATE', 'HOURS', 'MPH']
         >>> X = nimble.data(travelData, featureNames=fts)
+        >>> X
+        <DataFrame 5pt x 3ft
+             'STATE'  'HOURS' 'MPH'
+           ┌───────────────────────
+         0 │   Iowa    0.500    19
+         1 │ Maryland  1.500    48
+         2 │ Maryland  2.000    40
+         3 │  Texas    3.200    50
+         4 │  Texas    3.000    45
+        >
+        
         >>> X.points.mapReduce(distanceMapper, distanceReducer)
         <DataFrame 3pt x 2ft
                 0        1
