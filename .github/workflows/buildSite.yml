@@ -1,8 +1,8 @@
 # Job to build the html docs for ghpages
 #
 # (Current) Assumptions:
-# * remove_source.py still needs to be run on the wheels, (see the
-#   repair-wheel command in pyproject.toml)
+# * built wheels are available using saveNameWheel
+# * built conda channel availabe using saveNameConda
 #
 # Effects: A ghpages specific artifact containing the built site is saved.
 
@@ -19,6 +19,10 @@ on:
       saveNameConda:
         required: true
         type: string
+      # The name of the artifact containing the example notebooks built for the site
+      saveNameNotebooks:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       # The name of the artifact containing the wheels
@@ -27,6 +31,10 @@ on:
         type: string
       # The name of the artifact containing the conda channel
       saveNameConda:
+        required: true
+        type: string
+      # The name of the artifact containing the example notebooks built for the site
+      saveNameNotebooks:
         required: true
         type: string
 
@@ -75,6 +83,14 @@ jobs:
         # our cwd is the project root, we -C to indicate the folder we want to build from/in
         run: make html -C documentation
 
+      # save the converted notebooks of the site examples
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{inputs.saveNameNotebooks}}
+          path: ./documentation/html/examples
+          retention-days: 1
+
+      # pull previously created conda channel into the build site folder
       - uses: actions/download-artifact@v3
         with:
           name: ${{inputs.saveNameConda}}

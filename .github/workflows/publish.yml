@@ -22,7 +22,20 @@ jobs:
     with:
       saveNameWheel: built_wheel
       saveNameConda: built_channel
+      saveNameNotebooks: built_notebooks
 
   deploy-site:
     uses: ./.github/workflows/deploySite.yml
     needs: [build-site]
+
+  deploy-colab:
+    uses: ./.github/workflows/deployColab.yml
+    needs: [build-site]
+    with:
+      saveNameNotebooks: built_notebooks
+
+  deploy-pypi:
+    uses: ./.github/workflows/deployPyPi.yml
+    needs: [build-site]
+    with:
+      saveNameWheel: built_wheel

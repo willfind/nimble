@@ -1,7 +1,9 @@
 # Build wheels and save as artifact, to either be manually downloaded,
 # or chained as a precursor job within another action.
 #
-# Effects: artifact containing all built wheels saved.
+# Effects:
+# - artifact containing all built wheels saved.
+# - artifact containing conda channel is saved
 
 name: BuildWheels
 
@@ -56,6 +58,16 @@ jobs:
           #CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9, <3.11"
         with:
           output-dir: wheelhouse
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-activate-base: true
+          activate-environment: ""
+
+      - name: Conda channel build
+        run: |
+          conda install conda-build
+          conda build conda_recipe/ --output-folder=nimble-data --no-test --no-anaconda-upload --no-activate
 
       # retention days param critical for cost saving wrt free/paid storage.
       - uses: actions/upload-artifact@v3

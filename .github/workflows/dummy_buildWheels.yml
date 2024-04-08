@@ -39,15 +39,6 @@ jobs:
           auto-activate-base: true
           activate-environment: ""
 
-      - name: Remove Source
-        shell: bash
-        run: |
-          cd wheelhouse
-          pip install wheel
-          for name in *.whl; do
-              python3 ../remove_source.py . $name
-          done
-
       - name: Conda channel build
         run: |
           conda install conda-build

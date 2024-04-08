@@ -1,0 +1,37 @@
+# Job to deploy the built wheels to PyPI
+#
+# Assumptions:
+# * saveNameWheel contains the the built wheels
+# * the pypi account which owns the nimble project has trusted
+#   publishing set up for publish.py (the caller of this)
+#
+# Effects: google drive saved notebooks are overwritten with the
+#  given notebooks.
+
+name: Deploy built package to pypi
+
+on:
+  workflow_call:
+    inputs:
+      # The name of the artifact containing the wheels
+      saveNameWheel:
+        required: true
+        type: string
+
+jobs:
+  deploy-colab:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/nimble
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{inputs.saveNameWheel}}
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+      # details set up by env variables above, and takes from dist folder

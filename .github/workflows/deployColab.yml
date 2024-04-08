@@ -1,0 +1,57 @@
+# Job to deploy the examples to the known colab links
+#
+# Assumptions:
+# * saveNameNotebooks contains the notebooks built for the site,
+#   (and also includes the html pages, though we don't need them)
+#
+# Effects: google drive saved notebooks are overwritten with the
+#  given notebooks.
+
+name: Deploy Google Colab notebooks
+
+on:
+  workflow_call:
+    inputs:
+      # The name of the artifact containing the example notebooks built for the site
+      saveNameNotebooks:
+        required: true
+        type: string
+
+jobs:
+  deploy-colab:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/download-artifact@v3
+          with:
+            name: ${{inputs.saveNameNotebooks}}
+            path: ./notebooks
+      
+      - name: Remove unneeded HTML
+        run: rm ./examples/*.html
+
+      - name: Add needed install cell in notebooks
+          shell: bash
+          run: |
+            cd notebooks
+            pip install nbformat
+            for name in *.ipynb; do
+                python3 ../prep_for_colab.py . $name
+            done
+
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: 'Use gcloud CLI'
+        run: |
+          gcloud storage cp ./examples/additional_functionality.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/additional_functionality.ipynb
+          gcloud storage cp ./examples/cleaning_data.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/cleaning_data.ipynb
+          gcloud storage cp ./examples/exploring_data.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/exploring_data.ipynb
+          gcloud storage cp ./examples/merging_and_tidying_data.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/merging_and_tidying_data.ipynb
+          gcloud storage cp ./examples/neural_networks.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/neural_networks.ipynb
+          gcloud storage cp ./examples/supervised_learning.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/supervised_learning.ipynb
+          gcloud storage cp ./examples/unsupervised_learning.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/unsupervised_learning.ipynb
