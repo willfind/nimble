@@ -2376,7 +2376,7 @@ class Base(ABC):
     def toString(self, points=None, features=None, lineLimit=30,
                  lineWidthLimit=79,  sigDigits=3, columnWidthLimit=19,
                  includePointNames=True, includeFeatureNames=True,
-                 indent='', quoteNames=True):
+                 indent='', quoteNames=False):
         """
         A string representation of this object.
 
@@ -2427,16 +2427,19 @@ class Base(ABC):
         text, write, display, stringify
         """
         # setup a bundle of fixed constants
-        colSep = ' '
+        colSep = '  '
         colHold = '\u2500\u2500'
         rowHold = '\u2502'
         pnameSep = '\u2502'
+        pnameSepColSep = ' ' # special case of colSep for the gaps left and right of pnameSep
         fnameSep = '\u2500'
         corner = '\u250C'
-        nameHolder = '...'
+        nameHolder = '\u2500'
         dataOrientation = 'center'
+        dataRelativeOrientation = 'rjust'
         pNameOrientation = 'rjust'
         fNameOrientation = 'center'
+        holderOrientation = 'center'
 
         # Resolve default values for points, features, and related
         # variables
@@ -2483,9 +2486,9 @@ class Base(ABC):
             maxDataRows, columnWidthLimit, rowHold, nameHolder, includePointNames,
             quoteNames)
         # The available space for the data is reduced by the width of the
-        # pnames, a column separator, the pnames separator, and another
-        # column separator
-        maxDataWidth -= pnamesWidth + 2 * len(colSep) + len(pnameSep)
+        # pnames, a pnames column separator, the pnames separator, and another
+        # pnames column separator
+        maxDataWidth -= pnamesWidth + 2 * len(pnameSepColSep) + len(pnameSep)
 
         # Set up data values to fit in the available space
         with self._treatAs2D():
@@ -2500,20 +2503,52 @@ class Base(ABC):
         out = ""
         for i, row in enumerate(finalTable):
             for j, val in enumerate(row):
+                # point names
                 if j == 0:
-                    padded = getattr(val, pNameOrientation)(finalWidths[j])
+                    padded = getattr(val, pNameOrientation)(max(finalWidths[j]))
+                # feature Names
                 elif i == 0:
-                    padded = getattr(val, fNameOrientation)(finalWidths[j])
+                    padded = getattr(val, fNameOrientation)(max(finalWidths[j]))
+                # seperators between pnames and values (already fully filling
+                # the available space)
+                elif j == 1 and val == rowHold:
+                    padded = val
+                # row placeholder: centered between the width of the adjacent
+                # values in the column
+                elif val == rowHold:
+                    # finalTable is being padded as we go, have to strip the
+                    # previously added whitespace from the row above
+                    aboveVal = (finalTable[i-1][j]).strip()
+                    # in certain height limited conditions, the holder row may
+                    # be the last, so there is no value below. Only check if
+                    # we're sure there's another row.
+                    belowVal = aboveVal
+                    if i < len(finalTable)-1:
+                        belowVal = finalTable[i+1][j]
+                    valWidthMax = max(len(aboveVal), len(belowVal))
+                    # if we are in a column with all missing values, align to
+                    # center of the column
+                    if valWidthMax == 0:
+                        valWidthMax = max(finalWidths[j])
+                    valPadded = getattr(val, holderOrientation)(valWidthMax)
+                    padded = getattr(valPadded, dataRelativeOrientation)(finalWidths[j][1])
+                    padded = getattr(padded, dataOrientation)(max(finalWidths[j]))
+#                    padded = (' ' * max((finalWidths[j])) - valWidthMax) + valPadded
+                elif val == colHold:
+                    padded = getattr(val, holderOrientation)(max(finalWidths[j]))
+                # normal values
                 else:
-                    padded = getattr(val, dataOrientation)(finalWidths[j])
+                    padded = getattr(val, dataRelativeOrientation)(finalWidths[j][1])
+                    padded = getattr(padded, dataOrientation)(max(finalWidths[j]))
                 row[j] = padded
-            line = indent + colSep.join(finalTable[i])
+            line = indent + pnameSepColSep.join(finalTable[i][:3]) + colSep + colSep.join(finalTable[i][3:])
             out += line.rstrip() + "\n"
             if i == 0: # add separator row
                 out += indent
-                blank =  ' '.join(' ' * w for w in finalWidths[:1]) + ' '
-                ftWidths = [w for w in finalWidths[2:] if w]
-                sepStr = fnameSep.join([fnameSep * w for w in ftWidths])
+                # spaces for each character of point IDs max plus column seperator
+                blank =  (' ' * (max(finalWidths[0]))) + pnameSepColSep
+                ftWidths = [max(w) for w in finalWidths[2:] if w]
+                sepStr = (fnameSep * len(colSep)).join([fnameSep * w for w in ftWidths])
                 out += blank + corner + fnameSep + sepStr + '\n'
 
         return out
@@ -2553,7 +2588,7 @@ class Base(ABC):
               lineLimit='automatic', lineWidthLimit='automatic',
               sigDigits=3, columnWidthLimit='automatic',
               includePointNames=True, includeFeatureNames=True,
-              includeObjectName=True, indent='', quoteNames=True):
+              includeObjectName=True, indent='', quoteNames=False):
 
         # Check if we're in IPython / a Notebook
         if IPython.nimbleAccessible():
@@ -5544,10 +5579,7 @@ class Base(ABC):
 
             name = self.points.getName(index)
             if name is None:
-                if quoteNames:
-                    return str(index)
-                else:
-                    return ''
+                return str(index)
 
             if quoteNames:
                 if len(name) <= nameLength - 2:
@@ -5675,17 +5707,13 @@ class Base(ABC):
         while totalWidth < maxWidth and currIndex != endIndex:
             currTable = lTable if currIndex >= 0 else rTable
             currCol = []
-            currWidth = 0
 
             if fnames is None:
                 currFName = None
             else:
                 currFName = fnames[accessIndex]
             if currFName is None:
-                if quoteNames:
-                    currFName = str(accessIndex)
-                else:
-                    currFName = ''
+                currFName = str(accessIndex)
             elif quoteNames:
                 if len(currFName) > maxStrLength - 2:
                     currFName = currFName[:nameCutIndex - 2] + strHold
@@ -5694,7 +5722,8 @@ class Base(ABC):
                 if len(currFName) > maxStrLength:
                     currFName = currFName[:nameCutIndex] + strHold
 
-            currWidth = len(currFName)
+            nameWidth = len(currFName)
+            valWidth = 0
 
             # check all values in this column (in the accepted rows)
             i = 0
@@ -5705,9 +5734,9 @@ class Base(ABC):
                     valLimited = valFormed
                 else:
                     valLimited = valFormed[:nameCutIndex] + strHold
-                valLen = len(valLimited)
-                if valLen > currWidth:
-                    currWidth = valLen
+
+                if len(valFormed) > valWidth:
+                    valWidth = len(valFormed)
 
                 # If these are equal, it is time to add the holders
                 if i == rowHolderIndex:
@@ -5716,11 +5745,14 @@ class Base(ABC):
                 currCol.append(valLimited)
                 i += 1
 
+            # The max width used by this column
+            currWidths = (nameWidth, valWidth)
+
             # placeholder row needs to be placed at bottom
             if i == rowHolderIndex:
                 currCol.append(rowHold)
 
-            totalWidth += currWidth
+            totalWidth += max(currWidths)
             # only add this column if it won't put us over the limit
             if totalWidth <= maxWidth:
                 numAdded += 1
@@ -5734,12 +5766,12 @@ class Base(ABC):
                     rFNames.append(currFName)
                     currIndex = abs(currIndex)
                     accessIndex = fOffset + currIndex
-                    rColWidths.append(currWidth)
+                    rColWidths.append(currWidths)
                 else:
                     lFNames.append(currFName)
                     currIndex = (-1 * currIndex) - 1
                     accessIndex = fOffset + numFts + currIndex
-                    lColWidths.append(currWidth)
+                    lColWidths.append(currWidths)
 
             # ignore column separator if the next column is the last
             if numAdded == (numFts - 1):
