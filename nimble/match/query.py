@@ -98,12 +98,12 @@ class QueryString:
     >>> missing = toQuery.matchingElements("is nonZero")
     >>> missing
     <DataFrame 4pt x 3ft
-         'ft1' 'ft2' 'ft3'
-       ┌──────────────────
-     0 │ False  True  True
-     1 │  True  True  True
-     2 │  True  True  True
-     3 │  True False  True
+          ft1    ft2    ft3
+       ┌───────────────────
+     0 │ False   True  True
+     1 │  True   True  True
+     2 │  True   True  True
+     3 │  True  False  True
     >
     >>> toQuery.points.delete('ft3 == -1')
     >>> toQuery

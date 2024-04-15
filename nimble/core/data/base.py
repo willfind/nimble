@@ -250,11 +250,11 @@ class Base(ABC):
         >>> X.points.permute([2, 1, 0])
         >>> X
         <Matrix 3pt x 4ft
-             0 1 2 3
-           ┌────────
-         0 │ 0 0 0 0
-         1 │ 5 6 7 8
-         2 │ 1 2 3 4
+             0  1  2  3
+           ┌───────────
+         0 │ 0  0  0  0
+         1 │ 5  6  7  8
+         2 │ 1  2  3  4
         >
 
         Keywords
@@ -296,11 +296,11 @@ class Base(ABC):
         >>> X.features.permute([3, 2, 1, 0])
         >>> X
         <Matrix 3pt x 4ft
-             0 1 2 3
-           ┌────────
-         0 │ 4 3 2 1
-         1 │ 8 7 6 5
-         2 │ 0 0 0 0
+             0  1  2  3
+           ┌───────────
+         0 │ 4  3  2  1
+         1 │ 8  7  6  5
+         2 │ 0  0  0  0
         >
 
         Keywords
@@ -515,11 +515,11 @@ class Base(ABC):
         ['replace=a', 'replace=b', 'replace=c']
         >>> X
         <DataFrame 3pt x 3ft
-             'replace=a' 'replace=b' 'replace=c'
-           ┌────────────────────────────────────
-         0 │    1.000       0.000       0.000
-         1 │    0.000       1.000       0.000
-         2 │    0.000       0.000       1.000
+             replace=a  replace=b  replace=c
+           ┌────────────────────────────────
+         0 │   1.000      0.000      0.000
+         1 │   0.000      1.000      0.000
+         2 │   0.000      0.000      1.000
         >
 
         Keywords
@@ -596,11 +596,11 @@ class Base(ABC):
         {0: 'a', 1: 'b', 2: 'c'}
         >>> X
         <DataFrame 3pt x 3ft
-             'keep1' 'transform' 'keep2'
-           ┌────────────────────────────
-         0 │    1         0         1
-         1 │    2         1         2
-         2 │    3         2         3
+             keep1  transform  keep2
+           ┌────────────────────────
+         0 │   1        0        1
+         1 │   2        1        2
+         2 │   3        2        3
         >
 
         Keywords
@@ -692,11 +692,11 @@ class Base(ABC):
         >>> X.transformElements(lambda elem: elem + 1)
         >>> X
         <Matrix 3pt x 3ft
-             0 1 2
-           ┌──────
-         0 │ 2 2 2
-         1 │ 2 2 2
-         2 │ 2 2 2
+             0  1  2
+           ┌────────
+         0 │ 2  2  2
+         1 │ 2  2  2
+         2 │ 2  2  2
         >
 
         Transform while preserving zero values.
@@ -706,11 +706,11 @@ class Base(ABC):
         ...                     preserveZeros=True)
         >>> X
         <Sparse 3pt x 3ft
-             0  1  2
-           ┌─────────
-         0 │ 11 0  0
-         1 │ 0  11 0
-         2 │ 0  0  11
+             0   1   2
+           ┌───────────
+         0 │ 11   0   0
+         1 │  0  11   0
+         2 │  0   0  11
         >
 
         Transforming a subset of points and features.
@@ -720,12 +720,12 @@ class Base(ABC):
         ...                     features=[0, 2])
         >>> X
         <List 4pt x 4ft
-             0 1 2 3
-           ┌────────
-         0 │ 2 1 2 1
-         1 │ 2 1 2 1
-         2 │ 1 1 1 1
-         3 │ 1 1 1 1
+             0  1  2  3
+           ┌───────────
+         0 │ 2  1  2  1
+         1 │ 2  1  2  1
+         2 │ 1  1  1  1
+         3 │ 1  1  1  1
         >
 
         Transforming with None return values. With the ``addTenToEvens``
@@ -757,11 +757,11 @@ class Base(ABC):
         ...                        skipNoneReturnValues=True)
         >>> skip
         <Matrix 3pt x 3ft
-             0  1  2
-           ┌─────────
-         0 │ 1  12 3
-         1 │ 14 5  16
-         2 │ 7  18 9
+             0   1   2
+           ┌───────────
+         0 │  1  12   3
+         1 │ 14   5  16
+         2 │  7  18   9
         >
 
         Keywords
@@ -840,11 +840,11 @@ class Base(ABC):
         >>> twos = X.calculateOnElements(lambda elem: elem + 1)
         >>> twos
         <Matrix 3pt x 3ft
-             0 1 2
-           ┌──────
-         0 │ 2 2 2
-         1 │ 2 2 2
-         2 │ 2 2 2
+             0  1  2
+           ┌────────
+         0 │ 2  2  2
+         1 │ 2  2  2
+         2 │ 2  2  2
         >
 
         Calculate while preserving zero values.
@@ -854,11 +854,11 @@ class Base(ABC):
         ...                                preserveZeros=True)
         >>> addTen
         <Sparse 3pt x 3ft
-             0  1  2
-           ┌─────────
-         0 │ 11 0  0
-         1 │ 0  11 0
-         2 │ 0  0  11
+             0   1   2
+           ┌───────────
+         0 │ 11   0   0
+         1 │  0  11   0
+         2 │  0   0  11
         >
 
         Calculate on a subset of points and features.
@@ -869,10 +869,10 @@ class Base(ABC):
         ...                              features=[0, 2])
         >>> calc
         <List 2pt x 2ft
-             0 1
-           ┌────
-         0 │ 2 2
-         1 │ 2 2
+             0  1
+           ┌─────
+         0 │ 2  2
+         1 │ 2  2
         >
 
         Calculating with None return values. With the ``addTenToEvens``
@@ -976,10 +976,10 @@ class Base(ABC):
         >>> isNegativeOne = X.matchingElements(-1)
         >>> isNegativeOne
         <Matrix 2pt x 3ft
-               0     1     2
-           ┌──────────────────
-         0 │ False  True False
-         1 │ False False False
+               0      1      2
+           ┌────────────────────
+         0 │ False   True  False
+         1 │ False  False  False
         >
 
         >>> from nimble import match
@@ -988,10 +988,10 @@ class Base(ABC):
         >>> isMissing = X.matchingElements(match.missing)
         >>> isMissing
         <Matrix 2pt x 3ft
-               0     1     2
-           ┌──────────────────
-         0 │ False False  True
-         1 │  True False False
+               0      1      2
+           ┌────────────────────
+         0 │ False  False   True
+         1 │  True  False  False
         >
 
         >>> from nimble import match
@@ -1265,19 +1265,19 @@ class Base(ABC):
         [0, 1, 2, 3]
         >>> groupByLosses[1]
         <DataFrame 3pt x 3ft
-             'conference'   'team'   'wins'
-           ┌───────────────────────────────
-         0 │     SEC       Alabama     14
-         1 │    Big 10    Ohio State   13
+             conference     team      wins
+           ┌──────────────────────────────
+         0 │         SEC     Alabama   14
+         1 │      Big 10  Ohio State   13
          2 │ Independent  Notre Dame   12
         >
         >>> groupByLosses[3]
         <DataFrame 3pt x 3ft
-             'conference'  'team' 'wins'
-           ┌────────────────────────────
-         0 │     SEC        LSU     10
-         1 │     SEC      Florida   10
-         2 │     SEC      Georgia   11
+             conference  team    wins
+           ┌─────────────────────────
+         0 │     SEC       LSU    10
+         1 │     SEC    Florida   10
+         2 │     SEC    Georgia   11
         >
         
         Using the calculate parameter we can find the maximum of 
@@ -1544,19 +1544,19 @@ class Base(ABC):
         >>> trainData, testData = X.trainAndTestSets(.34)
         >>> trainData
         <Matrix "train" 4pt x 3ft
-               0 1 2
-             ┌──────
-         'a' │ 1 0 0
-         'b' │ 0 1 0
-         'f' │ 0 0 1
-         'c' │ 0 0 1
+             0  1  2
+           ┌────────
+         a │ 1  0  0
+         b │ 0  1  0
+         f │ 0  0  1
+         c │ 0  0  1
         >
         >>> testData
         <Matrix "test" 2pt x 3ft
-               0 1 2
-             ┌──────
-         'e' │ 0 1 0
-         'd' │ 1 0 0
+             0  1  2
+           ┌────────
+         e │ 0  1  0
+         d │ 1  0  0
         >
 
         Returning a 4-tuple.
@@ -1575,21 +1575,21 @@ class Base(ABC):
         >>> testX, testY = fourTuple[2], fourTuple[3]
         >>> trainX
         <Matrix "trainX" 4pt x 3ft
-               0 1 2
-             ┌──────
-         'a' │ 1 0 0
-         'b' │ 0 1 0
-         'f' │ 0 0 1
-         'c' │ 0 0 1
+             0  1  2
+           ┌────────
+         a │ 1  0  0
+         b │ 0  1  0
+         f │ 0  0  1
+         c │ 0  0  1
         >
         >>> trainY
         <Matrix "trainY" 4pt x 1ft
-               0
-             ┌──
-         'a' │ 1
-         'b' │ 2
-         'f' │ 3
-         'c' │ 3
+             0
+           ┌──
+         a │ 1
+         b │ 2
+         f │ 3
+         c │ 3
         >
         >>> testX
         <Matrix "testX" 2pt x 3ft
@@ -1973,28 +1973,28 @@ class Base(ABC):
 
         >>> office['pam', :]
         <DataFrame 1pt x 5ft
-                 'id' 'age'  'department'  'salary' 'gender'
-               ┌────────────────────────────────────────────
-         'pam' │ 4331   26  administration  28000      f
+                id   age    department    salary  gender
+             ┌──────────────────────────────────────────
+         pam │ 4331   26  administration  28000     f
         >
         >>> office[[3, 1], :]
         <DataFrame 2pt x 5ft
-                    'id' 'age' 'department' 'salary' 'gender'
-                  ┌──────────────────────────────────────────
-         'dwight' │ 4211   45     sales      33000      m
-            'jim' │ 4434   26     sales      26000      m
+                   id  age  department  salary  gender
+                ┌─────────────────────────────────────
+         dwight │ 4211  45    sales     33000     m
+            jim │ 4434  26    sales     26000     m
         >
 
         *Note: retains list order; index 3 placed before index 1*
 
         >>> office[1:4, :]
         <DataFrame 4pt x 5ft
-                    'id' 'age'  'department'  'salary' 'gender'
-                  ┌────────────────────────────────────────────
-            'jim' │ 4434   26      sales       26000      m
-            'pam' │ 4331   26  administration  28000      f
-         'dwight' │ 4211   45      sales       33000      m
-         'angela' │ 4344   45    accounting    43500      f
+                   id   age  department  salary gender
+                ┌────────────────────────────────────────────
+            jim │ 4434   26      sales       26000      m
+            pam │ 4331   26  administration  28000      f
+         dwight │ 4211   45      sales       33000      m
+         angela │ 4344   45    accounting    43500      f
         >
 
         *Note: slices are inclusive; index 4 ('gender') was included*
@@ -3486,19 +3486,19 @@ class Base(ABC):
         >>> X = nimble.data(lst)
         >>> X
         <Matrix 2pt x 3ft
-             0 1 2
-           ┌──────
-         0 │ 1 2 3
-         1 │ 4 5 6
+             0  1  2
+           ┌────────
+         0 │ 1  2  3
+         1 │ 4  5  6
         >
         >>> X.transpose()
         >>> X
         <Matrix 3pt x 2ft
-             0 1
-           ┌────
-         0 │ 1 4
-         1 │ 2 5
-         2 │ 3 6
+             0  1
+           ┌─────
+         0 │ 1  4
+         1 │ 2  5
+         2 │ 3  6
         >
 
         Keywords
@@ -3533,18 +3533,18 @@ class Base(ABC):
         >>> X = nimble.data(lst)
         >>> X
         <Matrix 2pt x 3ft
-             0 1 2
-           ┌──────
-         0 │ 1 2 3
-         1 │ 4 5 6
+             0  1  2
+           ┌────────
+         0 │ 1  2  3
+         1 │ 4  5  6
         >
         >>> X.T
         <Matrix 3pt x 2ft
-             0 1
-           ┌────
-         0 │ 1 4
-         1 │ 2 5
-         2 │ 3 6
+             0  1
+           ┌─────
+         0 │ 1  4
+         1 │ 2  5
+         2 │ 3  6
         >
         """
         ret = self.copy()
@@ -3601,18 +3601,18 @@ class Base(ABC):
         ...                 name="odd&even")
         >>> X
         <Matrix "odd&even" 2pt x 3ft
-                  0 1 2
-                ┌──────
-          'odd' │ 1 3 5
-         'even' │ 2 4 6
+                0  1  2
+              ┌────────
+          odd │ 1  3  5
+         even │ 2  4  6
         >
         >>> XCopy = X.copy()
         >>> XCopy
         <Matrix "odd&even" 2pt x 3ft
-                  0 1 2
-                ┌──────
-          'odd' │ 1 3 5
-         'even' │ 2 4 6
+                0  1  2
+              ┌────────
+          odd │ 1  3  5
+         even │ 2  4  6
         >
 
         Copy to other formats.
@@ -3624,10 +3624,10 @@ class Base(ABC):
         >>> asDataFrame = X.copy(to='DataFrame')
         >>> asDataFrame
         <DataFrame 2pt x 2ft
-               'a' 'b'
-             ┌────────
-         '0' │  1   0
-         '1' │  0   1
+             a  b
+           ┌─────
+         0 │ 1  0
+         1 │ 0  1
         >
         >>> asNumpyArray = X.copy(to='numpy array')
         >>> asNumpyArray
@@ -3807,12 +3807,12 @@ class Base(ABC):
         >>> X.replaceRectangle(filler, 0, 0, 1, 1)
         >>> X
         <Matrix 4pt x 4ft
-             0 1 2 3
-           ┌────────
-         0 │ 0 0 1 1
-         1 │ 0 0 1 1
-         2 │ 1 1 1 1
-         3 │ 1 1 1 1
+             0  1  2  3
+           ┌───────────
+         0 │ 0  0  1  1
+         1 │ 0  0  1  1
+         2 │ 1  1  1  1
+         3 │ 1  1  1  1
         >
 
         Keywords
@@ -3951,9 +3951,9 @@ class Base(ABC):
         >>> X.flatten()
         >>> X
         <Matrix 1pt x 4ft
-                       '1 | a' '1 | b' '3 | a' '3 | b'
-                     ┌────────────────────────────────
-         'Flattened' │    1       2       3       4
+                     1 | a  1 | b  3 | a  3 | b
+                   ┌───────────────────────────
+         Flattened │   1      2      3      4
         >
 
         >>> lst = [[1, 2],
@@ -3965,9 +3965,9 @@ class Base(ABC):
         >>> X.flatten(order='feature')
         >>> X
         <Matrix 1pt x 4ft
-                       '1 | a' '3 | a' '1 | b' '3 | b'
-                     ┌────────────────────────────────
-         'Flattened' │    1       3       2       4
+                     1 | a  3 | a  1 | b  3 | b
+                   ┌───────────────────────────
+         Flattened │   1      3      2      4
         >
 
         Keywords
@@ -4101,11 +4101,11 @@ class Base(ABC):
         >>> X.unflatten((3, 3))
         >>> X
         <Matrix 3pt x 3ft
-             0 1 2
-           ┌──────
-         0 │ 1 2 3
-         1 │ 4 5 6
-         2 │ 7 8 9
+             0  1  2
+           ┌────────
+         0 │ 1  2  3
+         1 │ 4  5  6
+         2 │ 7  8  9
         >
 
         Unflatten a point in feature order with default names.
@@ -4115,11 +4115,11 @@ class Base(ABC):
         >>> X.unflatten((3, 3), order='feature')
         >>> X
         <Matrix 3pt x 3ft
-             0 1 2
-           ┌──────
-         0 │ 1 4 7
-         1 │ 2 5 8
-         2 │ 3 6 9
+             0  1  2
+           ┌────────
+         0 │ 1  4  7
+         1 │ 2  5  8
+         2 │ 3  6  9
         >
 
         Unflatten a feature in feature order with default names.
@@ -4129,11 +4129,11 @@ class Base(ABC):
         >>> X.unflatten((3, 3), order='feature')
         >>> X
         <Matrix 3pt x 3ft
-             0 1 2
-           ┌──────
-         0 │ 1 2 3
-         1 │ 4 5 6
-         2 │ 7 8 9
+             0  1  2
+           ┌────────
+         0 │ 1  2  3
+         1 │ 4  5  6
+         2 │ 7  8  9
         >
 
         Unflatten a feature in point order with default names.
@@ -4143,11 +4143,11 @@ class Base(ABC):
         >>> X.unflatten((3, 3), order='point')
         >>> X
         <Matrix 3pt x 3ft
-             0 1 2
-           ┌──────
-         0 │ 1 4 7
-         1 │ 2 5 8
-         2 │ 3 6 9
+             0  1  2
+           ┌────────
+         0 │ 1  4  7
+         1 │ 2  5  8
+         2 │ 3  6  9
         >
 
         Unflatten a point with names that can be unflattened.
@@ -4160,11 +4160,11 @@ class Base(ABC):
         >>> X.unflatten((3, 3))
         >>> X
         <Matrix 3pt x 3ft
-               'a' 'b' 'c'
-             ┌────────────
-         '1' │  1   2   3
-         '4' │  4   5   6
-         '7' │  7   8   9
+             a  b  c
+           ┌────────
+         1 │ 1  2  3
+         4 │ 4  5  6
+         7 │ 7  8  9
         >
 
         Keywords
@@ -4301,22 +4301,22 @@ class Base(ABC):
         >>> left.merge(right, point='strict', feature='union')
         >>> left
         <DataFrame 3pt x 5ft
-                'f1' 'f2' 'f3' 'f4' 'f5'
-              ┌─────────────────────────
-         'p1' │  a    1    X    d    4
-         'p2' │  b    2    Y    e    5
-         'p3' │  c    3    Z    f    6
+              f1  f2  f3  f4  f5
+            ┌───────────────────
+         p1 │ a   1   X   d   4
+         p2 │ b   2   Y   e   5
+         p3 │ c   3   Z   f   6
         >
         >>> left = nimble.data(lstL, pointNames=pNamesL,
         ...                    featureNames=fNamesL)
         >>> left.merge(right, point='strict', feature='intersection')
         >>> left
         <DataFrame 3pt x 1ft
-                'f3'
-              ┌─────
-         'p1' │  X
-         'p2' │  Y
-         'p3' │  Z
+              f3
+            ┌───
+         p1 │ X
+         p2 │ Y
+         p3 │ Z
         >
 
         Additional merge combinations. In this example, the feature
@@ -5407,11 +5407,11 @@ class Base(ABC):
         >>> pointObj = nimble.data(lst1x3)
         >>> baseObj * pointObj.stretch
         <Matrix 3pt x 3ft
-             0 1  2
-           ┌────────
-         0 │ 1 4  9
-         1 │ 4 10 18
-         2 │ 0 -2 -6
+             0  1   2
+           ┌──────────
+         0 │ 1   4   9
+         1 │ 4  10  18
+         2 │ 0  -2  -6
         >
 
         Stretched feature with nimble Base object.
@@ -5422,11 +5422,11 @@ class Base(ABC):
         >>> featObj = nimble.data(lst1x3)
         >>> featObj.stretch + baseObj
         <Matrix 3pt x 3ft
-             0 1 2
-           ┌──────
-         0 │ 2 3 4
-         1 │ 6 7 8
-         2 │ 3 2 1
+             0  1  2
+           ┌────────
+         0 │ 2  3  4
+         1 │ 6  7  8
+         2 │ 3  2  1
         >
 
         Two stretched objects.
@@ -5437,19 +5437,19 @@ class Base(ABC):
         >>> featObj = nimble.data(lst3x1)
         >>> pointObj.stretch - featObj.stretch
         <Matrix 3pt x 3ft
-             0  1  2
-           ┌────────
-         0 │ 0  1  2
-         1 │ -1 0  1
-         2 │ -2 -1 0
+             0   1   2
+           ┌──────────
+         0 │  0   1  2
+         1 │ -1   0  1
+         2 │ -2  -1  0
         >
         >>> featObj.stretch - pointObj.stretch
         <Matrix 3pt x 3ft
-             0 1  2
-           ┌────────
-         0 │ 0 -1 -2
-         1 │ 1 0  -1
-         2 │ 2 1  0
+             0  1   2
+           ┌──────────
+         0 │ 0  -1  -2
+         1 │ 1   0  -1
+         2 │ 2   1   0
         >
 
         Keywords

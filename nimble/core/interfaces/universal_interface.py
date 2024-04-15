@@ -893,12 +893,12 @@ class TrainedLearner(object):
     ...                   trainY='label')
     >>> tl.apply(testX=testData[:, :'b'])
     <Matrix 4pt x 1ft
-         'label'
-       ┌────────
-     0 │    1
-     1 │    3
-     2 │    2
-     3 │    4
+         label
+       ┌──────
+     0 │   1
+     1 │   3
+     2 │   2
+     3 │   4
     >
     >>> tl.test(testX=testData, testY='label',
     ...         performanceFunction=nimble.calculate.fractionIncorrect)

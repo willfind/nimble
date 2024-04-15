@@ -452,11 +452,11 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     ...                                   trainX)
     >>> normTrainX
     <Matrix 3pt x 3ft
-           'age'  'height' 'weight'
-         ┌─────────────────────────
-     'a' │ -1.225  1.298    1.279
-     'b' │ 1.225   -1.136   -1.162
-     'c' │ 0.000   -0.162   -0.116
+          age    height   weight
+       ┌────────────────────────
+     a │ -1.225   1.298    1.279
+     b │  1.225  -1.136   -1.162
+     c │  0.000  -0.162   -0.116
     >
 
     Normalize training and testing data.
@@ -470,17 +470,17 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     ...                                          n_components=2)
     >>> pcaTrain
     <Matrix 3pt x 2ft
-           0      1
-       ┌──────────────
-     0 │ -0.216 0.713
-     1 │ -1.005 -0.461
-     2 │ 1.221  -0.253
+           0       1
+       ┌───────────────
+     0 │ -0.216   0.713
+     1 │ -1.005  -0.461
+     2 │  1.221  -0.253
     >
     >>> pcaTest
     <Matrix 1pt x 2ft
            0      1
-       ┌─────────────
-     0 │ -1.739 2.588
+       ┌──────────────
+     0 │ -1.739  2.588
     >
 
     Keywords
@@ -594,13 +594,13 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     ...                     mode='classification', k=3)
     >>> X
     <Matrix 5pt x 3ft
-           0     1     2
-       ┌──────────────────
-     0 │ 1.000 3.000 6.000
-     1 │ 1.000 3.000 6.000
-     2 │ 2.000 1.000 6.000
-     3 │ 1.000 3.000 7.000
-     4 │ 1.000 3.000 6.000
+           0      1      2
+       ┌────────────────────
+     0 │ 1.000  3.000  6.000
+     1 │ 1.000  3.000  6.000
+     2 │ 2.000  1.000  6.000
+     3 │ 1.000  3.000  7.000
+     4 │ 1.000  3.000  6.000
     >
 
     Fill last feature zeros based on k-nearest neighbors regressor.
@@ -616,13 +616,13 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     ...                     features=-1, k=3, mode='regression')
     >>> X
     <Matrix 5pt x 3ft
-           0     1     2
-       ┌──────────────────
-     0 │ 1.000 0.000 6.333
-     1 │ 1.000 3.000 6.000
-     2 │ 2.000 1.000 6.000
-     3 │ 1.000 3.000 7.000
-     4 │ 0.000 3.000 6.333
+           0      1      2
+       ┌────────────────────
+     0 │ 1.000  0.000  6.333
+     1 │ 1.000  3.000  6.000
+     2 │ 2.000  1.000  6.000
+     3 │ 1.000  3.000  7.000
+     4 │ 0.000  3.000  6.333
     >
 
     Keywords

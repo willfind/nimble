@@ -66,9 +66,9 @@ def constant(vector, match, constantValue):
     >>> X = nimble.data(lst)
     >>> constant(X, 'na', 0)
     <DataFrame 1pt x 5ft
-         0 1 2 3 4
-       ┌──────────
-     0 │ 1 0 3 0 5
+         0  1  2  3  4
+       ┌──────────────
+     0 │ 1  0  3  0  5
     >
 
     Match using a function from nimble's match module.
@@ -78,9 +78,9 @@ def constant(vector, match, constantValue):
     >>> X = nimble.data(lst)
     >>> constant(X, match.zero, 99)
     <Matrix 1pt x 5ft
-         0 1  2 3  4
-       ┌────────────
-     0 │ 1 99 3 99 5
+         0  1   2  3   4
+       ┌────────────────
+     0 │ 1  99  3  99  5
     >
     """
     toFill = _booleanElementMatch(vector, match)
@@ -129,9 +129,9 @@ def mean(vector, match):
     >>> X = nimble.data(lst)
     >>> mean(X, 'na')
     <DataFrame 1pt x 5ft
-         0   1   2   3   4
-       ┌──────────────────
-     0 │ 1 3.000 3 3.000 5
+         0    1    2    3    4
+       ┌──────────────────────
+     0 │ 1  3.000  3  3.000  5
     >
 
     Match using a function from nimble's match module.
@@ -141,9 +141,9 @@ def mean(vector, match):
     >>> X = nimble.data(lst)
     >>> mean(X, match.zero)
     <Matrix 1pt x 5ft
-           0     1     2     3     4
-       ┌──────────────────────────────
-     0 │ 6.000 4.000 2.000 4.000 4.000
+           0      1      2      3      4
+       ┌──────────────────────────────────
+     0 │ 6.000  4.000  2.000  4.000  4.000
     >
     """
     return statsBackend(vector, match, 'mean', nimble.calculate.mean)
@@ -185,9 +185,9 @@ def median(vector, match):
     >>> X = nimble.data(lst)
     >>> median(X, 'na')
     <DataFrame 1pt x 5ft
-         0   1   2   3   4
-       ┌──────────────────
-     0 │ 1 3.000 3 3.000 5
+         0    1    2    3    4
+       ┌──────────────────────
+     0 │ 1  3.000  3  3.000  5
     >
 
     Match using a function from nimble's match module.
@@ -197,9 +197,9 @@ def median(vector, match):
     >>> X = nimble.data(lst)
     >>> median(X, match.zero)
     <Matrix 1pt x 5ft
-           0     1     2     3     4
-       ┌──────────────────────────────
-     0 │ 6.000 4.000 2.000 4.000 4.000
+           0      1      2      3      4
+       ┌──────────────────────────────────
+     0 │ 6.000  4.000  2.000  4.000  4.000
     >
     """
     return statsBackend(vector, match, 'median', nimble.calculate.median)
@@ -239,9 +239,9 @@ def mode(vector, match):
     >>> X = nimble.data(lst)
     >>> mode(X, 'na')
     <DataFrame 1pt x 5ft
-         0 1 2 3 4
-       ┌──────────
-     0 │ 1 1 1 1 5
+         0  1  2  3  4
+       ┌──────────────
+     0 │ 1  1  1  1  5
     >
 
     Match using a function from nimble's match module.
@@ -251,9 +251,9 @@ def mode(vector, match):
     >>> X = nimble.data(lst)
     >>> mode(X, match.zero)
     <Matrix 1pt x 5ft
-         0 1 2 3 4
-       ┌──────────
-     0 │ 6 6 2 6 6
+         0  1  2  3  4
+       ┌──────────────
+     0 │ 6  6  2  6  6
     >
     """
     return statsBackend(vector, match, 'mode', nimble.calculate.mode)
@@ -296,9 +296,9 @@ def forwardFill(vector, match):
     >>> X = nimble.data(lst)
     >>> forwardFill(X, 'na')
     <DataFrame 1pt x 5ft
-         0 1 2 3 4
-       ┌──────────
-     0 │ 1 1 3 3 5
+         0  1  2  3  4
+       ┌──────────────
+     0 │ 1  1  3  3  5
     >
 
     Match using a function from nimble's match module.
@@ -308,9 +308,9 @@ def forwardFill(vector, match):
     >>> X = nimble.data(lst)
     >>> forwardFill(X, match.zero)
     <Matrix 1pt x 5ft
-         0 1 2 3 4
-       ┌──────────
-     0 │ 6 6 2 2 4
+         0  1  2  3  4
+       ┌──────────────
+     0 │ 6  6  2  2  4
     >
     """
     toFill = _booleanElementMatch(vector, match)
@@ -369,9 +369,9 @@ def backwardFill(vector, match):
     >>> X = nimble.data(lst)
     >>> backwardFill(X, 'na')
     <DataFrame 1pt x 5ft
-         0 1 2 3 4
-       ┌──────────
-     0 │ 1 3 3 5 5
+         0  1  2  3  4
+       ┌──────────────
+     0 │ 1  3  3  5  5
     >
 
     Match using a function from nimble's match module.
@@ -381,9 +381,9 @@ def backwardFill(vector, match):
     >>> X = nimble.data(lst)
     >>> backwardFill(X, match.zero)
     <Matrix 1pt x 5ft
-         0 1 2 3 4
-       ┌──────────
-     0 │ 6 2 2 4 4
+         0  1  2  3  4
+       ┌──────────────
+     0 │ 6  2  2  4  4
     >
     """
     toFill = _booleanElementMatch(vector, match)
@@ -449,9 +449,9 @@ def interpolate(vector, match, **kwarguments):
     >>> X = nimble.data(lst)
     >>> interpolate(X, 'na')
     <DataFrame 1pt x 5ft
-         0   1   2   3   4
-       ┌──────────────────
-     0 │ 1 2.000 3 4.000 5
+         0    1    2    3    4
+       ┌──────────────────────
+     0 │ 1  2.000  3  4.000  5
     >
 
     Match using a function from nimble's match module.
@@ -461,9 +461,9 @@ def interpolate(vector, match, **kwarguments):
     >>> X = nimble.data(lst)
     >>> interpolate(X, match.zero)
     <Matrix 1pt x 5ft
-           0     1     2     3     4
-       ┌──────────────────────────────
-     0 │ 6.000 5.000 4.000 3.000 2.000
+           0      1      2      3      4
+       ┌──────────────────────────────────
+     0 │ 6.000  5.000  4.000  3.000  2.000
     >
     """
     toFill = _booleanElementMatch(vector, match)
