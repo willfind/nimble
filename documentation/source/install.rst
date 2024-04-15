@@ -15,9 +15,6 @@ For convenience, installing optional packages can also be
 triggered while installing Nimble. We recommend the :ref:`quickstart-install`
 to make almost all of Nimble's functionality available with a single command.
 
-Note that downloading and/or installing Nimble constitutes agreement to the
-Nimble :doc:`License Agreement<legal>`.
-
 Install Methods
 ---------------
 
@@ -43,7 +40,7 @@ Nimble uses extras to provide the ``quickstart`` shortcut
 
 .. code-block::
 
-  pip install nimble[quickstart] --find-links=https://willfind.github.io/nimble/install
+  pip install nimble[quickstart]
 
 .. note::
   The brackets may need to be escaped in some shells. For example, on a mac,
@@ -51,7 +48,7 @@ Nimble uses extras to provide the ``quickstart`` shortcut
 
   .. code-block::
 
-    pip install nimble\[quickstart\] --find-links=https://willfind.github.io/nimble/install
+    pip install nimble\[quickstart\]
 
 **With conda:**
 
@@ -89,13 +86,13 @@ install.
 .. code-block::
 
   # single extra
-  pip install nimble[dateutil] --find-links=https://willfind.github.io/nimble/install
+  pip install nimble[dateutil]
     or
   # multiple extras
-  pip install nimble[requests,matplotlib,sklearn] --find-links=https://willfind.github.io/nimble/install
+  pip install nimble[requests,matplotlib,sklearn]
     or
   # shortcut (scipy and pandas)
-  pip install nimble[data] --find-links=https://willfind.github.io/nimble/install
+  pip install nimble[data]
 
 .. note::
    - The names of the extras match the names displayed in the "Package" columns
@@ -133,7 +130,7 @@ operations requiring an optional package that is not installed.
 
 **With pip**::
 
-  pip install nimble --find-links=https://willfind.github.io/nimble/install
+  pip install nimble
 
 
 **With conda**::
@@ -237,4 +234,3 @@ Binary Wheels
 The installation commands for pip we document on this page will automatically find the correct
 precompiled binary wheel from the possible options in the table below. Not all
 systems and python versions are supported.
-
