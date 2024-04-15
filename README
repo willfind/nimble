@@ -1,0 +1,25 @@
+Welcome to Nimble!
+==================
+
+Nimble is built on top of Python's most popular data science and machine
+learning libraries to provide a single, easy to use, API for any data science
+job. We believe the best way to learn about Nimble is to see it in action. So,
+we invite you to check out our `Cheatsheet <https://willfind.github.io/nimble/cheatsheet.html>`_
+and the examples below and explore how Nimble makes data science easier.
+
+* `Cleaning Data <https://willfind.github.io/nimble/examples/cleaning_data.html>`_
+* `Supervised Learning <https://willfind.github.io/nimble/examples/supervised_learning.html>`_
+* `Exploring Data <https://willfind.github.io/nimble/examples/exploring_data.html>`_
+* `Unsupervised Learning <https://willfind.github.io/nimble/examples/unsupervised_learning.html>`_
+* `Neural Networks <https://willfind.github.io/nimble/examples/neural_networks.html>`_
+* `Merging And Tidying Data <https://willfind.github.io/nimble/examples/merging_and_tidying_data.html>`_
+* `Additional Functionality <https://willfind.github.io/nimble/examples/additional_functionality.html>`_
+
+Resources
+---------
+
+* `Installation <https://willfind.github.io/nimble/install.html>`_
+* `API Documentation <https://willfind.github.io/docs/index.html>`_
+* `Cheatsheet <https://willfind.github.io/nimble/cheatsheet.html>`_
+* `Example Datasets <https://willfind.github.io/nimble/datasets.html>`_
+
