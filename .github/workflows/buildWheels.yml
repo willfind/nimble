@@ -45,7 +45,7 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.14.1
+        uses: pypa/cibuildwheel@v2.16.5
         # Allows us to specify cibuildwheel specific environment variables.
         env:
           # Using the input to specifify the matrix, we will either build all
