@@ -746,11 +746,11 @@ class Base(ABC):
         >>> dontSkip.transformElements(addTenToEvens)
         >>> dontSkip
         <Matrix 3pt x 3ft
-               0      1      2
-           ┌─────────────────────
-         0 │        12.000
-         1 │ 14.000        16.000
-         2 │        18.000
+               0       1       2
+           ┌───────────────────────
+         0 │         12.000
+         1 │ 14.000          16.000
+         2 │         18.000
         >
         >>> skip = nimble.data(lst)
         >>> skip.transformElements(addTenToEvens,
@@ -4334,21 +4334,21 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         <DataFrame 5pt x 5ft
-             'f1'  'f2' 'id' 'f4'  'f5'
-           ┌───────────────────────────
-         0 │  a   1.000 id1
-         1 │  b   2.000 id2
-         2 │  c   3.000 id3   x   7.000
-         3 │            id4   y   8.000
-         4 │            id5   z   9.000
+             f1    f2    id  f4    f5
+           ┌──────────────────────────
+         0 │ a   1.000  id1
+         1 │ b   2.000  id2
+         2 │ c   3.000  id3  x   7.000
+         3 │            id4  y   8.000
+         4 │            id5  z   9.000
         >
         >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> left.merge(right, point='union', feature='intersection',
         ...            onFeature="id")
         >>> left
         <DataFrame 5pt x 1ft
-             'id'
-           ┌─────
+              id
+           ┌────
          0 │ id1
          1 │ id2
          2 │ id3
@@ -4360,11 +4360,11 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         <DataFrame 5pt x 3ft
-             'f1'  'f2' 'id'
-           ┌────────────────
-         0 │  a   1.000 id1
-         1 │  b   2.000 id2
-         2 │  c   3.000 id3
+             f1    f2    id
+           ┌───────────────
+         0 │ a   1.000  id1
+         1 │ b   2.000  id2
+         2 │ c   3.000  id3
          3 │            id4
          4 │            id5
         >
@@ -4373,17 +4373,17 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         <DataFrame 1pt x 5ft
-             'f1' 'f2' 'id' 'f4' 'f5'
-           ┌─────────────────────────
-         0 │  c    3   id3   x    7
+             f1  f2   id  f4  f5
+           ┌────────────────────
+         0 │ c   3   id3  x   7
         >
         >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection',
         ...            feature='intersection', onFeature="id")
         >>> left
         <DataFrame 1pt x 1ft
-             'id'
-           ┌─────
+              id
+           ┌────
          0 │ id3
         >
         >>> left = nimble.data(lstL, featureNames=fNamesL)
@@ -4391,28 +4391,28 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         <DataFrame 1pt x 3ft
-             'f1' 'f2' 'id'
-           ┌───────────────
-         0 │  c    3   id3
+             f1  f2   id
+           ┌────────────
+         0 │ c   3   id3
         >
         >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='union',
         ...            onFeature="id")
         >>> left
         <DataFrame 3pt x 5ft
-             'f1' 'f2' 'id' 'f4'  'f5'
-           ┌──────────────────────────
-         0 │  a    1   id1
-         1 │  b    2   id2
-         2 │  c    3   id3   x   7.000
+             f1  f2   id  f4  f5
+           ┌───────────────────────
+         0 │ a   1   id1
+         1 │ b   2   id2
+         2 │ c   3   id3  x   7.000
         >
         >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='intersection',
         ...            onFeature="id")
         >>> left
         <DataFrame 3pt x 1ft
-             'id'
-           ┌─────
+              id
+           ┌────
          0 │ id1
          1 │ id2
          2 │ id3
@@ -4422,11 +4422,11 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         <DataFrame 3pt x 3ft
-             'f1' 'f2' 'id'
-           ┌───────────────
-         0 │  a    1   id1
-         1 │  b    2   id2
-         2 │  c    3   id3
+             f1  f2   id
+           ┌────────────
+         0 │ a   1   id1
+         1 │ b   2   id2
+         2 │ c   3   id3
         >
 
         Keywords

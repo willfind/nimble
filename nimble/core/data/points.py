@@ -1732,7 +1732,7 @@ class Points(ABC):
         >>> orders.points.permute(['o_1', 'o_2', 'o_3', 'o_4'])
         >>> orders
         <DataFrame 4pt x 3ft
-                0    1    2
+                0    1   2
              ┌─────────────
          o_1 │ home  11   3
          o_2 │ home  14   1
