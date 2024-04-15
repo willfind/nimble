@@ -353,12 +353,12 @@ def ones(numPoints, numFeatures, pointNames='automatic',
     ...                      name='ones DataFrame')
     >>> onesDF
     <DataFrame "ones DataFrame" 4pt x 4ft
-          a   b   c   d
-       ┌───────────────
-     1 │  1   1   1   1
-     2 │  1   1   1   1
-     3 │  1   1   1   1
-     4 │  1   1   1   1
+         a  b  c  d
+       ┌───────────
+     1 │ 1  1  1  1
+     2 │ 1  1  1  1
+     3 │ 1  1  1  1
+     4 │ 1  1  1  1
     >
 
     Keywords

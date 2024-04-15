@@ -893,21 +893,21 @@ class Base(ABC):
         >>> dontSkip = X.calculateOnElements(addTenToEvens)
         >>> dontSkip
         <Matrix 3pt x 3ft
-             0  1  2
-           ┌─────────
-         0 │    12
-         1 │ 14    16
-         2 │    18
+             0   1   2
+           ┌───────────
+         0 │     12
+         1 │ 14      16
+         2 │     18
         >
         >>> skip = X.calculateOnElements(addTenToEvens,
         ...                              skipNoneReturnValues=True)
         >>> skip
         <Matrix 3pt x 3ft
-             0  1  2
-           ┌─────────
-         0 │ 1  12 3
-         1 │ 14 5  16
-         2 │ 7  18 9
+             0   1   2
+           ┌───────────
+         0 │  1  12   3
+         1 │ 14   5  16
+         2 │  7  18   9
         >
 
         Keywords
@@ -1000,10 +1000,10 @@ class Base(ABC):
         >>> isPositive = X.matchingElements(">0")
         >>> isPositive
         <Matrix 2pt x 3ft
-               0     1     2
-           ┌──────────────────
-         0 │  True False  True
-         1 │ False  True False
+               0      1      2
+           ┌────────────────────
+         0 │  True  False   True
+         1 │ False   True  False
         >
 
         Keywords
@@ -1265,7 +1265,7 @@ class Base(ABC):
         [0, 1, 2, 3]
         >>> groupByLosses[1]
         <DataFrame 3pt x 3ft
-             conference     team      wins
+              conference     team     wins
            ┌──────────────────────────────
          0 │         SEC     Alabama   14
          1 │      Big 10  Ohio State   13
@@ -1273,11 +1273,11 @@ class Base(ABC):
         >
         >>> groupByLosses[3]
         <DataFrame 3pt x 3ft
-             conference  team    wins
-           ┌─────────────────────────
-         0 │     SEC       LSU    10
-         1 │     SEC    Florida   10
-         2 │     SEC    Georgia   11
+             conference    team   wins
+           ┌──────────────────────────
+         0 │    SEC          LSU   10
+         1 │    SEC      Florida   10
+         2 │    SEC      Georgia   11
         >
         
         Using the calculate parameter we can find the maximum of 
@@ -1285,25 +1285,25 @@ class Base(ABC):
         
         >>> top10.groupByFeature('conference', calculate='max')  
         {'ACC': <DataFrame 1pt x 3ft
-                 'team' 'wins' 'losses'
-               ┌───────────────────────
-         'max' │        15.000  0.000
+               team   wins   losses
+             ┌─────────────────────
+         max │       15.000  0.000
         >, 'SEC': <DataFrame 1pt x 3ft
-                 'team' 'wins' 'losses'
-               ┌───────────────────────
-         'max' │        14.000  3.000
+               team   wins   losses
+             ┌─────────────────────
+         max │       14.000  3.000
         >, 'Big 10': <DataFrame 1pt x 3ft
-                 'team' 'wins' 'losses'
-               ┌───────────────────────
-         'max' │        13.000  1.000
+               team   wins   losses
+             ┌─────────────────────
+         max │       13.000  1.000
         >, 'Big 12': <DataFrame 1pt x 3ft
-                 'team' 'wins' 'losses'
-               ┌───────────────────────
-         'max' │        12.000  2.000
+               team   wins   losses
+             ┌─────────────────────
+         max │       12.000  2.000
         >, 'Independent': <DataFrame 1pt x 3ft
-                 'team' 'wins' 'losses'
-               ┌───────────────────────
-         'max' │        12.000  1.000
+               team   wins   losses
+             ┌─────────────────────
+         max │       12.000  1.000
         >}
         
         Adding a new point to the data object with a missing value
@@ -1313,32 +1313,32 @@ class Base(ABC):
         >>> top10 = nimble.data(lst, featureNames=ftNames)
         >>> top10.groupByFeature('conference')
         {'ACC': <DataFrame 1pt x 3ft
-              'team' 'wins' 'losses'
-           ┌────────────────────────
-         0 │ Clemson   15      0
+               team   wins  losses
+           ┌──────────────────────
+         0 │ Clemson   15     0
         >, 'SEC': <DataFrame 4pt x 3ft
-              'team' 'wins' 'losses'
-           ┌────────────────────────
-         0 │ Alabama   14      1
-         1 │   LSU     10      3
-         2 │ Florida   10      3
-         3 │ Georgia   11      3
+               team   wins  losses
+           ┌──────────────────────
+         0 │ Alabama   14     1
+         1 │     LSU   10     3
+         2 │ Florida   10     3
+         3 │ Georgia   11     3
         >, 'Big 10': <DataFrame 1pt x 3ft
-               'team'   'wins' 'losses'
-           ┌───────────────────────────
-         0 │ Ohio State   13      1
-        >, 'Big 12': <DataFrame 1pt x 3ft
-              'team'  'wins' 'losses'
+                team     wins  losses
            ┌─────────────────────────
-         0 │ Oklahoma   12      2
-        >, 'Independent': <DataFrame 1pt x 3ft
-               'team'   'wins' 'losses'
-           ┌───────────────────────────
-         0 │ Notre Dame   12      1
-        >, 'NaN': <DataFrame 1pt x 3ft
-             'team' 'wins' 'losses'
+         0 │ Ohio State   13     1
+        >, 'Big 12': <DataFrame 1pt x 3ft
+               team    wins  losses
            ┌───────────────────────
-         0 │ Auburn   9       4
+         0 │ Oklahoma   12     2
+        >, 'Independent': <DataFrame 1pt x 3ft
+                team     wins  losses
+           ┌─────────────────────────
+         0 │ Notre Dame   12     1
+        >, 'NaN': <DataFrame 1pt x 3ft
+              team   wins  losses
+           ┌─────────────────────
+         0 │ Auburn   9      4
         >}
 
         Keywords
@@ -1593,17 +1593,17 @@ class Base(ABC):
         >
         >>> testX
         <Matrix "testX" 2pt x 3ft
-               0 1 2
-             ┌──────
-         'e' │ 0 1 0
-         'd' │ 1 0 0
+             0  1  2
+           ┌────────
+         e │ 0  1  0
+         d │ 1  0  0
         >
         >>> testY
         <Matrix "testY" 2pt x 1ft
-               0
-             ┌──
-         'e' │ 2
-         'd' │ 1
+             0
+           ┌──
+         e │ 2
+         d │ 1
         >
 
         Keywords
@@ -1979,22 +1979,22 @@ class Base(ABC):
         >
         >>> office[[3, 1], :]
         <DataFrame 2pt x 5ft
-                   id  age  department  salary  gender
-                ┌─────────────────────────────────────
-         dwight │ 4211  45    sales     33000     m
-            jim │ 4434  26    sales     26000     m
+                   id   age  department  salary  gender
+                ┌──────────────────────────────────────
+         dwight │ 4211   45    sales     33000     m
+            jim │ 4434   26    sales     26000     m
         >
 
         *Note: retains list order; index 3 placed before index 1*
 
         >>> office[1:4, :]
         <DataFrame 4pt x 5ft
-                   id   age  department  salary gender
-                ┌────────────────────────────────────────────
-            jim │ 4434   26      sales       26000      m
-            pam │ 4331   26  administration  28000      f
-         dwight │ 4211   45      sales       33000      m
-         angela │ 4344   45    accounting    43500      f
+                   id   age    department    salary  gender
+                ┌──────────────────────────────────────────
+            jim │ 4434   26           sales  26000     m
+            pam │ 4331   26  administration  28000     f
+         dwight │ 4211   45           sales  33000     m
+         angela │ 4344   45      accounting  43500     f
         >
 
         *Note: slices are inclusive; index 4 ('gender') was included*
@@ -2003,36 +2003,36 @@ class Base(ABC):
 
         >>> office[:, 2]
         <DataFrame 5pt x 1ft
-                      'department'
-                   ┌───────────────
-         'michael' │   management
-             'jim' │     sales
-             'pam' │ administration
-          'dwight' │     sales
-          'angela' │   accounting
+                     department
+                 ┌───────────────
+         michael │     management
+             jim │          sales
+             pam │ administration
+          dwight │          sales
+          angela │     accounting
         >
         >>> office[:, ['gender', 'age']]
         <DataFrame 5pt x 2ft
-                     'gender' 'age'
-                   ┌───────────────
-         'michael' │    m       41
-             'jim' │    m       26
-             'pam' │    f       26
-          'dwight' │    m       45
-          'angela' │    f       45
+                   gender  age
+                 ┌────────────
+         michael │   m      41
+             jim │   m      26
+             pam │   f      26
+          dwight │   m      45
+          angela │   f      45
         >
 
         *Note: retains list order; 'gender' placed before 'age'*
 
         >>> office[:, 'department':'salary']
         <DataFrame 5pt x 2ft
-                      'department'  'salary'
-                   ┌────────────────────────
-         'michael' │   management    50000
-             'jim' │     sales       26000
-             'pam' │ administration  28000
-          'dwight' │     sales       33000
-          'angela' │   accounting    43500
+                     department    salary
+                 ┌───────────────────────
+         michael │     management  50000
+             jim │          sales  26000
+             pam │ administration  28000
+          dwight │          sales  33000
+          angela │     accounting  43500
         >
 
 
@@ -2042,10 +2042,10 @@ class Base(ABC):
 
         >>> office[['pam', 'angela'], [3,2]]
         <DataFrame 2pt x 2ft
-                    'salary'  'department'
-                  ┌────────────────────────
-            'pam' │  28000   administration
-         'angela' │  43500     accounting
+                  salary    department
+                ┌───────────────────────
+            pam │ 28000   administration
+         angela │ 43500       accounting
         >
 
         *Note: list orders retained; 'pam' precedes 'angela' and index 3
@@ -2053,11 +2053,11 @@ class Base(ABC):
 
         >>> office[:2, 'age']
         <DataFrame 3pt x 1ft
-                     'age'
-                   ┌──────
-         'michael' │   41
-             'jim' │   26
-             'pam' │   26
+                   age
+                 ┌────
+         michael │  41
+             jim │  26
+             pam │  26
         >
 
         *Note: slices are inclusive; index 2 ('pam') was included*
@@ -4400,7 +4400,7 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         <DataFrame 3pt x 5ft
-             f1  f2   id  f4  f5
+             f1  f2   id  f4    f5
            ┌───────────────────────
          0 │ a   1   id1
          1 │ b   2   id2

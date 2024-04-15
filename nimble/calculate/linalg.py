@@ -242,9 +242,9 @@ def solve(aObj, bObj):
     >>> xObj = solve(aObj, bObj)
     >>> xObj
     <Matrix 1pt x 3ft
-           0     1      2
-       ┌───────────────────
-     0 │ 2.000 -2.000 9.000
+           0      1       2
+       ┌─────────────────────
+     0 │ 2.000  -2.000  9.000
     >
     """
     return _backendSolvers(aObj, bObj, solve)

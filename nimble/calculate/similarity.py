@@ -213,9 +213,9 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     <Matrix 3pt x 3ft
                       known_cat  known_dog  known_fish
                     ┌─────────────────────────────────
-      predicted_cat │    3          1          0
-      predicted_dog │    1          3          0
-     predicted_fish │    0          0          4
+      predicted_cat │     3          1          0
+      predicted_dog │     1          3          0
+     predicted_fish │     0          0          4
     >
 
     Label objects can have string values and here we output fractions.
@@ -235,10 +235,10 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     >>> cm
     <DataFrame 3pt x 3ft
                       known_cat  known_dog  known_fish
-                    ┌─────────────────────────────────────
-      predicted_cat │    0.250       0.083       0.000
-      predicted_dog │    0.083       0.250       0.000
-     predicted_fish │    0.000       0.000       0.333
+                    ┌─────────────────────────────────
+      predicted_cat │   0.250      0.083      0.000
+      predicted_dog │   0.083      0.250      0.000
+     predicted_fish │   0.000      0.000      0.333
     >
     """
     if not (isinstance(knownValues, nimble.core.data.Base)

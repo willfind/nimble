@@ -1947,8 +1947,8 @@ class Features(ABC):
         <Matrix 2pt x 3ft
                   review1  review2  review3
                 ┌──────────────────────────
-         movie4 │  0.535    0.996   -0.307
-         movie5 │ -0.267   -0.444    1.031
+         movie4 │   0.535    0.996   -0.307
+         movie5 │  -0.267   -0.444    1.031
         >
         
         With user defined normalization function.

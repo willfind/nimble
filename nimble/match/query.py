@@ -110,8 +110,8 @@ class QueryString:
     <DataFrame 2pt x 3ft
          ft1   ft2    ft3
        ┌──────────────────
-     0 │ -1    True  2.000
-     1 │ -1   False  3.000
+     0 │  -1   True  2.000
+     1 │  -1  False  3.000
     >
     """
     _accepted = {n: getattr(match, n) for n in _setAll(vars(match))}
