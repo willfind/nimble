@@ -1,1 +1,2 @@
 include nimble/configuration.ini
+prune tests/

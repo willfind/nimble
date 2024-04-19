@@ -59,6 +59,9 @@ jobs:
         with:
           output-dir: wheelhouse
 
+      - name: Build source dist and any py wheel
+        run: python -m build -sdist
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
           auto-activate-base: true
