@@ -2139,7 +2139,99 @@ class Base(ABC):
             ret = self.points._structuralBackend_implementation('copy', x)
             ret = ret.features._structuralBackend_implementation('copy', y)
         return ret
+    
+    def __setitem__(self, key, value):
+        """
+        Set items in the data structure, adapting to the inclusive slicing 
+        convention and handling both single and multiple assignments.
 
+        Parameters
+        ----------
+        key : tuple, slice, or combination
+            Describes the subset of data to set. See __getitem__ for detailed key types.
+        value : single value, list, or ndarray
+            The new values to set. Can be a single value to apply to all selected points
+            and features, or an array/list of values matching the size of the selection.
+
+        Examples
+        --------
+        >>> office['michael', 'age'] = 42
+        >>> office[0,1] = 43
+        >>> office[:, 'department'] = 'operations'
+        >>> office[1:3, 'age'] = [27, 27]
+        """
+        
+        # Expand key into points and features
+        # if not isinstance(key, tuple):
+        #     raise ValueError("Key must be a tuple specifying both points and features.")
+        
+        # points_key, features_key = key
+        
+        # def _resolve_indices(self, axis, key):
+        #     """
+        #     Helper function to resolve indices from a key.
+        #     """
+        #     if isinstance(key, slice):
+        #         # Convert slices to inclusive, if necessary
+        #         start, stop, step = key.start, key.stop, key.step
+        #         if stop is not None:
+        #             stop += 1  # Make the slice inclusive
+        #         return range(start or 0, stop or len(axis), step or 1)
+        #     elif isinstance(key, (list, tuple)):
+        #         return [axis._getIndex(k) for k in key]
+        #     else:
+        #         return [axis._getIndex(key)]
+
+        # # Resolve indices for points and features
+        # points_indices = _resolve_indices(self.points, points_key)
+        # features_indices = _resolve_indices(self.features, features_key)
+
+        # # Apply the value to the selected subset
+        # if isinstance(value, (list, np.ndarray)):
+        #     # Ensure the size of the value matches the selection size
+        #     expected_size = len(points_indices) * len(features_indices)
+        #     if len(value) != expected_size:
+        #         raise ValueError(f"Size of value must match the selection size: expected {expected_size}.")
+        #     value_matrix = np.array(value).reshape(len(points_indices), len(features_indices))
+        #     for i, p_idx in enumerate(points_indices):
+        #         for j, f_idx in enumerate(features_indices):
+        #             self._setitem_implementation(p_idx, f_idx, value_matrix[i, j])
+        # else:
+        #     # Set a single value across all selected indices
+        #     for p_idx in points_indices:
+        #         for f_idx in features_indices:
+        #             self._setitem_implementation(p_idx, f_idx, value)
+        
+        # If key is not a tuple, convert it to a tuple
+        if not isinstance(key, tuple):
+            key = (key, slice(None))  # Assuming the first dimension is 'x' and the second is 'y'
+        
+        # Extract x and y indices from the key
+        x, y = key
+        
+        # Validate single or multiple indices for 'x'
+        single_x = isinstance(x, (int, float, str, np.integer))
+        if single_x:
+            x = self.points._getIndex(x, allowFloats=True)
+        else:
+            x = self.points._processMultiple(x)
+        
+        # Validate single or multiple indices for 'y'
+        single_y = isinstance(y, (int, float, str, np.integer))
+        if single_y:
+            y = self.features._getIndex(y, allowFloats=True)
+        else:
+            y = self.features._processMultiple(y)
+        
+        # Perform setting operation based on single or multiple indices
+        if single_x and single_y:
+            self._setitem_implementation(x, y, value)
+        else:
+            for i in x:
+                for j in y:
+                    self._setitem_implementation(i, j, value)
+        
+    
     def pointView(self, identifier):
         """
         A read-only view of a single point.
@@ -5894,6 +5986,10 @@ class Base(ABC):
 
     @abstractmethod
     def _getitem_implementation(self, x, y):
+        pass
+    
+    @abstractmethod
+    def _setitem_implementation(self, x, y, value):
         pass
 
     @abstractmethod

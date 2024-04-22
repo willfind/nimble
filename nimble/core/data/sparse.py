@@ -821,7 +821,10 @@ class Sparse(Base):
         k = np.searchsorted(offAxis[start:end], offAxisVal) + start
         if k < end and offAxis[k] == offAxisVal:
             return self._data.data[k]
-        return self._data.data.dtype.type(0)
+        return self._data.data.dtype.type(0) 
+    
+    def _setitem_implementation(self, x, y, value):
+        pass 
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):

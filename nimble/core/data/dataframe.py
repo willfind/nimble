@@ -413,6 +413,12 @@ class DataFrame(Base):
         # .iat should be used for accessing scalar values in pandas
         return self._data.iat[x, y]
 
+    def _setitem_implementation(self, x, y, value):
+       # need to see if there is an issue with scalar vs slice
+      self._data.iat[x, y] = value
+
+
+
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):
         kwds = {}

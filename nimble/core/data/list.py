@@ -534,6 +534,9 @@ class List(Base):
 
     def _getitem_implementation(self, x, y):
         return self._data[x][y]
+    
+    def _setitem_implementation(self, x, y, value):
+        self._data[x][y] = value
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):

@@ -63,6 +63,9 @@ class Points(ABC):
 
     def __getitem__(self, key):
         return self._getitem(key)
+    
+    def __setitem__(self, key, value):
+        self._setitem(key, value)
 
     ########################
     # Low Level Operations #
@@ -2895,6 +2898,10 @@ class Points(ABC):
     def _getitem(self, key):
         pass
 
+    @abstractmethod
+    def _setitem(self, key, value):
+        pass
+            
     @abstractmethod
     def _getName(self, index):
         pass

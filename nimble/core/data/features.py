@@ -70,6 +70,10 @@ class Features(ABC):
     @limitedTo2D
     def __getitem__(self, key):
         return self._getitem(key)
+    
+    @limitedTo2D
+    def __setitem__(self, key, value):
+        self._setitem(key, value)
 
     ########################
     # Low Level Operations #
@@ -3113,7 +3117,11 @@ class Features(ABC):
     @abstractmethod
     def _getitem(self, key):
         pass
-
+    
+    @abstractmethod
+    def _setitem(self, key, value):
+        pass
+        
     @abstractmethod
     def _getName(self, index):
         pass
