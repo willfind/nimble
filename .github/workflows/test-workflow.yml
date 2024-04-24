@@ -1,0 +1,45 @@
+name: Test Workflow
+
+on:
+  workflow_call:
+    inputs:
+      # The name of the artifact containing the wheels
+      saveNameWheel:
+        required: true
+        type: string
+      # The name of the artifact containing the conda channel
+      saveNameConda:
+        required: true
+        type: string
+
+jobs:
+
+  test-workflow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{inputs.saveNameWheel}}
+    
+      - name: Move Wheels to docs source
+        run: mv *.whl ./documentation/source/wheels
+
+      - name: install nimble and dependencies
+        run: 
+          pip install pylint==2.14.0
+          pip install pytest
+          pip install keras tensorflow
+          pip install nimble[quickstart] --find-links=./documentation/source/wheels # Only if needed 
+
+      - name: Run pytest
+        run: pytest -v -p no:cacheprovider

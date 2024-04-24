@@ -11,12 +11,8 @@ name: BuildWheels
 on:
   workflow_call:
     inputs:
-      # The name of the artifact containing the wheels
-      saveNameWheel:
-        required: true
-        type: string
-      # The name of the artifact containing the conda channel
-      saveNameConda:
+      # The name of the artifact to be saved
+      saveName:
         required: true
         type: string
 
@@ -49,7 +45,7 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.14.1
+        uses: pypa/cibuildwheel@v2.16.5
         # Allows us to specify cibuildwheel specific environment variables.
         env:
           # Using the input to specifify the matrix, we will either build all
@@ -61,35 +57,9 @@ jobs:
         with:
           output-dir: wheelhouse
 
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          auto-activate-base: true
-          activate-environment: ""
-
-      - name: Remove Source
-        # bash shell can also be specified even when on windows
-        shell: bash
-        run: |
-          cd wheelhouse
-          pip install wheel
-          for name in *.whl; do
-              python3 ../remove_source.py . $name
-          done
-
-      - name: Conda channel build
-        run: |
-          conda install conda-build
-          conda build conda_recipe/ --output-folder=nimble-data --no-test --no-anaconda-upload --no-activate
-
       # retention days param critical for cost saving wrt free/paid storage.
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{inputs.saveNameWheel}}
+          name: ${{inputs.saveName}}
           path: ./wheelhouse/
-          retention-days: 1
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: ${{inputs.saveNameConda}}
-          path: ./nimble-data/
           retention-days: 1

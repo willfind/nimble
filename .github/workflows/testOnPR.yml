@@ -1,0 +1,25 @@
+# test or orchestrator 
+name: PR test trigger
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - nini/githubActionsTests
+
+jobs:
+  build-wheels:
+    uses: ./.github/workflows/buildWheels.yml
+    with:
+      saveNameWheel: built_wheel
+      saveNameConda: built_channel
+
+  run-tests:
+    # try to build the site regardless of how much of the previous job
+    # matrix completed. There are additional sanity checks within.
+    if: ${{ always() }}
+    needs: [build-wheels]
+    uses: ./.github/workflows/test-workflow.yml
+    with:
+      saveNameWheel: built_wheel
+      saveNameConda: built_channel
