@@ -365,73 +365,73 @@ class Features(ABC):
         >>> single = X.features.copy('0')
         >>> single
         <Matrix 4pt x 1ft
-               '0'
-             ┌────
-         'a' │  0
-         'b' │  0
-         'c' │  0
-         'd' │  0
+             0
+           ┌──
+         a │ 0
+         b │ 0
+         c │ 0
+         d │ 0
         >
         >>> multiple = X.features.copy(['0', 3])
         >>> multiple
         <Matrix 4pt x 2ft
-               '0' '3'
-             ┌────────
-         'a' │  0   3
-         'b' │  0   3
-         'c' │  0   3
-         'd' │  0   3
+             0  3
+           ┌─────
+         a │ 0  3
+         b │ 0  3
+         c │ 0  3
+         d │ 0  3
         >
         >>> func = X.features.copy(nimble.match.allZero)
         >>> func
         <Matrix 4pt x 1ft
-               '0'
-             ┌────
-         'a' │  0
-         'b' │  0
-         'c' │  0
-         'd' │  0
+             0
+           ┌──
+         a │ 0
+         b │ 0
+         c │ 0
+         d │ 0
         >
         >>> strFunc = X.features.copy("a >= 2")
         >>> strFunc
         <Matrix 4pt x 2ft
-               '2' '3'
-             ┌────────
-         'a' │  2   3
-         'b' │  2   3
-         'c' │  2   3
-         'd' │  2   3
+             2  3
+           ┌─────
+         a │ 2  3
+         b │ 2  3
+         c │ 2  3
+         d │ 2  3
         >
         >>> startEnd = X.features.copy(start=1, end=3) # Note: Inclusive
         >>> startEnd
         <Matrix 4pt x 3ft
-               '1' '2' '3'
-             ┌────────────
-         'a' │  1   2   3
-         'b' │  1   2   3
-         'c' │  1   2   3
-         'd' │  1   2   3
+             1  2  3
+           ┌────────
+         a │ 1  2  3
+         b │ 1  2  3
+         c │ 1  2  3
+         d │ 1  2  3
         >
         >>> numberNoRandom = X.features.copy(number=2)
         >>> numberNoRandom
         <Matrix 4pt x 2ft
-               '0' '1'
-             ┌────────
-         'a' │  0   1
-         'b' │  0   1
-         'c' │  0   1
-         'd' │  0   1
+             0  1
+           ┌─────
+         a │ 0  1
+         b │ 0  1
+         c │ 0  1
+         d │ 0  1
         >
         >>> nimble.random.setSeed(42)
         >>> numberRandom = X.features.copy(number=2, randomize=True)
         >>> numberRandom
         <Matrix 4pt x 2ft
-               '0' '3'
-             ┌────────
-         'a' │  0   3
-         'b' │  0   3
-         'c' │  0   3
-         'd' │  0   3
+             0  3
+           ┌─────
+         a │ 0  3
+         b │ 0  3
+         c │ 0  3
+         d │ 0  3
         >
 
         Keywords
@@ -517,19 +517,19 @@ class Features(ABC):
         >>> single = X.features.extract('a')
         >>> single
         <Matrix 3pt x 1ft
-             'a'
-           ┌────
-         0 │  1
-         1 │  0
-         2 │  0
+             a
+           ┌──
+         0 │ 1
+         1 │ 0
+         2 │ 0
         >
         >>> X
         <Matrix 3pt x 2ft
-             'b' 'c'
-           ┌────────
-         0 │  0   0
-         1 │  1   0
-         2 │  0   1
+             b  c
+           ┌─────
+         0 │ 0  0
+         1 │ 1  0
+         2 │ 0  1
         >
 
         Extract multiple features.
@@ -539,19 +539,19 @@ class Features(ABC):
         >>> multiple = X.features.extract(['a', 2])
         >>> multiple
         <Matrix 3pt x 2ft
-             'a' 'c'
-           ┌────────
-         0 │  1   0
-         1 │  0   0
-         2 │  0   1
+             a  c
+           ┌─────
+         0 │ 1  0
+         1 │ 0  0
+         2 │ 0  1
         >
         >>> X
         <Matrix 3pt x 1ft
-             'b'
-           ┌────
-         0 │  0
-         1 │  1
-         2 │  0
+             b
+           ┌──
+         0 │ 0
+         1 │ 1
+         2 │ 0
         >
 
         Extract feature when the function returns True.
@@ -561,7 +561,7 @@ class Features(ABC):
         >>> func = X.features.extract(nimble.match.anyMissing)
         >>> func
         <Matrix 3pt x 1ft
-              'c'
+               c
            ┌──────
          0 │ 3.000
          1 │
@@ -569,11 +569,11 @@ class Features(ABC):
         >
         >>> X
         <Matrix 3pt x 2ft
-              'a'   'b'
-           ┌────────────
-         0 │ 1.000 2.000
-         1 │ 4.000 5.000
-         2 │ 7.000 8.000
+               a      b
+           ┌─────────────
+         0 │ 1.000  2.000
+         1 │ 4.000  5.000
+         2 │ 7.000  8.000
         >
 
         Extract feature when the query string returns True.
@@ -583,19 +583,19 @@ class Features(ABC):
         >>> strFunc = X.features.extract("p2 != 0")
         >>> strFunc
         <Matrix 3pt x 1ft
-                'b'
-              ┌────
-         'p1' │  0
-         'p2' │  1
-         'p3' │  0
+              b
+            ┌──
+         p1 │ 0
+         p2 │ 1
+         p3 │ 0
         >
         >>> X
         <Matrix 3pt x 2ft
-                'a' 'c'
-              ┌────────
-         'p1' │  1   0
-         'p2' │  0   0
-         'p3' │  0   1
+              a  c
+            ┌─────
+         p1 │ 1  0
+         p2 │ 0  0
+         p3 │ 0  1
         >
 
         Extract features from the inclusive start to the inclusive end.
@@ -605,19 +605,19 @@ class Features(ABC):
         >>> startEnd = X.features.extract(start=1, end=2)
         >>> startEnd
         <Matrix 3pt x 2ft
-             'b' 'c'
-           ┌────────
-         0 │  0   0
-         1 │  1   0
-         2 │  0   1
+             b  c
+           ┌─────
+         0 │ 0  0
+         1 │ 1  0
+         2 │ 0  1
         >
         >>> X
         <Matrix 3pt x 1ft
-             'a'
-           ┌────
-         0 │  1
-         1 │  0
-         2 │  0
+             a
+           ┌──
+         0 │ 1
+         1 │ 0
+         2 │ 0
         >
 
         Select a set number to extract, starting from the first feature.
@@ -628,19 +628,19 @@ class Features(ABC):
         >>> numberNoRandom = X.features.extract(number=2)
         >>> numberNoRandom
         <Matrix 3pt x 2ft
-             'a' 'b'
-           ┌────────
-         0 │  1   0
-         1 │  0   1
-         2 │  0   0
+             a  b
+           ┌─────
+         0 │ 1  0
+         1 │ 0  1
+         2 │ 0  0
         >
         >>> X
         <Matrix 3pt x 1ft
-             'c'
-           ┌────
-         0 │  0
-         1 │  0
-         2 │  1
+             c
+           ┌──
+         0 │ 0
+         1 │ 0
+         2 │ 1
         >
 
         Select a set number to extract, choosing features at random.
@@ -650,19 +650,19 @@ class Features(ABC):
         >>> numberRandom = X.features.extract(number=2, randomize=True)
         >>> numberRandom
         <Matrix 3pt x 2ft
-             'c' 'a'
-           ┌────────
-         0 │  0   1
-         1 │  0   0
-         2 │  1   0
+             c  a
+           ┌─────
+         0 │ 0  1
+         1 │ 0  0
+         2 │ 1  0
         >
         >>> X
         <Matrix 3pt x 1ft
-             'b'
-           ┌────
-         0 │  0
-         1 │  1
-         2 │  0
+             b
+           ┌──
+         0 │ 0
+         1 │ 1
+         2 │ 0
         >
 
         Keywords
@@ -744,11 +744,11 @@ class Features(ABC):
         >>> X.features.delete('a')
         >>> X
         <Matrix 3pt x 2ft
-             'b' 'c'
-           ┌────────
-         0 │  0   0
-         1 │  1   0
-         2 │  0   1
+             b  c
+           ┌─────
+         0 │ 0  0
+         1 │ 1  0
+         2 │ 0  1
         >
 
         Delete multiple features.
@@ -758,11 +758,11 @@ class Features(ABC):
         >>> X.features.delete(['a', 2])
         >>> X
         <Matrix 3pt x 1ft
-             'b'
-           ┌────
-         0 │  0
-         1 │  1
-         2 │  0
+             b
+           ┌──
+         0 │ 0
+         1 │ 1
+         2 │ 0
         >
 
         Delete feature when the function returns True.
@@ -772,11 +772,11 @@ class Features(ABC):
         >>> X.features.delete(nimble.match.anyMissing)
         >>> X
         <Matrix 3pt x 2ft
-              'a'   'b'
-           ┌────────────
-         0 │ 1.000 2.000
-         1 │ 4.000 5.000
-         2 │ 7.000 8.000
+               a      b
+           ┌─────────────
+         0 │ 1.000  2.000
+         1 │ 4.000  5.000
+         2 │ 7.000  8.000
         >
 
         Delete feature when the query string returns True.
@@ -786,11 +786,11 @@ class Features(ABC):
         >>> X.features.delete("p2 != 0")
         >>> X
         <Matrix 3pt x 2ft
-                'a' 'c'
-              ┌────────
-         'p1' │  1   0
-         'p2' │  0   0
-         'p3' │  0   1
+              a  c
+            ┌─────
+         p1 │ 1  0
+         p2 │ 0  0
+         p3 │ 0  1
         >
 
         Delete features from the inclusive start to the inclusive end.
@@ -800,11 +800,11 @@ class Features(ABC):
         >>> X.features.delete(start=1, end=2)
         >>> X
         <Matrix 3pt x 1ft
-             'a'
-           ┌────
-         0 │  1
-         1 │  0
-         2 │  0
+             a
+           ┌──
+         0 │ 1
+         1 │ 0
+         2 │ 0
         >
 
         Select a set number to delete, starting from the first feature.
@@ -814,11 +814,11 @@ class Features(ABC):
         >>> X.features.delete(number=2)
         >>> X
         <Matrix 3pt x 1ft
-             'c'
-           ┌────
-         0 │  0
-         1 │  0
-         2 │  1
+             c
+           ┌──
+         0 │ 0
+         1 │ 0
+         2 │ 1
         >
 
         Select a set number to delete, choosing features at random.
@@ -829,11 +829,11 @@ class Features(ABC):
         >>> X.features.delete(number=2,  randomize=True)
         >>> X
         <Matrix 3pt x 1ft
-             'b'
-           ┌────
-         0 │  0
-         1 │  1
-         2 │  0
+             b
+           ┌──
+         0 │ 0
+         1 │ 1
+         2 │ 0
         >
 
         Keywords
@@ -915,11 +915,11 @@ class Features(ABC):
         >>> X.features.retain('a')
         >>> X
         <Matrix 3pt x 1ft
-             'a'
-           ┌────
-         0 │  1
-         1 │  0
-         2 │  0
+             a
+           ┌──
+         0 │ 1
+         1 │ 0
+         2 │ 0
         >
 
         Retain multiple features.
@@ -929,11 +929,11 @@ class Features(ABC):
         >>> X.features.retain(['a', 2])
         >>> X
         <Matrix 3pt x 2ft
-             'a' 'c'
-           ┌────────
-         0 │  1   0
-         1 │  0   0
-         2 │  0   1
+             a  c
+           ┌─────
+         0 │ 1  0
+         1 │ 0  0
+         2 │ 0  1
         >
 
         Retain feature when the function returns True.
@@ -943,7 +943,7 @@ class Features(ABC):
         >>> X.features.retain(nimble.match.allNonMissing)
         >>> X
         <Matrix 3pt x 1ft
-              'c'
+               c
            ┌──────
          0 │ 3.000
          1 │ 6.000
@@ -957,11 +957,11 @@ class Features(ABC):
         >>> X.features.retain("p2 != 0")
         >>> X
         <Matrix 3pt x 1ft
-                'b'
-              ┌────
-         'p1' │  0
-         'p2' │  1
-         'p3' │  0
+              b
+            ┌──
+         p1 │ 0
+         p2 │ 1
+         p3 │ 0
         >
 
         Retain features from the inclusive start to the inclusive end.
@@ -971,11 +971,11 @@ class Features(ABC):
         >>> X.features.retain(start=1, end=2)
         >>> X
         <Matrix 3pt x 2ft
-             'b' 'c'
-           ┌────────
-         0 │  0   0
-         1 │  1   0
-         2 │  0   1
+             b  c
+           ┌─────
+         0 │ 0  0
+         1 │ 1  0
+         2 │ 0  1
         >
 
         Select a set number to retain, starting from the first feature.
@@ -985,11 +985,11 @@ class Features(ABC):
         >>> X.features.retain(number=2)
         >>> X
         <Matrix 3pt x 2ft
-             'a' 'b'
-           ┌────────
-         0 │  1   0
-         1 │  0   1
-         2 │  0   0
+             a  b
+           ┌─────
+         0 │ 1  0
+         1 │ 0  1
+         2 │ 0  0
         >
 
         Select a set number to retain, choosing features at random.
@@ -1000,11 +1000,11 @@ class Features(ABC):
         >>> X.features.retain(number=2, randomize=True)
         >>> X
         <Matrix 3pt x 2ft
-             'c' 'a'
-           ┌────────
-         0 │  0   1
-         1 │  0   0
-         2 │  1   0
+             c  a
+           ┌─────
+         0 │ 0  1
+         1 │ 0  0
+         2 │ 1  0
         >
 
         Keywords
@@ -1118,12 +1118,12 @@ class Features(ABC):
         >>> highTemps.features.sort()
         >>> highTemps
         <Matrix 4pt x 3ft
-             'Boulder' 'Denver' 'Fort Collins'
-           ┌──────────────────────────────────
-         0 │     67       64          64
-         1 │     71       68          66
-         2 │     71       73          70
-         3 │     40       45          51
+             Boulder  Denver  Fort Collins
+           ┌──────────────────────────────
+         0 │    67      64         64
+         1 │    71      68         66
+         2 │    71      73         70
+         3 │    40      45         51
         >
 
         Sort by points.
@@ -1136,12 +1136,12 @@ class Features(ABC):
         >>> orders.features.sort(0)
         >>> orders
         <Matrix 4pt x 5ft
-             0 1 2  3   4
-           ┌──────────────
-         0 │ 0 1 2  2   3
-         1 │ 0 1 10 11 100
-         2 │ 0 2 20 21 200
-         3 │ 0 3 30 31 300
+             0  1  2   3    4
+           ┌──────────────────
+         0 │ 0  1   2   2    3
+         1 │ 0  1  10  11  100
+         2 │ 0  2  20  21  200
+         3 │ 0  3  30  31  300
         >
 
         Sort using function.
@@ -1157,12 +1157,12 @@ class Features(ABC):
         >>> highTemps.features.sort(averageHighTemp, reverse=True)
         >>> highTemps
         <Matrix 4pt x 3ft
-             'Fort Collins' 'Denver' 'Boulder'
-           ┌──────────────────────────────────
-         0 │       64          64        67
-         1 │       66          68        71
-         2 │       70          73        71
-         3 │       51          45        40
+             Fort Collins  Denver  Boulder
+           ┌──────────────────────────────
+         0 │      64         64       67
+         1 │      66         68       71
+         2 │      70         73       71
+         3 │      51         45       40
         >
 
         Keywords
@@ -1210,11 +1210,11 @@ class Features(ABC):
         >>> X.features.transform(lambda ft: ft + 2)
         >>> X
         <Matrix 3pt x 5ft
-             0 1 2 3 4
-           ┌──────────
-         0 │ 3 3 3 3 3
-         1 │ 3 3 3 3 3
-         2 │ 3 3 3 3 3
+             0  1  2  3  4
+           ┌──────────────
+         0 │ 3  3  3  3  3
+         1 │ 3  3  3  3  3
+         2 │ 3  3  3  3  3
         >
 
         Transform all features; apply to certain points. Note that the
@@ -1229,11 +1229,11 @@ class Features(ABC):
         >>> X.features.transform(transformMiddlePoint)
         >>> X
         <Matrix 3pt x 5ft
-             0 1 2 3 4
-           ┌──────────
-         0 │ 1 1 1 1 1
-         1 │ 5 5 5 5 5
-         2 │ 1 1 1 1 1
+             0  1  2  3  4
+           ┌──────────────
+         0 │ 1  1  1  1  1
+         1 │ 5  5  5  5  5
+         2 │ 1  1  1  1  1
         >
 
         Transform a subset of features.
@@ -1242,11 +1242,11 @@ class Features(ABC):
         >>> X.features.transform(lambda ft: ft + 6, features=[1, 3])
         >>> X
         <Matrix 3pt x 5ft
-             0 1 2 3 4
-           ┌──────────
-         0 │ 1 7 1 7 1
-         1 │ 1 7 1 7 1
-         2 │ 1 7 1 7 1
+             0  1  2  3  4
+           ┌──────────────
+         0 │ 1  7  1  7  1
+         1 │ 1  7  1  7  1
+         2 │ 1  7  1  7  1
         >
 
         Keywords
@@ -1302,11 +1302,11 @@ class Features(ABC):
         >>> addTwo = X.features.calculate(lambda ft: ft + 2)
         >>> addTwo
         <Matrix 3pt x 5ft
-             0 1 2 3 4
-           ┌──────────
-         0 │ 3 3 3 3 3
-         1 │ 3 3 3 3 3
-         2 │ 3 3 3 3 3
+             0  1  2  3  4
+           ┌──────────────
+         0 │ 3  3  3  3  3
+         1 │ 3  3  3  3  3
+         2 │ 3  3  3  3  3
         >
 
         Apply calculation to all features; function modifies a specific
@@ -1321,11 +1321,11 @@ class Features(ABC):
         >>> middleChange = X.features.calculate(changeMiddlePoint)
         >>> middleChange
         <Matrix 3pt x 5ft
-             0 1 2 3 4
-           ┌──────────
-         0 │ 1 1 1 1 1
-         1 │ 5 5 5 5 5
-         2 │ 1 1 1 1 1
+             0  1  2  3  4
+           ┌──────────────
+         0 │ 1  1  1  1  1
+         1 │ 5  5  5  5  5
+         2 │ 1  1  1  1  1
         >
 
         Apply calculation to a subset of features.
@@ -1336,11 +1336,11 @@ class Features(ABC):
         ...                             features=[2, 0])
         >>> calc
         <Matrix 3pt x 2ft
-             'f3' 'f1'
-           ┌──────────
-         0 │  6    7
-         1 │  6    6
-         2 │  7    6
+             f3  f1
+           ┌───────
+         0 │ 6   7
+         1 │ 6   6
+         2 │ 7   6
         >
 
         Keywords
@@ -1391,9 +1391,9 @@ class Features(ABC):
         >>> allPositiveFts = X.features.matching(match.allPositive)
         >>> allPositiveFts
         <Matrix 1pt x 3ft
-                           0     1    2
-                       ┌─────────────────
-         'allPositive' │ False False True
+                         0      1     2
+                     ┌───────────────────
+         allPositive │ False  False  True
         >
 
         >>> from nimble import match
@@ -1402,9 +1402,9 @@ class Features(ABC):
         >>> ftHasMissing = X.features.matching(match.anyMissing)
         >>> ftHasMissing
         <Matrix 1pt x 3ft
-                          0    1     2
-                      ┌─────────────────
-         'anyMissing' │ False True False
+                        0     1      2
+                    ┌───────────────────
+         anyMissing │ False  True  False
         >
 
         Keywords
@@ -1459,11 +1459,11 @@ class Features(ABC):
         >>> X.features.insert(1, toInsert)
         >>> X
         <Matrix 3pt x 4ft
-             0 1 2 3
-           ┌────────
-         0 │ 0 1 1 0
-         1 │ 0 1 1 0
-         2 │ 0 1 1 0
+             0  1  2  3
+           ┌───────────
+         0 │ 0  1  1  0
+         1 │ 0  1  1  0
+         2 │ 0  1  1  0
         >
 
         Insert before another point; mixed object types.
@@ -1476,10 +1476,10 @@ class Features(ABC):
         >>> X.features.insert('4', toInsert)
         >>> X
         <Matrix 2pt x 4ft
-             '1' '2' '3' '4'
-           ┌────────────────
-         0 │  1   2   3   4
-         1 │  5   6   7   8
+             1  2  3  4
+           ┌───────────
+         0 │ 1  2  3  4
+         1 │ 5  6  7  8
         >
 
         Reorder names.
@@ -1492,10 +1492,10 @@ class Features(ABC):
         >>> X.features.insert(2, toInsert)
         >>> X
         <Matrix 2pt x 4ft
-               0 1 2 3
-             ┌────────
-         'a' │ 1 2 3 4
-         'b' │ 5 6 7 8
+             0  1  2  3
+           ┌───────────
+         a │ 1  2  3  4
+         b │ 5  6  7  8
         >
 
         Keywords
@@ -1546,11 +1546,11 @@ class Features(ABC):
         >>> X.features.append(toAppend)
         >>> X
         <Matrix 3pt x 4ft
-             0 1 2 3
-           ┌────────
-         0 │ 0 0 1 1
-         1 │ 0 0 1 1
-         2 │ 0 0 1 1
+             0  1  2  3
+           ┌───────────
+         0 │ 0  0  1  1
+         1 │ 0  0  1  1
+         2 │ 0  0  1  1
         >
 
         Append mixed object types.
@@ -1563,10 +1563,10 @@ class Features(ABC):
         >>> X.features.append(toAppend)
         >>> X
         <Matrix 2pt x 4ft
-             '1' '2' '3' '4'
-           ┌────────────────
-         0 │  1   2   3   4
-         1 │  5   6   7   8
+             1  2  3  4
+           ┌───────────
+         0 │ 1  2  3  4
+         1 │ 5  6  7  8
         >
 
         Reorder names.
@@ -1579,10 +1579,10 @@ class Features(ABC):
         >>> X.features.append(toAppend)
         >>> X
         <Matrix 2pt x 4ft
-               0 1 2 3
-             ┌────────
-         'a' │ 1 2 3 4
-         'b' │ 5 6 7 8
+             0  1  2  3
+           ┌───────────
+         a │ 1  2  3  4
+         b │ 5  6  7  8
         >
 
         Keywords
@@ -1638,11 +1638,11 @@ class Features(ABC):
         >>> obj.features.replace(newFt, features='b')
         >>> obj
         <Matrix 3pt x 3ft
-             'a' 'b' 'c'
-           ┌────────────
-         0 │  0   1   0
-         1 │  0   1   0
-         2 │  0   1   0
+             a  b  c
+           ┌────────
+         0 │ 0  1  0
+         1 │ 0  1  0
+         2 │ 0  1  0
         >
 
         >>> obj = nimble.zeros(3, 4, returnType='Sparse')
@@ -1650,11 +1650,11 @@ class Features(ABC):
         >>> obj.features.replace(replacement, [1, 2])
         >>> obj
         <Sparse 3pt x 4ft
-             0 1 2 3
-           ┌────────
-         0 │ 0 1 9 0
-         1 │ 0 2 8 0
-         2 │ 0 3 7 0
+             0  1  2  3
+           ┌───────────
+         0 │ 0  1  9  0
+         1 │ 0  2  8  0
+         2 │ 0  3  7  0
         >
 
         >>> obj = nimble.zeros(3, 3, featureNames=['a', 'b', 'c'],
@@ -1662,11 +1662,11 @@ class Features(ABC):
         >>> obj.features.replace(['Y', 'N', 'Y'], featureNames=['b'])
         >>> obj
         <DataFrame 3pt x 3ft
-             'a' 'b' 'c'
-           ┌────────────
-         0 │  0   Y   0
-         1 │  0   N   0
-         2 │  0   Y   0
+             a  b  c
+           ┌────────
+         0 │ 0  Y  0
+         1 │ 0  N  0
+         2 │ 0  Y  0
         >
 
         Keywords
@@ -1721,12 +1721,12 @@ class Features(ABC):
         >>> X.features.permute()
         >>> X
         <Matrix 4pt x 4ft
-             0 1 2 3
-           ┌────────
-         0 │ 3 2 4 1
-         1 │ 3 2 4 1
-         2 │ 3 2 4 1
-         3 │ 3 2 4 1
+             0  1  2  3
+           ┌───────────
+         0 │ 3  2  4  1
+         1 │ 3  2  4  1
+         2 │ 3  2  4  1
+         3 │ 3  2  4  1
         >
 
         Permute with a list of identifiers.
@@ -1740,12 +1740,12 @@ class Features(ABC):
         >>> orders.features.permute(['ID', 'quantity', 'dept'])
         >>> orders
         <DataFrame 4pt x 3ft
-             'ID' 'quantity' 'dept'
-           ┌───────────────────────
-         0 │  81      3       home
-         1 │  98      10      gard
-         2 │  14      1       home
-         3 │  11      3       home
+             ID  quantity  dept
+           ┌───────────────────
+         0 │ 81      3     home
+         1 │ 98     10     gard
+         2 │ 14      1     home
+         3 │ 11      3     home
         >
 
         Keywords
@@ -1819,13 +1819,13 @@ class Features(ABC):
         >>> X.features.fillMatching(-1, 'na')
         >>> X
         <DataFrame 5pt x 3ft
-             0  1 2
-           ┌────────
-         0 │ 1  1 1
-         1 │ 1  1 1
-         2 │ 1  1 -1
-         3 │ 2  2 2
-         4 │ -1 2 2
+             0   1  2
+           ┌──────────
+         0 │  1  1   1
+         1 │  1  1   1
+         2 │  1  1  -1
+         3 │  2  2   2
+         4 │ -1  2   2
         >
 
         Fill using nimble's match and fill modules; limit to first
@@ -1842,13 +1842,13 @@ class Features(ABC):
         >>> X.features.fillMatching(fill.mean, match.missing, features=0)
         >>> X
         <Matrix 5pt x 3ft
-               0     1     2
-           ┌──────────────────
-         0 │ 1.000 1.000 1.000
-         1 │ 1.000 1.000 1.000
-         2 │ 1.000 1.000
-         3 │ 2.000 2.000 2.000
-         4 │ 1.250 2.000 2.000
+               0      1      2
+           ┌────────────────────
+         0 │ 1.000  1.000  1.000
+         1 │ 1.000  1.000  1.000
+         2 │ 1.000  1.000
+         3 │ 2.000  2.000  2.000
+         4 │ 1.250  2.000  2.000
         >
         """
         return self._fillMatching(fillWith, matchingElements, features,
@@ -1913,11 +1913,11 @@ class Features(ABC):
         >>> train.features.normalize(range0to1Normalize)
         >>> train
         <Matrix 3pt x 3ft
-                    'review1' 'review2' 'review3'
-                  ┌──────────────────────────────
-         'movie1' │   1.000     1.000     1.000
-         'movie2' │   0.333     0.471     0.460
-         'movie3' │   0.000     0.000     0.000
+                  review1  review2  review3
+                ┌──────────────────────────
+         movie1 │  1.000    1.000    1.000
+         movie2 │  0.333    0.471    0.460
+         movie3 │  0.000    0.000    0.000
         >
 
         With applyResultTo.
@@ -1937,18 +1937,18 @@ class Features(ABC):
         ...                          applyResultTo=test)
         >>> train
         <Matrix 3pt x 3ft
-                    'review1' 'review2' 'review3'
-                  ┌──────────────────────────────
-         'movie1' │   1.336     1.248     1.149
-         'movie2' │   -0.267    -0.048    0.139
-         'movie3' │   -1.069    -1.200    -1.288
+                  review1  review2  review3
+                ┌──────────────────────────
+         movie1 │   1.336    1.248    1.149
+         movie2 │  -0.267   -0.048    0.139
+         movie3 │  -1.069   -1.200   -1.288
         >
         >>> test
         <Matrix 2pt x 3ft
-                    'review1' 'review2' 'review3'
-                  ┌──────────────────────────────
-         'movie4' │   0.535     0.996     -0.307
-         'movie5' │   -0.267    -0.444    1.031
+                  review1  review2  review3
+                ┌──────────────────────────
+         movie4 │   0.535    0.996   -0.307
+         movie5 │  -0.267   -0.444    1.031
         >
         
         With user defined normalization function.
@@ -1960,26 +1960,26 @@ class Features(ABC):
         >>> train = nimble.data(lstTrain, pts, fts)
         >>> train
         <Matrix 5pt x 1ft
-                   'miles'
-                 ┌────────
-         'user1' │   482
-         'user2' │  30000
-         'user3' │   7900
-         'user4' │    35
-         'user5' │   600
+                 miles
+               ┌──────
+         user1 │   482
+         user2 │ 30000
+         user3 │  7900
+         user4 │    35
+         user5 │   600
         >
         >>> def logNormalize(ft):
         ...     return np.log(ft)
         >>> train.features.normalize(logNormalize)
         >>> train
         <Matrix 5pt x 1ft
-                   'miles'
-                 ┌────────
-         'user1' │  6.178
-         'user2' │  10.309
-         'user3' │  8.975
-         'user4' │  3.555
-         'user5' │  6.397
+                 miles
+               ┌───────
+         user1 │  6.178
+         user2 │ 10.309
+         user3 │  8.975
+         user4 │  3.555
+         user5 │  6.397
         >
 
         Keywords
@@ -2110,11 +2110,11 @@ class Features(ABC):
         ...                                   ['city', 'country'])
         >>> locations
         <DataFrame 3pt x 2ft
-               'city'   'country'
-           ┌───────────────────────
-         0 │ Cape Town South Africa
-         1 │    Lima       Peru
-         2 │   Moscow     Russia
+                city      country
+           ┌────────────────────────
+         0 │ Cape Town  South Africa
+         1 │      Lima          Peru
+         2 │    Moscow        Russia
         >
 
         Split with an index for ``rule``.
@@ -2128,12 +2128,12 @@ class Features(ABC):
         >>> inventory.features.splitByParsing(0, 3, ['category', 'id'])
         >>> inventory
         <DataFrame 4pt x 3ft
-             'category' 'id' 'quantity'
-           ┌───────────────────────────
-         0 │    AGG     932      44
-         1 │    AGG     734      11
-         2 │    HEQ     892      1
-         3 │    LEQ     331      2
+             category   id  quantity
+           ┌────────────────────────
+         0 │   AGG     932     44
+         1 │   AGG     734     11
+         2 │   HEQ     892      1
+         3 │   LEQ     331      2
         >
 
         Keywords
@@ -2243,11 +2243,11 @@ class Features(ABC):
         >>> X.features.repeat(totalCopies=3,
         ...                      copyFeatureByFeature=False)
         <Matrix 3pt x 3ft
-             'a_1' 'a_2' 'a_3'
-           ┌──────────────────
-         0 │   1     1     1
-         1 │   2     2     2
-         2 │   3     3     3
+             a_1  a_2  a_3
+           ┌──────────────
+         0 │  1    1    1
+         1 │  2    2    2
+         2 │  3    3    3
         >
 
         Two-dimensional, copyFeatureByFeature is False
@@ -2257,11 +2257,11 @@ class Features(ABC):
         >>> X.features.repeat(totalCopies=2,
         ...                      copyFeatureByFeature=False)
         <Matrix 3pt x 4ft
-             'a_1' 'b_1' 'a_2' 'b_2'
-           ┌────────────────────────
-         0 │   1     2     1     2
-         1 │   3     4     3     4
-         2 │   5     6     5     6
+             a_1  b_1  a_2  b_2
+           ┌───────────────────
+         0 │  1    2    1    2
+         1 │  3    4    3    4
+         2 │  5    6    5    6
         >
 
         Two-dimensional, copyFeatureByFeature is True
@@ -2271,11 +2271,11 @@ class Features(ABC):
         >>> X.features.repeat(totalCopies=2,
         ...                      copyFeatureByFeature=True)
         <Matrix 3pt x 4ft
-             'a_1' 'a_2' 'b_1' 'b_2'
-           ┌────────────────────────
-         0 │   1     1     2     2
-         1 │   3     3     4     4
-         2 │   5     5     6     6
+             a_1  a_2  b_1  b_2
+           ┌───────────────────
+         0 │  1    1    2    2
+         1 │  3    3    4    4
+         2 │  5    5    6    6
         >
 
         Keywords
@@ -2312,12 +2312,12 @@ class Features(ABC):
         >>> uniqueFeatures = X.features.unique()
         >>> uniqueFeatures
         <DataFrame 4pt x 3ft
-             'f1' 'f2' 'f3'
-           ┌───────────────
-         0 │  a    1    3
-         1 │  a    5    6
-         2 │  b    7    1
-         3 │  c    2    9
+             f1  f2  f3
+           ┌───────────
+         0 │ a   1   3
+         1 │ a   5   6
+         2 │ b   7   1
+         3 │ c   2   9
         >
 
         Keywords
@@ -2740,9 +2740,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.max()
         <Matrix 1pt x 3ft
-                 0 1  2
-               ┌───────
-         'max' │ 3 22 5
+               0  1   2
+             ┌─────────
+         max │ 3  22  5
         >
         """
         return self._max(groupByFeature)
@@ -2770,9 +2770,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.mean()
         <Matrix 1pt x 3ft
-                    0     1      2
-                ┌───────────────────
-         'mean' │ 1.500 22.000 3.500
+                  0      1       2
+              ┌─────────────────────
+         mean │ 1.500  22.000  3.500
         >
         """
         return self._mean(groupByFeature)
@@ -2800,9 +2800,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.median()
         <Matrix 1pt x 3ft
-                      0     1      2
-                  ┌───────────────────
-         'median' │ 1.500 22.000 3.500
+                    0      1       2
+                ┌─────────────────────
+         median │ 1.500  22.000  3.500
         >
         """
         return self._median(groupByFeature)
@@ -2830,9 +2830,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.min()
         <Matrix 1pt x 3ft
-                 0 1  2
-               ┌───────
-         'min' │ 0 22 2
+               0  1   2
+             ┌─────────
+         min │ 0  22  2
         >
         """
         return self._min(groupByFeature)
@@ -2856,9 +2856,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.uniqueCount()
         <Matrix 1pt x 3ft
-                         0 1 2
-                       ┌──────
-         'uniquecount' │ 2 1 2
+                       0  1  2
+                     ┌────────
+         uniquecount │ 2  1  2
         >
         """
         
@@ -2883,9 +2883,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.proportionMissing()
         <Matrix 1pt x 3ft
-                                 0     1     2
-                             ┌──────────────────
-         'proportionmissing' │ 0.500 0.000 0.500
+                               0      1      2
+                           ┌────────────────────
+         proportionmissing │ 0.500  0.000  0.500
         >
         """
         return self._proportionMissing(groupByFeature)
@@ -2909,9 +2909,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.proportionZero()
         <Matrix 1pt x 3ft
-                              0     1     2
-                          ┌──────────────────
-         'proportionzero' │ 0.500 0.500 0.500
+                            0      1      2
+                        ┌────────────────────
+         proportionzero │ 0.500  0.500  0.500
         >
         """
         return self._proportionZero(groupByFeature)
@@ -2935,9 +2935,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.standardDeviation()
         <Matrix 1pt x 3ft
-                                 0     1     2
-                             ┌──────────────────
-         'standarddeviation' │ 2.121 0.000 2.121
+                               0      1      2
+                           ┌────────────────────
+         standarddeviation │ 2.121  0.000  2.121
         >
         """
         return self._standardDeviation(groupByFeature)
@@ -2961,9 +2961,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.populationStandardDeviation()
         <Matrix 1pt x 3ft
-                                           0     1     2
-                                       ┌──────────────────
-         'populationstandarddeviation' │ 1.500 0.000 1.500
+                                         0      1      2
+                                     ┌────────────────────
+         populationstandarddeviation │ 1.500  0.000  1.500
         >
         """
         return self._populationStandardDeviation(groupByFeature)
@@ -2988,9 +2988,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.mode()
         <Matrix 1pt x 3ft
-                  0 1 2
-                ┌──────
-         'mode' │ 0 2 2
+                0  1  2
+              ┌────────
+         mode │ 0  2  2
         >
         """
         return self._mode(grouByFeature)
@@ -3014,9 +3014,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.sum()
         <Matrix 1pt x 3ft
-                 0 1  2
-               ┌───────
-         'sum' │ 3 44 7
+               0  1   2
+             ┌─────────
+         sum │ 3  44  7
         >
         """
         return self._sum(groupByFeature)
@@ -3040,9 +3040,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.variance()
         <Matrix 1pt x 3ft
-                        0     1     2
-                    ┌──────────────────
-         'variance' │ 4.500 0.000 4.500
+                      0      1      2
+                  ┌────────────────────
+         variance │ 4.500  0.000  4.500
         >
         """
         return self._variance(groupByFeature)
@@ -3066,9 +3066,9 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.medianAbsoluteDeviation()
         <Matrix 1pt x 3ft
-                                       0     1     2
-                                   ┌──────────────────
-         'medianabsolutedeviation' │ 1.500 0.000 1.500
+                                     0      1      2
+                                 ┌────────────────────
+         medianabsolutedeviation │ 1.500  0.000  1.500
         >
         """
         return self._medianAbsoluteDeviation(groupByFeature)
@@ -3092,11 +3092,11 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.quartiles()
         <Matrix 3pt x 3ft
-                         0     1      2
-                     ┌───────────────────
-         'quartile1' │ 0.750 22.000 2.750
-         'quartile2' │ 1.500 22.000 3.500
-         'quartile3' │ 2.250 22.000 4.250
+                       0      1       2
+                   ┌─────────────────────
+         quartile1 │ 0.750  22.000  2.750
+         quartile2 │ 1.500  22.000  3.500
+         quartile3 │ 2.250  22.000  4.250
         >
         """
         return self._quartiles(groupByFeature)

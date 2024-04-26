@@ -43,9 +43,9 @@ def meanNormalize(values1, values2=None):
        ┌───────
      0 │ -2.000
      1 │ -1.000
-     2 │ 0.000
-     3 │ 1.000
-     4 │ 2.000
+     2 │  0.000
+     3 │  1.000
+     4 │  2.000
     >
     >>> lst2 = [[3], [2], [6]]
     >>> X2 = nimble.data(lst2)
@@ -54,9 +54,9 @@ def meanNormalize(values1, values2=None):
     <Matrix 3pt x 1ft
            0
        ┌───────
-     0 │ 0.000
+     0 │  0.000
      1 │ -1.000
-     2 │ 3.000
+     2 │  3.000
     >
     """
     mean = nimble.calculate.mean(values1)
@@ -89,9 +89,9 @@ def meanStandardDeviationNormalize(values1, values2=None):
        ┌───────
      0 │ -1.414
      1 │ -0.707
-     2 │ 0.000
-     3 │ 0.707
-     4 │ 1.414
+     2 │  0.000
+     3 │  0.707
+     4 │  1.414
     >
     >>> lst2 = [[3], [2], [6]]
     >>> X2 = nimble.data(lst2)
@@ -100,9 +100,9 @@ def meanStandardDeviationNormalize(values1, values2=None):
     <Matrix 3pt x 1ft
            0
        ┌───────
-     0 │ 0.000
+     0 │  0.000
      1 │ -0.707
-     2 │ 2.121
+     2 │  2.121
     >
     """
     standardDeviation = nimble.calculate.standardDeviation(values1, False)

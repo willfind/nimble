@@ -441,13 +441,13 @@ def performanceFunction(optimal, best=None, predict=None, validate=True,
     >>> # Can visualize our predictedValues for this case using apply()
     >>> knn.apply(testX, scoreMode='allScores') # 12/15 votes correct
     <Matrix 5pt x 3ft
-         '0' '1' '2'
-       ┌────────────
-     0 │  3   0   0
-     1 │  2   1   0
-     2 │  0   3   0
-     3 │  2   1   0
-     4 │  0   0   3
+         0  1  2
+       ┌────────
+     0 │ 3  0  0
+     1 │ 2  1  0
+     2 │ 0  3  0
+     3 │ 2  1  0
+     4 │ 0  0  3
     >
     >>> knn.test(correctVoteRatio, testX, testY)
     0.8
