@@ -1,0 +1,123 @@
+name: Specific Test Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      branchName:
+        description: 'Branch Name to Run Tests On'
+        required: true
+        type: string
+      testName:
+        description: 'Test(s) name or name substring to run'
+        required: true
+        type: string
+      operatingSystem:
+        description: 'Operating System'
+        required: true
+        type: choice
+        options:
+          - "windows-latest"
+          - "macos-latest"
+          - "ubuntu-latest"
+      pyVersion:
+        description: 'Python version'
+        required: true
+        type: choice
+        options:
+          - 3.8
+          - 3.9
+          - 3.10
+          - 3.11
+      
+
+jobs:
+  build_wheels:
+    name: Build specific wheels on demand
+    runs-on: ${{ github.event.inputs.operatingSystem }}
+    steps: 
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ github.event.inputs.pyVersion }}
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
+
+      - name: Setup environment variable for cibuildwheel
+        run: echo "CIBW_BUILD=cp${{ github.event.inputs.pyVersion }}-*" >> $GITHUB_ENV
+
+      - name: Debugging output
+        run: echo "CIBW_BUILD=${{ env.CIBW_BUILD }}"
+
+      - name: Build wheels using cibuildwheel
+        uses: pypa/cibuildwheel@v2.16.5
+        with:
+          output-dir: wheelhouse
+        env:
+          CIBW_BUILD: ${{ env.CIBW_BUILD }}
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-activate-base: true
+          activate-environment: ""
+
+      - name: Remove Source
+        shell: bash
+        run: |
+          cd wheelhouse
+          pip install wheel
+          for name in *.whl; do
+              python3 ../remove_source.py . $name
+          done
+      - name: Conda channel build
+        run: |
+          conda install conda-build
+          conda build conda_recipe/ --output-folder=nimble-data --no-test --no-anaconda-upload --no-activate
+      
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: built_wheel
+          path: ./wheelhouse/
+          retention-days: 1
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: built_channel
+          path: ./nimble-data/
+          retention-days: 1
+
+  checkout-and-test:
+    needs: [build_wheels]
+    runs-on: ${{ github.event.inputs.operatingSystem }}
+    steps:
+      - name: Checkout the specified branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.branchName }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ github.event.inputs.pyVersion }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: built_wheel
+    
+      - name: Move Wheels to docs source
+        run: 
+          mv *.whl ./documentation/source/wheels
+
+      
+      - name: Install nimble and Dependencies
+        run: 
+          pip install pylint==2.14.0
+          pip install pytest
+          pip install keras tensorflow
+          pip install nimble[quickstart] --find-links=./documentation/source/wheels
+
+      - name: Run Specific Test
+        run: pytest -v -k ${{ github.event.inputs.testName }}
