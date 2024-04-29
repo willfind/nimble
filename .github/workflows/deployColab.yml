@@ -20,13 +20,13 @@ on:
 jobs:
   deploy-colab:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/download-artifact@v3
           with:
             name: ${{inputs.saveNameNotebooks}}
             path: ./notebooks
-      
+
       - name: Remove unneeded HTML
         run: rm ./examples/*.html
 
