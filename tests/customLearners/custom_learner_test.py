@@ -488,10 +488,10 @@ class RandomControl(CustomLearner):
     learnerType = 'undefined'
 
     def train(self, trainX, trainY):
-        self.rand = nimble.random.pythonRandom.randint(0, 1e15)
+        self.rand = nimble.random.pythonRandom.randint(0, int(1e15))
 
     def incrementalTrain(self, trainX, trainY):
-        self.rand = nimble.random.pythonRandom.randint(0, 1e15)
+        self.rand = nimble.random.pythonRandom.randint(0, int(1e15))
 
     def apply(self, testX):
         return [v * self.rand for v in testX]

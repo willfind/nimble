@@ -575,6 +575,10 @@ def testSciKitLearnTransformationLearners():
             # in question, so we use in instead of ==
             target = "fit() missing 1 required positional argument: 'y'"
             assert target in str(TE).lower()
+        except ValueError as VE:
+            # Similar to above, yet the param is provided as None
+            target = "estimator requires y to be passed, but the target y is None"
+            assert target in str(VE)
 
 
 @sklSkipDec
