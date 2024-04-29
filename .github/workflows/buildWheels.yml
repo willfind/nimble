@@ -64,7 +64,7 @@ jobs:
         shell: bash
         run: |
           pip install build
-          python -m build -sdist
+          python -m build --sdist
           cp dist/nimble* wheelhouse/
 
       # retention days param critical for cost saving wrt free/paid storage.
