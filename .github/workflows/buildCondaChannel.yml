@@ -23,7 +23,7 @@ jobs:
     name: $Channel info for for ${{ matrix.os}}
     # This will automatically split off concurrent jobs running-on each value
     runs-on: ${{ matrix.os}}
-    stragegy:
+    strategy:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]

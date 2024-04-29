@@ -13,7 +13,7 @@ jobs:
       saveNameWheel: built_wheel
 
   build-channel:
-    uses: ./.github/workflows/buildWheels.yml
+    uses: ./.github/workflows/buildCondaChannel.yml
     with:
       saveNameWheel: built_wheel
       saveNameConda: built_channel
