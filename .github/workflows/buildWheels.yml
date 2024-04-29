@@ -60,9 +60,10 @@ jobs:
         with:
           output-dir: wheelhouse
 
-      - name: Build source dist and any py wheel
+      - name: Build source dist
         shell: bash
         run: |
+          pip install build
           python -m build -sdist
           cp dist/nimble* wheelhouse/
 
