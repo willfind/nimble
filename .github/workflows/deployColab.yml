@@ -23,21 +23,21 @@ jobs:
 
     steps:
       - uses: actions/download-artifact@v3
-          with:
-            name: ${{inputs.saveNameNotebooks}}
-            path: ./notebooks
+        with:
+          name: ${{inputs.saveNameNotebooks}}
+          path: ./notebooks
 
       - name: Remove unneeded HTML
         run: rm ./examples/*.html
 
       - name: Add needed install cell in notebooks
-          shell: bash
-          run: |
-            cd notebooks
-            pip install nbformat
-            for name in *.ipynb; do
-                python3 ../prep_for_colab.py . $name
-            done
+        shell: bash
+        run: |
+          cd notebooks
+          pip install nbformat
+          for name in *.ipynb; do
+              python3 ../prep_for_colab.py . $name
+          done
 
       - uses: 'google-github-actions/auth@v2'
         with:

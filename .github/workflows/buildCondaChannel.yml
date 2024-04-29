@@ -37,6 +37,7 @@ jobs:
         with:
           auto-activate-base: true
           activate-environment: ""
+          python-version: 3.9
 
       - name: Conda channel build
         run: |
