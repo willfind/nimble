@@ -1,1 +1,3 @@
 include nimble/configuration.ini
+prune tests/
+include *.c

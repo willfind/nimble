@@ -12,7 +12,6 @@ jobs:
     uses: ./.github/workflows/buildWheels.yml
     with:
       saveNameWheel: built_wheel
-      saveNameConda: built_channel
 
   run-tests:
     # try to build the site regardless of how much of the previous job

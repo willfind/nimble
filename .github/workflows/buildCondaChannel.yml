@@ -1,0 +1,53 @@
+# Build the conda channel and save as artifact, to either be manually downloaded,
+# or chained as a precursor job within another action.
+#
+# Effects:
+# - artifact containing conda channel is saved
+
+name: BuildCondaChannel
+
+on:
+  workflow_call:
+    inputs:
+      # The name of the artifact containing the wheels
+      saveNameWheel:
+        required: true
+        type: string
+      # The name of the artifact containing the conda channel
+      saveNameConda:
+        required: true
+        type: string
+
+jobs:
+  build_channel:
+    name: $Channel info for for ${{ matrix.os}}
+    # This will automatically split off concurrent jobs running-on each value
+    runs-on: ${{ matrix.os}}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{inputs.saveNameWheel}}
+          path: wheelhouse
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-activate-base: true
+          activate-environment: ""
+
+      - name: Conda channel build
+        run: |
+          conda install conda-build
+          conda build conda_recipe/ --output-folder=nimble-data --no-test --no-anaconda-upload --no-activate
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{inputs.saveNameConda}}
+          path: ./nimble-data/
+          retention-days: 1

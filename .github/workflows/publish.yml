@@ -11,18 +11,37 @@ jobs:
     uses: ./.github/workflows/buildWheels.yml
     with:
       saveNameWheel: built_wheel
+
+  build-channel:
+    needs: [build-wheels]
+    uses: ./.github/workflows/buildCondaChannel.yml
+    with:
+      saveNameWheel: built_wheel
       saveNameConda: built_channel
 
   build-site:
     # try to build the site regardless of how much of the previous job
     # matrix completed. There are additional sanity checks within.
     if: ${{ always() }}
-    needs: [build-wheels]
+    needs: [build-channel]
     uses: ./.github/workflows/buildSite.yml
     with:
       saveNameWheel: built_wheel
       saveNameConda: built_channel
+      saveNameNotebooks: built_notebooks
 
   deploy-site:
     uses: ./.github/workflows/deploySite.yml
     needs: [build-site]
+
+  deploy-colab:
+    uses: ./.github/workflows/deployColab.yml
+    needs: [build-site]
+    with:
+      saveNameNotebooks: built_notebooks
+
+  deploy-pypi:
+    uses: ./.github/workflows/deployPyPi.yml
+    needs: [build-site]
+    with:
+      saveNameWheel: built_wheel

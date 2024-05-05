@@ -15,7 +15,14 @@ on:
 jobs:
 
   test-workflow:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.pyVer}} for ${{ matrix.os}}
+    # This will automatically split off concurrent jobs running-on each value
+    runs-on: ${{ matrix.os}}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        pyVer: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
       - name: Checkout code
@@ -23,7 +30,7 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: ${{ matrix.pyVer}}
           cache: pip
           cache-dependency-path: pyproject.toml
 
@@ -32,6 +39,7 @@ jobs:
           name: ${{inputs.saveNameWheel}}
     
       - name: Move Wheels to docs source
+        shell: bash
         run: mv *.whl ./documentation/source/wheels
 
       - name: install nimble and dependencies

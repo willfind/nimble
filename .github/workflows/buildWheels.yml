@@ -1,7 +1,8 @@
 # Build wheels and save as artifact, to either be manually downloaded,
 # or chained as a precursor job within another action.
 #
-# Effects: artifact containing all built wheels saved.
+# Effects:
+# - artifact containing all built wheels saved.
 
 name: BuildWheels
 
@@ -11,10 +12,11 @@ name: BuildWheels
 on:
   workflow_call:
     inputs:
-      # The name of the artifact to be saved
-      saveName:
+      # The name of the artifact containing the wheels
+      saveNameWheel:
         required: true
         type: string
+
 
 jobs:
   build_wheels:
@@ -22,6 +24,7 @@ jobs:
     # This will automatically split off concurrent jobs running-on each value
     runs-on: ${{ matrix.os}}
     strategy:
+      fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         #os: ["ubuntu-latest"]
@@ -45,7 +48,7 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.5
+        uses: pypa/cibuildwheel@v2.17.0
         # Allows us to specify cibuildwheel specific environment variables.
         env:
           # Using the input to specifify the matrix, we will either build all
@@ -57,9 +60,16 @@ jobs:
         with:
           output-dir: wheelhouse
 
+      - name: Build source dist
+        shell: bash
+        run: |
+          pip install build
+          python -m build --sdist
+          cp dist/nimble* wheelhouse/
+
       # retention days param critical for cost saving wrt free/paid storage.
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{inputs.saveName}}
+          name: ${{inputs.saveNameWheel}}
           path: ./wheelhouse/
           retention-days: 1
