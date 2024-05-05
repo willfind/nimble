@@ -19,7 +19,7 @@ on:
         type: string
 
 jobs:
-  deploy-colab:
+  deploy-pypi:
     runs-on: ubuntu-latest
     environment:
       name: pypi

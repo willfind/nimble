@@ -29,15 +29,17 @@ jobs:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
 
     steps:
+      - uses: actions/checkout@v3
+
       - uses: actions/download-artifact@v3
         with:
           name: ${{inputs.saveNameWheel}}
+          path: wheelhouse
 
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           auto-activate-base: true
           activate-environment: ""
-          python-version: 3.9
 
       - name: Conda channel build
         run: |

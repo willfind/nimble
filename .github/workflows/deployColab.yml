@@ -25,7 +25,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: ${{inputs.saveNameNotebooks}}
-          path: ./notebooks
+          path: ./examples
 
       - name: Remove unneeded HTML
         run: rm ./examples/*.html
@@ -33,7 +33,7 @@ jobs:
       - name: Add needed install cell in notebooks
         shell: bash
         run: |
-          cd notebooks
+          cd examples
           pip install nbformat
           for name in *.ipynb; do
               python3 ../prep_for_colab.py . $name

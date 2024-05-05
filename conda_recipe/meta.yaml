@@ -1,6 +1,6 @@
 package:
   name: nimble
-  version: "0.4.4"
+  version: "0.5.0"
 
 source:
   path: ../
@@ -14,12 +14,12 @@ requirements:
     - setuptools
     - numpy>=1.14
     - packaging>=20.0
-    - tomli
+    - tomli>=2.0
   run:
     - python {{ python }}
     - numpy>=1.14
     - packaging>=20.0
-    - tomli
+    - tomli>=2.0
 
 outputs:
   - name: nimble
@@ -38,8 +38,8 @@ outputs:
         - scikit-learn>=1.0
         - {{ pin_subpackage('nimble', max_pin="x.x.x.x") }}
       run_constrained:
-        - keras>=2.0
-        - tensorflow>=1.14
+        - keras>=2.4
+        - tensorflow>=2.0
         - hyperopt>=0.2
     test:
       imports:
