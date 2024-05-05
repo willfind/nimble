@@ -25,7 +25,6 @@ import types
 import logging
 import importlib
 import numpy as np
-from numpy.distutils import system_info as npdusi
 from packaging.version import Version
 
 import nimble
@@ -89,7 +88,9 @@ class Autoimpute(_SciKitLearnAPI):
         # for >= v1.22. Since it causes an attribute error during import,
         # we perform a patch to present the info irrespective of the
         # potential pymc3 version.
-        if Version("1.22") <= Version(np.__version__):
+        npVer = Version(np.__version__)
+        if Version("1.22") <= npVer and npVer < Version("1.26"):
+            from numpy.distutils import system_info as npdusi
             patchValue = npdusi.get_info("blas_opt", 0)
             np.distutils.__config__.blas_opt_info = patchValue
 
