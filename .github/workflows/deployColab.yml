@@ -38,7 +38,7 @@ jobs:
           cd examples
           pip install nbformat
           for name in *.ipynb; do
-              python3 ../prep_for_colab.py . $name
+              python3 ../prep_for_colab.py $name
           done
 
       - uses: 'google-github-actions/auth@v2'
