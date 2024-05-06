@@ -39,6 +39,8 @@ jobs:
     needs: [build-site]
     with:
       saveNameNotebooks: built_notebooks
+    secrets:
+      COLAB_CREDENTIALS: ${{ secrets.COLAB_CREDENTIALS }}
 
   deploy-pypi:
     uses: ./.github/workflows/deployPyPi.yml

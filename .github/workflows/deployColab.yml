@@ -3,6 +3,7 @@
 # Assumptions:
 # * saveNameNotebooks contains the notebooks built for the site,
 #   (and also includes the html pages, though we don't need them)
+# * Secret passed down which can be used for auth with google.
 #
 # Effects: google drive saved notebooks are overwritten with the
 #  given notebooks.
@@ -16,6 +17,10 @@ on:
       saveNameNotebooks:
         required: true
         type: string
+    secrets:
+      COLAB_CREDENTIALS:
+        description: 'Service account access credentials'
+        required: true
 
 jobs:
   deploy-colab:
