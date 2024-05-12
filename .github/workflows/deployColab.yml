@@ -46,19 +46,7 @@ jobs:
               python3 ../prep_for_colab.py $name
           done
 
-      - uses: 'google-github-actions/auth@v2'
-        with:
-          credentials_json: '${{ secrets.COLAB_CREDENTIALS }}'
-
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
-
-      - name: 'Use gcloud CLI'
-        run: |
-          gcloud storage cp ./examples/additional_functionality.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/additional_functionality.ipynb
-          gcloud storage cp ./examples/cleaning_data.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/cleaning_data.ipynb
-          gcloud storage cp ./examples/exploring_data.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/exploring_data.ipynb
-          gcloud storage cp ./examples/merging_and_tidying_data.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/merging_and_tidying_data.ipynb
-          gcloud storage cp ./examples/neural_networks.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/neural_networks.ipynb
-          gcloud storage cp ./examples/supervised_learning.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/supervised_learning.ipynb
-          gcloud storage cp ./examples/unsupervised_learning.ipynb /content/drive/MyDrive/Nimble\ Example\ Notebooks/unsupervised_learning.ipynb
+      - name: Script to update each file in Drive
+        env:
+          COLAB_CREDENTIALS: ${{ secrets.COLAB_CREDENTIALS }}
+        run: python copy_to_drive.py
