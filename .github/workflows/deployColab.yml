@@ -46,6 +46,9 @@ jobs:
               python3 ../prep_for_colab.py $name
           done
 
+      - name: Install pydrive2
+        run: pip install pydrive2
+
       - name: Script to update each file in Drive
         env:
           COLAB_CREDENTIALS: ${{ secrets.COLAB_CREDENTIALS }}
