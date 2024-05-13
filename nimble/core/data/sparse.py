@@ -824,7 +824,52 @@ class Sparse(Base):
         return self._data.data.dtype.type(0) 
     
     def _setitem_implementation(self, x, y, value):
-        pass 
+        """ 
+        currently, we sort the data first and then do binary search
+        """
+        sortedAxis = self._sorted['axis']
+        sort = sortedAxis if sortedAxis is not None else 'point'
+        self._sortInternal(sort, setIndices=True)
+        
+        if self._sorted['axis'] == 'point':
+            offAxis = self._data.col
+            axisVal = x
+            offAxisVal = y
+        else:
+            offAxis = self._data.row
+            axisVal = y
+            offAxisVal = x
+            
+        # binary search
+        start, end = self._sorted['indices'][axisVal:axisVal + 2]
+        # if start == end: # axisVal is not in self._data.row
+        #     pass
+        #     # if value != 0:
+        #     #     self._data.data = np.insert(self._data.data, start, value)
+        #     #     self._data.row = np.insert(self._data.row, start, axisVal)
+        #     #     self._data.col = np.insert(self._data.col, start, offAxisVal)
+        # k = np.searchsorted(offAxis[start:end], offAxisVal) + start
+        # if k < end and offAxis[k] == offAxisVal:
+        #     return self._data.data[k]
+        # self._data.data[k] = value 
+        if start != end:
+            k = np.searchsorted(offAxis[start:end], offAxisVal) + start
+            if k < end and offAxis[k] == offAxisVal:
+                if value != 0:
+                    self._data.data[k] = value  # Update existing entry
+                else:
+                    # Remove entry if value is zero (maintain sparsity)
+                    self._data.data = np.delete(self._data.data, k)
+                    self._data.row = np.delete(self._data.row, k)
+                    self._data.col = np.delete(self._data.col, k)
+                    self._sortInternal(self._sorted['axis'], setIndices=True)  # Re-sort and re-index
+                return
+        if value != 0:
+            # Insert new entry if value is not zero
+            self._data.data = np.append(self._data.data, value)
+            self._data.row = np.append(self._data.row, x)
+            self._data.col = np.append(self._data.col, y)
+            self._sortInternal(self._sorted['axis'], setIndices=True)  # Re-sort and re-index
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):
