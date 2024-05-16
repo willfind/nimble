@@ -879,7 +879,8 @@ class Sparse(Base):
                  shape=(numPts,numFts)
             )
             self._sortInternal(self._sorted['axis'], setIndices=True)  # Re-sort and re-index
-
+            self._sorted['axis'] = None
+            
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):
         """
