@@ -865,10 +865,19 @@ class Sparse(Base):
                     self._sortInternal(self._sorted['axis'], setIndices=True)  # Re-sort and re-index
                 return
         if value != 0:
+            
+            # numPts = len(list(self._getPoints))
+            # numFts = len(list(self._getFeatures))
+            numPts = len(list(self.points))
+            numFts = len(list(self.features))
             # Insert new entry if value is not zero
             self._data.data = np.append(self._data.data, value)
             self._data.row = np.append(self._data.row, x)
             self._data.col = np.append(self._data.col, y)
+            self._data = scipy.sparse.coo_matrix(
+                (self._data.data, (self._data.row, self._data.col)),
+                 shape=(numPts,numFts)
+            )
             self._sortInternal(self._sorted['axis'], setIndices=True)  # Re-sort and re-index
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
