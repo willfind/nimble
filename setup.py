@@ -32,9 +32,6 @@ clean - remove setup generated directories and files. By default, clean
 import os
 import glob
 
-from distutils import log
-from distutils.command.clean import clean
-from distutils.dir_util import remove_tree
 from setuptools import setup, Distribution
 from setuptools.extension import Extension
 
@@ -95,23 +92,6 @@ class NimbleDistribution(Distribution):
             # re-init with ext_modules
             super().__init__(attrs)
 
-
-class CleanCommand(clean):
-    """
-    Custom clean command to tidy up the project root.
-    """
-    def run(self):
-        super().run()
-        if self.all:
-            for directory in ['build', 'nimble.egg-info']:
-                if os.path.exists(directory):
-                    remove_tree(directory, dry_run=self.dry_run)
-            for f in getCFiles():
-                if not self.dry_run:
-                    os.remove(f)
-                log.info('removing %s', os.path.relpath(f))
-
-
 class EmptyConfigFile:
     """
     Provide empty configuration.ini file for the distribution.
@@ -143,6 +123,5 @@ class EmptyConfigFile:
 if __name__ == '__main__':
     with EmptyConfigFile():
         setupKwargs = {}
-        setupKwargs['cmdclass'] = {'clean': CleanCommand}
         setupKwargs['distclass'] = NimbleDistribution
         setup(**setupKwargs)
