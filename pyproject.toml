@@ -32,7 +32,8 @@ dynamic = ['version']
 dependencies = [
         'numpy>=1.14',
         'packaging>=20.0',
-        'tomli>=2.0'
+        'tomli>=2.0',
+        'scipy>=1.1'
         ]
 
 
