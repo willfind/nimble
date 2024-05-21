@@ -1020,7 +1020,7 @@ def _replaceMissingData(rawData, treatAsMissing, replaceMissingWith, copied):
                 rawData = rawData.copy()
                 copied = True
             rawData = replaceNumpyValues(rawData, replaceLocs)
-    elif scipy.sparse.issparse(rawData):
+    elif scipy.nimbleAccessible() and scipy.sparse.issparse(rawData):
         replaceLocs = getNumpyReplaceLocations(rawData.data)
         if replaceLocs.any():
             if not copied:
