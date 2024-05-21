@@ -33,9 +33,9 @@ if __name__ == "__main__":
 
     contentHeader = ["##### Required Colab Setup",]
 
-    installPage = "https://willfind.github.io/nimble/install"
+    installPage = "www.nimbledata.org/install"
     contentInstall = [
-        "!pip install nimble --find-links=" + installPage
+        "!pip install nimble"
         ]
 
     cellHeader = nbformat.v4.new_markdown_cell(contentHeader)

@@ -1,23 +1,27 @@
-## Welcome to Nimble!
+## Nimble - python data science package
 
-Nimble is built on top of Python's most popular data science and machine
-learning libraries to provide a single, easy to use, API for any data science
-job. We believe the best way to learn about Nimble is to see it in action. So,
-we invite you to check out our [Cheatsheet](https://willfind.github.io/nimble/cheatsheet.html)
+Nimble provides a unified framework for data science, data analysis, and machine
+learning in Python that can be used as a more elegant alternative to the standard
+stack (numpy, pandas, scikit-learn/sklearn, scipy etc.). Nimble can also be used
+alongside these standard tools to make it faster and easier to make predictions and
+manipulate, analyze, process and visualize data.
+
+We believe the best way to learn about Nimble is to see it in action. So,
+we invite you to check out our [Cheatsheet](https://www.nimbledata.org/cheatsheet.html)
 and the examples below and explore how Nimble makes data science easier.
 
-* [Cleaning Data](https://willfind.github.io/nimble/examples/cleaning_data.html)
-* [Supervised Learning](https://willfind.github.io/nimble/examples/supervised_learning.html)
-* [Exploring Data](https://willfind.github.io/nimble/examples/exploring_data.html)
-* [Unsupervised Learning](https://willfind.github.io/nimble/examples/unsupervised_learning.html)
-* [Neural Networks](https://willfind.github.io/nimble/examples/neural_networks.html)
-* [Merging And Tidying Data](https://willfind.github.io/nimble/examples/merging_and_tidying_data.html)
-* [Additional Functionality](https://willfind.github.io/nimble/examples/additional_functionality.html)
+* [Cleaning Data](https://www.nimbledata.org/examples/cleaning_data.html)
+* [Supervised Learning](https://www.nimbledata.org/examples/supervised_learning.html)
+* [Exploring Data](https://www.nimbledata.org/examples/exploring_data.html)
+* [Unsupervised Learning](https://www.nimbledata.org/examples/unsupervised_learning.html)
+* [Neural Networks](https://www.nimbledata.org/neural_networks.html)
+* [Merging And Tidying Data](https://www.nimbledata.org/examples/merging_and_tidying_data.html)
+* [Additional Functionality](https://www.nimbledata.org/examples/additional_functionality.html)
 
 ### Resources
 
-* [Installation](https://willfind.github.io/nimble/install.html)
-* [API Documentation](https://willfind.github.io/docs/index.html)
-* [Cheatsheet](https://willfind.github.io/nimble/cheatsheet.html)
-* [Example Datasets](https://willfind.github.io/nimble/datasets.html)
+* [Installation](https://www.nimbledata.org/install.html)
+* [API Documentation](https://www.nimbledata.org/docs/index.html)
+* [Cheatsheet](https://www.nimbledata.org/cheatsheet.html)
+* [Example Datasets](https://www.nimbledata.org/datasets.html)
 

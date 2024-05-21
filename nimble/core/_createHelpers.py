@@ -1896,7 +1896,7 @@ def _processUCISource(source):
     return source
 
 def _processNimbleSource(source):
-    prefix = 'https://willfind.github.io/nimble/datasets.html'
+    prefix = 'https://www.nimbledata.org/datasets.html'
     if source.lower().startswith('nimble::'):
         source = source[8:]
         source = prefix + '#' + '-'.join(source.lower().split())
@@ -1910,7 +1910,7 @@ def _urlSourceProcessor(source):
     if 'archive.ics.uci.edu' in lower or lower.startswith('uci::'):
         source = _processUCISource(source)
         database = 'uci'
-    elif 'willfind.github.io/nimble' in lower or lower.startswith('nimble::'):
+    elif 'nimbledata.org' in lower or lower.startswith('nimble::'):
         source = _processNimbleSource(source)
         database = 'nimble'
     else:
@@ -2090,7 +2090,7 @@ class _IndirectURLManagerNimble(_IndirectURLManager):
         return sourceHRefs
 
     def downloadPrefix(self):
-        return 'https://willfind.github.io/nimble/'
+        return 'https://www.nimbledata.org'
 
 def _extractFromArchive(ioStream, dataFilter):
     """
