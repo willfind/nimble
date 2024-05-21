@@ -38,6 +38,7 @@ import locale
 import pickle
 import numbers
 import itertools
+import time
 from collections.abc import Sequence
 
 import numpy as np
@@ -1864,6 +1865,10 @@ def _processUCISource(source):
         searchURL = "https://archive.ics.uci.edu/datasets?search="
         searchURL += toFind.strip()
         searchResponse = requests.get(searchURL)
+        # for a normal user this ought not to be very relevant, but in certain
+        # automated cases (such as building the online documentation) this rate
+        # limits requests to a more civil level.
+        time.sleep(1)
 
         # have to escape out the pluses for the RE
         toFindREForm = toFind.strip().replace("+", r"\+")
@@ -1876,22 +1881,20 @@ def _processUCISource(source):
         source = pagePrefix + suffix
 
     if "dataset" in source:
+        # rip the dataset id number from the provided link to make a url
+        # directly to the zip file; doing so avoids another request to the
+        # website that would be needed to rip the download link directly
+        # from the page.
         toFind = source.split("dataset/")
-        toFindREForm = toFind[1].strip().replace("+", r"\+")
-        response = requests.get(source)
-        # find the html specifying the desired link
-        downloadMatch = r'href="/static/public/' + toFindREForm + '.+?"'
-
-        # cut down to only the link that we want to use instead of the
-        # html metadata
-        data = re.search(downloadMatch, response.text).group()[7:-1]
-        source = pagePrefix + data
+        downloadPrefix = "/static/public/"
+        subtarget = toFind[1].strip()
+        source = pagePrefix + downloadPrefix + subtarget + ".zip"
 
     if "static/public" not in source:
         msg = "To access a file from UCI one must pass in a direct link to the file, "
         msg += "a linkt to the dataset's page, or the 'uci::' shorthand with the "
         msg += "dataset's name."
-        raise msg
+        raise InvalidArgumentValue(msg)
 
     return source
 

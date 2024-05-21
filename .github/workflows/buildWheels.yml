@@ -28,7 +28,8 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         #os: ["ubuntu-latest"]
-        pyVer: ["cp38", "cp39", "cp310", "cp311", "cp312"]
+        pyVer: ["cp*"]
+#        pyVer: ["cp38", "cp39", "cp310", "cp311", "cp312"]
         #pyVer: ["cp310"]
 
     steps:
