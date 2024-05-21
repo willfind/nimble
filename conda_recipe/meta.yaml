@@ -1,6 +1,6 @@
 package:
   name: nimble
-  version: "0.5.0"
+  version: "0.5.1"
 
 source:
   path: ../
@@ -50,4 +50,4 @@ test:
     - nimble
 
 about:
-  home: https://willfind.github.io/nimble/index.html
+  home: https://www.nimbledata.org

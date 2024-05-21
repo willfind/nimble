@@ -2290,7 +2290,7 @@ def mocked_requests_get(url, *args, **kwargs):
 
         return MockResponse(bytes(content, 'utf-8'), 200)
 
-    if 'willfind.github.io/nimble' in url:
+    if 'nimbledata.org' in url:
         permalink = url.split('#')
         if len(permalink) > 1:
             # nimble has a single page of data with permalinks defining which
@@ -2547,7 +2547,7 @@ def test_data_http_nimblePathHandling():
         fromShorthand = nimble.data(source="nimble::data")
         assert fromShorthand == exp
 
-        url = 'willfind.github.io/nimble/examples/data'
+        url = 'nimbledata.org/examples/data'
         fromPage = nimble.data(source=url)
         assert fromPage == exp
 
@@ -2665,9 +2665,8 @@ def test_data_fetch_uciPathHandling():
 @mockRequestsGet
 @clearNimbleData
 def test_data_fetch_nimblePathHandling():
-    urlBasePath = 'https://willfind.github.io/nimble/examples/'
-    fileBasePath = os.path.join('nimbleData','willfind.github.io', 'nimble',
-                                '_downloads')
+    urlBasePath = 'https://www.nimbledata.org/examples/'
+    fileBasePath = os.path.join('nimbleData','nimbledata.org', '_downloads')
     urlToSingleFile = urlBasePath + 'data'
     singleFile = os.path.join(fileBasePath, 'hash', 'CSV.csv')
 

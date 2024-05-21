@@ -62,7 +62,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
         htmlString = origHTML.read()
         # set absolute paths
         htmlString = re.sub('docs/',
-                            'https://willfind.github.io/nimble/docs/',
+                            'https://www.nimbledata.org/docs/',
                             htmlString)
         tmpHTML.write(htmlString)
         tmpHTML.seek(0)

@@ -15,7 +15,7 @@ authors = [
         ]
 description = "Interfaces and tools for data science."
 readme = {file="README.md", content-type="text/markdown"}
-requires-python = ">=3.8, <=3.12"
+requires-python = ">=3.8, <3.13"
 license = {text = "Apache 2.0"}
 classifiers = [
         'Development Status :: 3 - Alpha',
@@ -86,7 +86,8 @@ all = [
 
 
 [project.urls]
-"Homepage" = "https://willfind.github.io/nimble/index.html"
+"Homepage" = "https://www.nimbledata.org"
+"Repository" = "https://github.com/willfind/nimble"
 
 
 [tool.setuptools.packages.find]

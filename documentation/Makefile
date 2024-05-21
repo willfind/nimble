@@ -115,9 +115,6 @@ html:
 	python generate_cheatsheets.py
 	@echo "Cheatsheets generated"
 	@echo
-	python add_wheels_install.py
-	@echo "Wheels links table added"
-	@echo
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html"

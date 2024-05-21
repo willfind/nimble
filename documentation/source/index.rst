@@ -3,12 +3,16 @@
 .. You can adapt this file completely to your liking, but it should at least
 .. contain the root `toctree` directive.
 
-Welcome to Nimble!
-==================
+Nimble - python data science package
+====================================
 
-Nimble is built on top of Python's most popular data science and machine
-learning libraries to provide a single, easy to use, API for any data science
-job. We believe the best way to learn about Nimble is to see it in action. So,
+Nimble provides a unified framework for data science, data analysis, and machine
+learning in Python that can be used as a more elegant alternative to the standard
+stack (numpy, pandas, scikit-learn/sklearn, scipy etc.). Nimble can also be used
+alongside these standard tools to make it faster and easier to make predictions and
+manipulate, analyze, process and visualize data.
+
+We believe the best way to learn about Nimble is to see it in action. So
 we invite you to check out our :doc:`cheatsheet` and the examples below and
 explore how Nimble makes data science easier.
 

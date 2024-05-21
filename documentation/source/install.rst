@@ -59,7 +59,7 @@ other desired packages.
 
 .. code-block::
 
-  conda install nimble-quickstart -c https://willfind.github.io/nimble/nimble-data/
+  conda install nimble-quickstart -c https://www.nimbledata.org/nimble-data
 
 .. _specific-install:
 
@@ -110,7 +110,7 @@ known channels.
 
 .. code-block::
 
-  conda install nimble matplotlib scikit-learn -c https://willfind.github.io/nimble/nimble-data/
+  conda install nimble matplotlib scikit-learn -c https://www.nimbledata.org/nimble-data
 
 .. note::
   - The package names used for the installation do not always match the
@@ -135,7 +135,7 @@ operations requiring an optional package that is not installed.
 
 **With conda**::
 
-  conda install nimble -c https://willfind.github.io/nimble/nimble-data
+  conda install nimble -c https://www.nimbledata.org/nimble-data
 
 .. _optional-packages:
 
@@ -226,11 +226,3 @@ Machine-Learning Interfaces
 
    - Unix: https://github.com/lakshayg/tensorflow-build
    - Windows: https://github.com/fo40225/tensorflow-windows-wheel
-
-
-Binary Wheels
--------------
-
-The installation commands for pip we document on this page will automatically find the correct
-precompiled binary wheel from the possible options in the table below. Not all
-systems and python versions are supported.
