@@ -3,9 +3,9 @@ Installation
 
 Nimble can be installed in a variety of ways and strives for flexibility
 during the install process. To avoid requiring packages that may never be used,
-Nimble only has only three required dependencies, `Numpy`_, `packaging`_,
+Nimble only has only four required dependencies, `Numpy`_, `Scipy`_, `packaging`_,
 and `tomli`_.
-`NumPy`_ enables a baseline portion of the data manipulation API.
+`NumPy`_ and `Scipy`_ enable a baseline portion of the data manipulation API.
 The `packaging`_ dependency is used to validate the installed versions of any
 optional packages. The `tomli`_ dependency is a fallback for certain dependency
 checks of the optional dependencies. All further functionality is accessed by
@@ -67,7 +67,7 @@ Install with Specific Packages
 ------------------------------
 
 :ref:`optional-packages` can always be installed separately with ``pip`` or
-``conda``, for example: ``pip install scipy`` or ``conda install scipy``.
+``conda``, for example: ``pip install pandas`` or ``conda install pandas``.
 However, both package managers offer ways to install optional packages in
 the same step as installing nimble.
 
@@ -78,10 +78,13 @@ the same step as installing nimble.
 ``pip`` supports the use of extras included in brackets after the package name.
 Nimble provides each optional package as an extra and extras that are shortcuts
 to installing multiple packages. The ``[quickstart]`` shortcut was outlined in
-:ref:`quickstart-install`, but the ``[data]`` shortcut can also be used to
-install both ``scipy`` and ``pandas``, which will make all Nimble data object
-types immediately available. Multiple extras can be included during the same
-install.
+:ref:`quickstart-install`, but there are other defined in :ref:`optional-packages`
+below.
+
+.. ``[data]`` shortcut can also be used to
+.. install both ``scipy`` and ``pandas``, which will make all Nimble data object
+.. types immediately available. Multiple extras can be included during the same
+.. install.
 
 .. code-block::
 
@@ -91,8 +94,8 @@ install.
   # multiple extras
   pip install nimble[requests,matplotlib,sklearn]
     or
-  # shortcut (scipy and pandas)
-  pip install nimble[data]
+  # shortcut (for ML packages)
+  pip install nimble[interfaces]
 
 .. note::
    - The names of the extras match the names displayed in the "Package" columns
