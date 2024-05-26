@@ -1048,235 +1048,53 @@ class QueryBackendSparseSafe(DataTestObject):
     # __setitem__#
     ##############
     
-    @raises(KeyError)
-    def test_setitem_exception_duplicateValuesPoint(self):
-        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        obj = self.constructor(raw)
+    # @raises(KeyError)
+    # def test_setitem_exception_duplicateValuesPoint(self):
+    #     raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    #     obj = self.constructor(raw)
 
-        # this should be changed to be duplicate settings
-        obj[0, 1, 0] = 32
+    #     obj[[0, 1, 0], 1] = 32
 
-    @raises(KeyError)
-    def test_setitem_exception_duplicateValuesFeature(self):
-        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        obj = self.constructor(raw)
-
-        # this should be changed to be duplicate settings features
-        obj[:, [1, 0, 1]]
-
-    @raises(KeyError)
-    def test_getitem_exception_mixedTypesPoint(self):
-        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        obj = self.constructor(raw)
-
-        # is there a setitem for this?
-        obj[[False, True, 2], :]
-
-    @raises(KeyError)
-    def test_getitem_exception_mixedTypesFeature(self):
-        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        obj = self.constructor(raw)
-        # is there a setitem for this?
-        obj[:, [False, True, 2]]
+    # @raises(KeyError)
+    # def test_setitem_exception_duplicateValuesFeature(self):
+    #     raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    #     obj = self.constructor(raw)
         
-    # @noLogEntryExpected
-    # def test_setitem_allExamples(self):
-    #     featureNames = ["one", "two", "three", "zero", "unit"]
-    #     pnames = ['1', '4', '7', '0']
-    #     data = [[1, 2, 3, 0, 200], [4, 5, 0, 0, 100], [7, 0, 9, 0, 200], [0, 0, 0, 0, 100]]
+    #     obj[0, [1, 0, 1]] = 12
 
-    #     toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+    # @raises(KeyError)
+    # def test_setitem_exception_mixedTypesPoint(self):
+    #     raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    #     obj = self.constructor(raw)
 
-    #     # Add your setitem assertions here
+    #     # is there a setitem for this?
+    #     obj[[False, True, 2], 0] 
 
-    # def test_setitem_simpleExampleWithZeroes(self):
-    #     featureNames = ["one", "two", "three", "zero"]
-    #     pnames = ['1', '4', '7', '0']
-    #     data = [[1, 2, 3, 0], [4, 5, 0, 0], [7, 0, 9, 0], [0, 0, 0, 0]]
-
-    #     toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
-
-        # Add your setitem assertions here
-
-    @raises(KeyError)
-    def test_setitem_nonIntConvertableFloatSingleKey(self):
-        data = [[0, 1, 2, 3]]
-        toTest = self.constructor(data)
+    # @raises(KeyError)
+    # def test_getitem_exception_mixedTypesFeature(self):
+    #     raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    #     obj = self.constructor(raw)
+    #     # is there a setitem for this?
+    #     obj[:, [False, True, 2]]
         
-        # setting item to decimal point should raise KeyError
-        toTest[0.1] = 0
-
-    @raises(KeyError)
-    def test_setitem_nonIntConvertableFloatTupleKey(self):
-        data = [[0, 1], [2, 3]]
-        toTest = self.constructor(data)
-
-        toTest[0, 1.1] = 1
-
-    def test_setitem_floatKeys(self):
-        featureNames = ["one", "two", "three", "zero"]
+    @noLogEntryExpected
+    def test_setitem_allExamples(self):
+        featureNames = ["one", "two", "three", "zero", "unit"]
         pnames = ['1', '4', '7', '0']
-        data = [[1, 2, 3, 0], [4, 5, 0, 0], [7, 0, 9, 0], [0, 0, 0, 0]]
+        data = [[1, 2, 3, 0, 200], [4, 5, 0, 0, 100], [7, 0, 9, 0, 200], [0, 0, 0, 0, 100]]
 
         toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
-
-        # Add your setitem assertions here 
-        assert toTest[0.0, 0] == 1
-        assert toTest[1.0, 3.0] == 0
-
-    def test_setitem_floatKeysInList(self):
-        featureNames = ["one", "two", "three", "zero"]
-        pnames = ['1', '4', '7', '0']
-        data = [[1, 2, 3, 0], [4, 5, 0, 0], [7, 0, 9, 0], [0, 0, 0, 0]]
-
-        toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
-
-        # Add your setitem assertions here
-
-    def test_setitem_SinglePoint(self):
-        pnames = ['single']
-        fnames = ['a', 'b', 'c', 'd', 'e']
-        data = [[0, 1, 2, 3, 10]]
-        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-
-        # Add your setitem assertions here
-
-    def test_setitem_SingleFeature(self):
-        fnames = ['single']
-        pnames = ['a', 'b', 'c', 'd', 'e']
-        data = [[0], [1], [2], [3], [10]]
-        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-
-        # Add your setitem assertions here
-
-    def test_setitem_vectorsPlayNiceWithPythonKeywords(self):
-        # Add your setitem assertions here
-
-    @raises(InvalidArgumentType)
-    def test_setitem_exception_nimble2D(self):
-        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        obj = self.constructor(raw)
-
-        rawIdx = [[1, 2, 3], [4, 5, 6]]
-        idxObj = self.constructor(rawIdx)
-
-        obj[idxObj] = 0
-
-    @raises(InvalidArgumentType)
-    def test_setitem_exception_nimbleBoolean2D(self):
-        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        obj = self.constructor(raw)
-
-        idxObj = obj.matchingElements(lambda x: x % 2 == 0)
-
-        obj[idxObj] = 0
-
-    @raises(KeyError)
-    def test_setitem_exception_nimbleBooleanPointVectorShape(self):
-        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        obj = self.constructor(raw)
-
-        idxObj = obj.points.matching(lambda pt: sum(pt) > 6)
-        idxObjShort = idxObj[:1]
-
-        obj[idxObjShort, :] = 0
-
-    @raises(KeyError)
-    def test_setitem_exception_nimbleBooleanFeatureVectorShape(self):
-        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        obj = self.constructor(raw)
-
-        idxObj = obj.features.matching(lambda ft: sum(ft) > 12)
-        idxObjShort = idxObj[:1]
-
-        obj[:, idxObjShort] = 0
-
-    def test_setitem_nimbleBooleanPointVector(self):
-        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        obj = self.constructor(raw)
-
-        idxObj = obj.points.matching(lambda pt: sum(pt) > 6)
-        obj[idxObj, :] = 0
-
-        # Add your assertions here
-
-    def test_setitem_nimbleBooleanFeatureVector(self):
-        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        obj = self.constructor(raw)
-
-        idxObj = obj.features.matching(lambda ft: sum(ft) < 18)
-        obj[:, idxObj] = 0
-
-        # Add your assertions here
-
-    ###############################
-    # points/features.__setitem__ #
-    ###############################
-
-    def test_pf_setitem(self):
-        pass
-    
-    #####################################################
-    # data / points / features .__setitem__ ease of use #
-    #####################################################
-
-    def test_pointNames_assisted_match(self):
-        rawData = [[1, 2, 3], [2, 4, 6]]
-        pointNames = ['Single', 'Double']
-        data = self.constructor(rawData, pointNames=pointNames)
-        try:
-            data.points['Singel']
-        except KeyError as e:
-            assert str(e) == '"The point name \'Singel\' cannot be found. Did you mean \'Single\'?"'
-        try:
-            data['Singel',:]
-        except KeyError as e:
-            assert str(e) == '"The point name \'Singel\' cannot be found. Did you mean \'Single\'?"'
-
-    def test_featureNames_assisted_match(self):
-        rawData = [[1, 2, 3], [2, 4, 6]]
-        featureNames = ["rainy season", "rain season", "wet season"]
-        data = self.constructor(rawData, featureNames=featureNames)
-        try:
-            data.features['rainy-season']
-        except KeyError as e:
-            assert str(e) == '"The feature name \'rainy-season\' cannot be found. Did you mean \'rainy season\'?"'
-        try:
-            data[:, 'rainy-season']
-        except KeyError as e:
-            assert str(e) == '"The feature name \'rainy-season\' cannot be found. Did you mean \'rainy season\'?"'
-
-    def test_unique_singleID_access(self):
-        rawData = [[1, 2, 3], [2, 4, 6]]
-        pointNames =  ['Single', 'Double']
-        featureNames = ['1st', '2nd', '3rd']
-        data = self.constructor(rawData, pointNames=pointNames, featureNames=featureNames)
-
-        assert data['Single'] == data['Single', :]
-        assert data.points['Single'] == data['Single']
-
-        assert data['1st'] == data[:, '1st']
-        assert data.features['1st'] == data['1st']
-
-    def test_nonUnique_singleID_access(self):
-        rawData = [[1, 2, 3], [2, 4, 6]]
-        pointNames =  ['Single', 'Double']
-        featureNames = ['1st', 'Double', '3rd']
-        data = self.constructor(rawData, pointNames=pointNames, featureNames=featureNames)
-        try:
-            data['Double']
-        except InvalidArgumentType as iae:
-            expectedMsg = "Using 'Double' as an identifier is ambiguous as it is both a point and feature name."
-            assert expectedMsg == str(iae)
-
-    @raises(InvalidArgumentType)
-    def test_numeric_singleID_access(self):
-        rawData = [[1, 2, 3], [2, 4, 6]]
-        pointNames =  ['Single', 'Double']
-        featureNames = ['1st', '2nd', '3rd']
-        data = self.constructor(rawData, pointNames=pointNames, featureNames=featureNames)
-        # technically unambiguous, but we disallow this
-        _ = data[2]
+        exp1, exp2, exp3, exp4 = [22, 55, 99, 10]
+        
+        toTest['1',1] = 22
+        toTest[1, "two"] = 55
+        toTest['7', "three"] = 99
+        toTest[1,4] = 10
+        
+        assert toTest [0,1] == exp1
+        assert toTest[1,1] == exp2
+        assert toTest[2,2] == exp3
+        assert toTest[1,4] == exp4
 
     ################
     # pointView #

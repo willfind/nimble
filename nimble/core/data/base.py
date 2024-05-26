@@ -2142,19 +2142,29 @@ class Base(ABC):
     
     def __setitem__(self, key, value):
         """
-        Set items in the data structure, adapting to the inclusive slicing 
-        convention and handling both single and multiple assignments.
+        Set a single item in the data structure.
 
         Parameters
         ----------
         key : tuple, slice, or combination
-            Describes the subset of data to set. See __getitem__ for detailed key types.
+            Describes the subset of data to set.
         value : single value, list, or ndarray
             The new values to set. Can be a single value to apply to all selected points
             and features, or an array/list of values matching the size of the selection.
 
         Examples
         --------
+        >>> lst = [[4132, 41, 'management', 50000, 'm'],
+        ...        [4434, 26, 'sales', 26000, 'm'],
+        ...        [4331, 26, 'administration', 28000, 'f'],
+        ...        [4211, 45, 'sales', 33000, 'm'],
+        ...        [4344, 45, 'accounting', 43500, 'f']]
+        >>> pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
+        >>> featureNames = ['id', 'age', 'department', 'salary',
+        ...                 'gender']
+        >>> office = nimble.data(lst, pointNames=pointNames,
+        ...                      featureNames=featureNames)
+
         >>> office['michael', 'age'] = 42
         >>> office[0,1] = 43
         >>> office[:, 'department'] = 'operations'
