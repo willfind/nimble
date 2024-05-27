@@ -1957,7 +1957,7 @@ class Base(ABC):
         >>> pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
         >>> featureNames = ['id', 'age', 'department', 'salary',
         ...                 'gender']
-        >>> office = nimble.data(lst, pointNames=pointNames,
+        >>> office = nimble.data(lst, pointNames=pointNames, 
         ...                      featureNames=featureNames)
 
         Get a single value.
@@ -2140,6 +2140,7 @@ class Base(ABC):
             ret = ret.features._structuralBackend_implementation('copy', y)
         return ret
     
+    @limitedTo2D
     def __setitem__(self, key, value):
         """
         Set a single item in the data structure.
@@ -2154,63 +2155,43 @@ class Base(ABC):
 
         Examples
         --------
-        >>> lst = [[4132, 41, 'management', 50000, 'm'],
-        ...        [4434, 26, 'sales', 26000, 'm'],
-        ...        [4331, 26, 'administration', 28000, 'f'],
-        ...        [4211, 45, 'sales', 33000, 'm'],
-        ...        [4344, 45, 'accounting', 43500, 'f']]
-        >>> pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
-        >>> featureNames = ['id', 'age', 'department', 'salary',
-        ...                 'gender']
+        >>> lst = [[4132, 41, 'management'],
+        ...        [4434, 26, 'sales'],
+        ...        [4331, 26, 'administration'],
+        ...        [4211, 45, 'sales']]
+        >>> pointNames = ['michael', 'jim', 'pam', 'dwight']
+        >>> featureNames = ['id', 'age', 'department']
         >>> office = nimble.data(lst, pointNames=pointNames,
         ...                      featureNames=featureNames)
-
+        >>> office
+        <DataFrame 4pt x 3ft
+                    id   age    department
+                 ┌──────────────────────────
+         michael │ 4132   41      management
+             jim │ 4434   26           sales
+             pam │ 4331   26  administration
+          dwight │ 4211   45           sales
+        >
         >>> office['michael', 'age'] = 42
-        >>> office[0,1] = 43
-        >>> office[:, 'department'] = 'operations'
-        >>> office[1:3, 'age'] = [27, 27]
+        >>> office['michael']
+        <DataFrame 1pt x 3ft
+                    id   age  department
+                 ┌──────────────────────
+         michael │ 4132   42  management
+        >
+        >>> office[3,1] = 85
+        >>> office[1, 'department'] = 'management'
+        >>> office
+        <DataFrame 4pt x 3ft
+                    id   age    department
+                 ┌──────────────────────────
+         michael │ 4132   42      management
+             jim │ 4434   26      management
+             pam │ 4331   26  administration
+          dwight │ 4211   85           sales
+        >
+        
         """
-        
-        # Expand key into points and features
-        # if not isinstance(key, tuple):
-        #     raise ValueError("Key must be a tuple specifying both points and features.")
-        
-        # points_key, features_key = key
-        
-        # def _resolve_indices(self, axis, key):
-        #     """
-        #     Helper function to resolve indices from a key.
-        #     """
-        #     if isinstance(key, slice):
-        #         # Convert slices to inclusive, if necessary
-        #         start, stop, step = key.start, key.stop, key.step
-        #         if stop is not None:
-        #             stop += 1  # Make the slice inclusive
-        #         return range(start or 0, stop or len(axis), step or 1)
-        #     elif isinstance(key, (list, tuple)):
-        #         return [axis._getIndex(k) for k in key]
-        #     else:
-        #         return [axis._getIndex(key)]
-
-        # # Resolve indices for points and features
-        # points_indices = _resolve_indices(self.points, points_key)
-        # features_indices = _resolve_indices(self.features, features_key)
-
-        # # Apply the value to the selected subset
-        # if isinstance(value, (list, np.ndarray)):
-        #     # Ensure the size of the value matches the selection size
-        #     expected_size = len(points_indices) * len(features_indices)
-        #     if len(value) != expected_size:
-        #         raise ValueError(f"Size of value must match the selection size: expected {expected_size}.")
-        #     value_matrix = np.array(value).reshape(len(points_indices), len(features_indices))
-        #     for i, p_idx in enumerate(points_indices):
-        #         for j, f_idx in enumerate(features_indices):
-        #             self._setitem_implementation(p_idx, f_idx, value_matrix[i, j])
-        # else:
-        #     # Set a single value across all selected indices
-        #     for p_idx in points_indices:
-        #         for f_idx in features_indices:
-        #             self._setitem_implementation(p_idx, f_idx, value)
         
         # If key is not a tuple, convert it to a tuple
         if not isinstance(key, tuple):

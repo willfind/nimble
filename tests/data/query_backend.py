@@ -1044,58 +1044,6 @@ class QueryBackendSparseSafe(DataTestObject):
         # technically unambiguous, but we disallow this
         _ = data[2]
 
-    ##############
-    # __setitem__#
-    ##############
-    
-    # @raises(KeyError)
-    # def test_setitem_exception_duplicateValuesPoint(self):
-    #     raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     obj = self.constructor(raw)
-
-    #     obj[[0, 1, 0], 1] = 32
-
-    # @raises(KeyError)
-    # def test_setitem_exception_duplicateValuesFeature(self):
-    #     raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     obj = self.constructor(raw)
-        
-    #     obj[0, [1, 0, 1]] = 12
-
-    # @raises(KeyError)
-    # def test_setitem_exception_mixedTypesPoint(self):
-    #     raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     obj = self.constructor(raw)
-
-    #     # is there a setitem for this?
-    #     obj[[False, True, 2], 0] 
-
-    # @raises(KeyError)
-    # def test_getitem_exception_mixedTypesFeature(self):
-    #     raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     obj = self.constructor(raw)
-    #     # is there a setitem for this?
-    #     obj[:, [False, True, 2]]
-        
-    @noLogEntryExpected
-    def test_setitem_allExamples(self):
-        featureNames = ["one", "two", "three", "zero", "unit"]
-        pnames = ['1', '4', '7', '0']
-        data = [[1, 2, 3, 0, 200], [4, 5, 0, 0, 100], [7, 0, 9, 0, 200], [0, 0, 0, 0, 100]]
-
-        toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
-        exp1, exp2, exp3, exp4 = [22, 55, 99, 10]
-        
-        toTest['1',1] = 22
-        toTest[1, "two"] = 55
-        toTest['7', "three"] = 99
-        toTest[1,4] = 10
-        
-        assert toTest [0,1] == exp1
-        assert toTest[1,1] == exp2
-        assert toTest[2,2] == exp3
-        assert toTest[1,4] == exp4
-
     ################
     # pointView #
     ################

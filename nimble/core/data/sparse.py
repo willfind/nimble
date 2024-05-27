@@ -842,16 +842,6 @@ class Sparse(Base):
             
         # binary search
         start, end = self._sorted['indices'][axisVal:axisVal + 2]
-        # if start == end: # axisVal is not in self._data.row
-        #     pass
-        #     # if value != 0:
-        #     #     self._data.data = np.insert(self._data.data, start, value)
-        #     #     self._data.row = np.insert(self._data.row, start, axisVal)
-        #     #     self._data.col = np.insert(self._data.col, start, offAxisVal)
-        # k = np.searchsorted(offAxis[start:end], offAxisVal) + start
-        # if k < end and offAxis[k] == offAxisVal:
-        #     return self._data.data[k]
-        # self._data.data[k] = value 
         if start != end:
             k = np.searchsorted(offAxis[start:end], offAxisVal) + start
             if k < end and offAxis[k] == offAxisVal:
@@ -865,9 +855,6 @@ class Sparse(Base):
                     self._sortInternal(self._sorted['axis'], setIndices=True)  # Re-sort and re-index
                 return
         if value != 0:
-            
-            # numPts = len(list(self._getPoints))
-            # numFts = len(list(self._getFeatures))
             numPts = len(list(self.points))
             numFts = len(list(self.features))
             # Insert new entry if value is not zero
