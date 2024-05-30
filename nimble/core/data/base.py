@@ -2483,7 +2483,7 @@ class Base(ABC):
         # we want to only prepare pointNames if "include=True"
         # else table should include data but no pointnames + space for it
         pnames, pnamesWidth = self._arrangePointNames(pRange,
-            maxDataRows, columnWidthLimit, rowHold, nameHolder, includePointNames,
+            maxDataRows, columnWidthLimit*2, rowHold, nameHolder, includePointNames,
             quoteNames)
         # The available space for the data is reduced by the width of the
         # pnames, a pnames column separator, the pnames separator, and another
@@ -2623,7 +2623,13 @@ class Base(ABC):
 
         if columnWidthLimit == 'automatic':
             if isinstance(lineWidthLimit, int):
-                columnWidthLimit = (lineWidthLimit // len(self.features)) + 7
+                # If we just have point indices can know how much space they'll take up
+                if not self.points.names or len(self.points.names) == None:
+                    pNamesEst = math.ceil(math.log(len(self.points), 10))
+                    columnWidthLimit = ((lineWidthLimit-pNamesEst) // len(self.features)) + 7
+                # For assigned names, we just let it take up another column's worth
+                else:
+                    columnWidthLimit = (lineWidthLimit // (len(self.features)+1)) + 7
                 if columnWidthLimit < 8:
                     columnWidthLimit = 8 # lower limit for dynamic column width
             else:
@@ -5735,8 +5741,8 @@ class Base(ABC):
                 else:
                     valLimited = valFormed[:nameCutIndex] + strHold
 
-                if len(valFormed) > valWidth:
-                    valWidth = len(valFormed)
+                if len(valLimited) > valWidth:
+                    valWidth = len(valLimited)
 
                 # If these are equal, it is time to add the holders
                 if i == rowHolderIndex:
