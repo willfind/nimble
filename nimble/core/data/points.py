@@ -413,7 +413,7 @@ class Points(ABC):
 
         Keywords
         --------
-        duplicate, replicate, clone
+        duplicate, replicate, clone, filter
         """
         return self._copy(toCopy, start, end, number, randomize, features)
 
@@ -622,7 +622,7 @@ class Points(ABC):
 
         Keywords
         --------
-        move, pull, separate, withdraw, cut, hsplit
+        move, pull, separate, withdraw, cut, hsplit, filter
         """
         return self._extract(toExtract, start, end, number, randomize,
                              features)
@@ -782,7 +782,7 @@ class Points(ABC):
 
         Keywords
         --------
-        remove, drop, exclude, eliminate, destroy, cut
+        remove, drop, exclude, eliminate, destroy, cut, filter
         """
         self._delete(toDelete, start, end, number, randomize, features)
 
@@ -940,6 +940,9 @@ class Points(ABC):
          c │ 0  0  1
          a │ 1  0  0
         >
+        Keywords
+        --------
+        keep, hold, maintain, preserve, remove, filter
         """
         self._retain(toRetain, start, end, number, randomize, features)
 
@@ -1343,7 +1346,7 @@ class Points(ABC):
         Keywords
         --------
         boolean, equivalent, identical, same, matches, equals, compare,
-        comparison, same
+        comparison, same, filter
         """
         return self._matching(function)
 
