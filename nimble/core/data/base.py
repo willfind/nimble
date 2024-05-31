@@ -5968,6 +5968,7 @@ class Base(ABC):
         baseVector = self.copy()
         baseVector.flatten(useLog=False)
         return baseVector
+        # return self 
 
     def max(self):
         """
@@ -6001,7 +6002,8 @@ class Base(ABC):
         >>> X.mean()
         9.0
         """
-        return nimble.calculate.mean(self._vectorize())
+        # return nimble.calculate.mean(self._vectorize())
+        return nimble.calculate.mean(self)
 
     def median(self):
         """
@@ -6018,7 +6020,8 @@ class Base(ABC):
         >>> X.median()
         13.5
         """
-        return nimble.calculate.median(self._vectorize())
+        #return nimble.calculate.median(self._vectorize())
+        return nimble.calculate.median(self)
 
     def min(self):
         """
