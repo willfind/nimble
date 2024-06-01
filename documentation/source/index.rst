@@ -22,8 +22,8 @@ the quickstart extra dependencies. You can check :doc:`install` for more detaile
 
    pip install nimble\[quickstart\]
 
-Then, to get started
-in a script, load your data by calling :doc:`nimble.data` with a URL or local path.
+Then, to get started in a script, load your data by calling
+``nimble.data`` with a URL or local path.
 
 .. code-block:: python
 
