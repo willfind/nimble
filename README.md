@@ -13,7 +13,7 @@ the quickstart extra dependencies. You can check the [Install](https://www.nimbl
 page for more detailed options.
 
 ```
-   pip install nimble\[quickstart\]
+pip install nimble\[quickstart\]
 ```
 
 Then, to get started in a script, load your data by calling
@@ -21,9 +21,9 @@ Then, to get started in a script, load your data by calling
 with a URL or local path.
 
 ```
-   import nimble
-   url = "https://storage.googleapis.com/nimble/Metro_Interstate_Traffic_Volume.csv"
-   loaded = nimble.data(url)
+import nimble
+url = "https://storage.googleapis.com/nimble/Metro_Interstate_Traffic_Volume.csv"
+loaded = nimble.data(url)
 ```
 
 From there, you can check the links in our [Cheatsheet](https://www.nimbledata.org/cheatsheet.html)
