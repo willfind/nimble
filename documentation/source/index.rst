@@ -16,7 +16,8 @@ Getting Started
 ---------------
 
 The simplest way to get up and running is to use pip install on a command line, with
-the quickstart extra dependencies. You can check :doc:`install` for more detailed options.
+the quickstart extra dependencies. You can check the :doc:`install` page for
+more detailed options.
 
 .. code-block:: bash
 
@@ -36,7 +37,7 @@ annotated `API Docs <https://www.nimbledata.org/docs/index.html>`_
 to see what's possible.
 
 However, the best way to see what nimble is capable of is to see it in action.
-So we also invite you to check out the examples below and explore how Nimble
+So we invite you to check out the examples below and explore how Nimble
 makes data science easier!
 
 Examples
