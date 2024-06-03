@@ -5472,22 +5472,22 @@ class Base(ABC):
         if name == "hist":
             msg = "Try .plotFeatureDistribution() instead."
             raise AttributeError(base + msg)
-        elif name == 'describe':
+        elif name in ["describe", "summary"]:
             msg = "Try .report() instead."
             raise AttributeError(base + msg)
-        elif name == "columns":
+        elif name in ["columns", "colnames"]:
             msg = "Try .features.getNames() instead."
             raise AttributeError(base + msg)
         elif name in ["isna", "isnull"]:
             msg = "Look up the Nimble QueryString object in the documentation."
             raise AttributeError(base + msg)
-        elif name in ["sum", "cumsum", "corr", "nunique"]:
+        elif name in ["sum", "cumsum", "cor", "corr", "nunique"]:
             msg = "Check for similar methods available in Nimble.calculate."
             raise AttributeError(base + msg)
-        elif name == "scatter_matrix":
+        elif name in ["scatter_matrix","scatter_pairs"]:
             msg = "Try .plotFeatureAgainstFeature()instead."
             raise AttributeError(base + msg)
-        elif name == "dropna":
+        elif name in ["dropna", "omit"]:
             msg = "Look up how to combine .[points/features].delete with the Nimble.match in the documentation."
             raise AttributeError(base + msg)
         elif name == "fillna":
@@ -5496,7 +5496,7 @@ class Base(ABC):
         elif name == "insert":
             msg = "Try .[points/features].insert() instead."
             raise AttributeError(base + msg)
-        elif name == "sort_values":
+        elif name in ["sort_values", "sort"]:
             msg = "Try .[points/features].sort() instead."
             raise AttributeError(base + msg)
         else:
