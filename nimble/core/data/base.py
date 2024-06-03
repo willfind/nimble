@@ -34,6 +34,9 @@ import shutil
 import re
 
 import numpy as np
+import pandas as pd 
+from scipy.sparse import coo_matrix
+
 
 import nimble
 from nimble import match
@@ -86,6 +89,41 @@ def hashCodeFunc(elementValue, pointNum, featureNum):
     Generate hash code.
     """
     return ((math.sin(pointNum) + math.cos(featureNum)) / 2.0) * elementValue
+
+def checkNumericListType(listData):
+    '''
+    Function dedicated to seeing if list of lists that make up
+    base._data contains entirely numeric data or not.
+    '''
+    if isinstance(listData, list):
+      for item in listData:
+        if isinstance(item, list):
+            if not all(isinstance(sub_item, (int, float)) for sub_item in item):
+                return False
+        else:
+            if not isinstance(item, (int, float)):
+                return False
+      return True
+    return False
+
+def isNumeric(base):
+    '''
+    Helper for certain stats methods to know if feature columns contain invalid
+    values.
+    '''
+    def is_numeric_column(column):
+        return pd.api.types.is_numeric_dtype(column)
+
+    if isinstance(base._data, pd.DataFrame):
+        return all(is_numeric_column(column) for column in base._data.dtypes)
+    elif isinstance(base._data, np.ndarray):
+        return np.issubdtype(base._data.dtype, np.number)
+    elif isinstance(base._data, coo_matrix):
+        return base._data.dtype.kind in 'ifc'
+    elif isinstance(base._data, list):
+        return checkNumericListType(base._data)
+    else:
+        raise ValueError("Unsupported data type")
 
 class Base(ABC):
     """
@@ -5968,7 +6006,6 @@ class Base(ABC):
         baseVector = self.copy()
         baseVector.flatten(useLog=False)
         return baseVector
-        # return self 
 
     def max(self):
         """
@@ -5985,6 +6022,9 @@ class Base(ABC):
         >>> X.max()
         22
         """
+        if not isNumeric(self):
+            return(np.nan)   
+        
         return nimble.calculate.maximum(self._vectorize())
 
     def mean(self):
@@ -6002,8 +6042,10 @@ class Base(ABC):
         >>> X.mean()
         9.0
         """
-        # return nimble.calculate.mean(self._vectorize())
-        return nimble.calculate.mean(self)
+        if not isNumeric(self):
+            return(np.nan) 
+        return nimble.calculate.mean(self._vectorize())
+        #return nimble.calculate.mean(self)
 
     def median(self):
         """
@@ -6020,8 +6062,10 @@ class Base(ABC):
         >>> X.median()
         13.5
         """
-        #return nimble.calculate.median(self._vectorize())
-        return nimble.calculate.median(self)
+        if not isNumeric(self):
+            return(np.nan) 
+        return nimble.calculate.median(self._vectorize())
+        #return nimble.calculate.median(self)
 
     def min(self):
         """
@@ -6038,6 +6082,8 @@ class Base(ABC):
         >>> X.min()
         0
         """
+        if not isNumeric(self):
+            return(np.nan) 
         return nimble.calculate.minimum(self._vectorize())
 
     def uniqueCount(self):
@@ -6051,6 +6097,8 @@ class Base(ABC):
         >>> X.uniqueCount()
         5
         """
+        if not isNumeric(self):
+            return(np.nan) 
         return nimble.calculate.uniqueCount(self._vectorize())
 
     def proportionMissing(self):
@@ -6065,6 +6113,8 @@ class Base(ABC):
         >>> X.proportionMissing()
         0.5
         """
+        if not isNumeric(self):
+            return(np.nan) 
         return nimble.calculate.proportionMissing(self._vectorize())
 
     def proportionZero(self):
@@ -6079,6 +6129,8 @@ class Base(ABC):
         >>> X.proportionZero()
         0.5
         """
+        if not isNumeric(self):
+            return(np.nan) 
         return nimble.calculate.proportionZero(self._vectorize())
     
     def mode(self):
@@ -6105,6 +6157,8 @@ class Base(ABC):
         >>> X.sum()
         8
         """
+        if not isNumeric(self):
+            return(np.nan) 
         return nimble.calculate.sum(self._vectorize())
     
     def variance(self):
@@ -6118,6 +6172,8 @@ class Base(ABC):
         >>> X.variance()
         3.866666666666667
         """
+        if not isNumeric(self):
+            return(np.nan) 
         return nimble.calculate.variance(self._vectorize())
     
     def medianAbsoluteDeviation(self):
@@ -6132,6 +6188,8 @@ class Base(ABC):
         >>> X.medianAbsoluteDeviation()
         0.5
         """
+        if not isNumeric(self):
+            return(np.nan) 
         return nimble.calculate.medianAbsoluteDeviation(self._vectorize())
     
     def quartiles(self):
@@ -6146,4 +6204,6 @@ class Base(ABC):
         >>> X.quartiles()
         (0.0, 0.5, 1.75)
         """
+        if not isNumeric(self):
+            return(np.nan) 
         return nimble.calculate.quartiles(self._vectorize())
