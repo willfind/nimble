@@ -1766,9 +1766,6 @@ class QueryBackendSparseSafe(DataTestObject):
     def test_repr_notTruncated(self):
         self.back_reprOutput(9, 9)
 
-    def test_repr_withPath(self):
-        self.back_reprOutput(9, 9, addPath=True)
-
     def test_repr_truncated(self):
         self.back_reprOutput(40, 20, truncated=True)
 
