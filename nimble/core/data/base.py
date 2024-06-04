@@ -2483,7 +2483,7 @@ class Base(ABC):
         # we want to only prepare pointNames if "include=True"
         # else table should include data but no pointnames + space for it
         pnames, pnamesWidth = self._arrangePointNames(pRange,
-            maxDataRows, columnWidthLimit*2, rowHold, nameHolder, includePointNames,
+            maxDataRows, columnWidthLimit, rowHold, nameHolder, includePointNames,
             quoteNames)
         # The available space for the data is reduced by the width of the
         # pnames, a pnames column separator, the pnames separator, and another
