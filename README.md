@@ -1,38 +1,34 @@
-## Nimble - python data science package
+## Nimble - Python data science package
 
 Nimble provides a unified framework for data science, data analysis, and machine
 learning in Python that can be used as a more elegant alternative to the standard
-stack (numpy, pandas, scikit-learn/sklearn, scipy etc.). Nimble can also be used
+stack (numpy, pandas, scikit-learn/sklearn, scipy, etc.). Nimble can also be used
 alongside these standard tools to make it faster and easier to make predictions and
 manipulate, analyze, process and visualize data.
 
 ### Getting Started
 
-The simplest way to get up and running is to use pip install on a command line, with
-the quickstart extra dependencies. You can check the [Install](https://www.nimbledata.org/install.html)
-page for more detailed options.
+You can check the [Install](https://www.nimbledata.org/install.html) page for detailed
+options or just started with this:
 
 ```
 pip install nimble\[quickstart\]
 ```
 
-Then, to get started in a script, load your data by calling
+Once Nimble is installed, you can load data in a script by calling
 [`nimble.data`](https://www.nimbledata.org/docs/generated/nimble.data.html)
 with a URL or local path.
 
 ```
 import nimble
-url = "https://storage.googleapis.com/nimble/Metro_Interstate_Traffic_Volume.csv"
-loaded = nimble.data(url)
+urlOrPath = "https://storage.googleapis.com/nimble/Metro_Interstate_Traffic_Volume.csv"
+loaded = nimble.data(urlOrPath)
 ```
 
-From there, you can check the links in our [Cheatsheet](https://www.nimbledata.org/cheatsheet.html)
-or annotated [API Docs](https://www.nimbledata.org/docs/index.html)
-to see what's possible.
-
-However, the best way to see what nimble is capable of is to see it in action.
-So we invite you to check out the examples below and explore how Nimble
-makes data science easier!
+From there, you can explore the examples below or check out the the
+[Cheatsheet](https://www.nimbledata.org/cheatsheet.html) and
+[API Docs](https://www.nimbledata.org/docs/index.html)
+to see what's possible!
 
 ### Examples
 
@@ -50,4 +46,12 @@ makes data science easier!
 * [API Documentation](https://www.nimbledata.org/docs/index.html)
 * [Cheatsheet](https://www.nimbledata.org/cheatsheet.html)
 * [Example Datasets](https://www.nimbledata.org/datasets.html)
+
+### Contact
+
+Feel free to get in touch with us at:
+
+<img src="https://www.nimbledata.org/_static/sparkwave_email.png" width="334" height="30">
+
+or through the [Nimble Github](https://github.com/willfind/nimble) page.
 
