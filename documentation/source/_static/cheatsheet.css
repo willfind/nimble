@@ -41,16 +41,19 @@ div.body .new-row {
   margin-bottom: -3px;
   clear: both;
   line-height: 7px;
+  page-break-inside: avoid;
 }
 
 div.body .col {
   float: left;
   margin: 2px;
   padding: 0;
+  page-break-inside: avoid;
 }
 
 div.body .clear {
   clear: both;
+  page-break-inside: avoid;
 }
 
 div.body .text-center {
@@ -65,6 +68,7 @@ div.body .outline {
   border: 1px solid black;
   margin-bottom: 1px;
   padding-bottom: 2px;
+  page-break-inside: avoid;
 }
 
 div.body .bordered {
@@ -109,6 +113,7 @@ div.body .code {
   padding-top: 1px;
   margin: 1px;
   padding-left: 1px;
+  page-break-inside: avoid;
 }
 
 div.body .highlighter {
@@ -137,6 +142,7 @@ div.body .pad {
   margin-top: 0;
   padding-top: 2px;
   padding-bottom: 2px;
+  page-break-inside: avoid;
 }
 
 div.body .lower {
