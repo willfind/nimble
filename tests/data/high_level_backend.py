@@ -3139,6 +3139,15 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         assert toTest[2,2] == exp3
         assert toTest[1,4] == exp4
 
+        # Zero entry manipulation checks that may be relevant for sparse
+        toTest[0,3] = -10
+        toTest[1,0] = 0
+        toTest[2,1] = 0
+
+        assert toTest[0,3] == -10
+        assert toTest[1,0] == 0
+        assert toTest[2,1] == 0
+
     ####################################
     # replaceFeatureWithBinaryFeatures #
     ####################################

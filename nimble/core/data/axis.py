@@ -373,34 +373,6 @@ class Axis(ABC):
             return self._base.pointView(key[0]).copy()
         return self._structuralBackend_implementation('copy', key)
     
-    def _setitem(self, key, value):
-      # Determine if the key is a single key based on its type
-        singleKey = isinstance(key, (int, float, str, np.integer))
-
-        # Convert the key into appropriate indices
-        if singleKey:
-            key = [self._getIndex(key, allowFloats=True)]
-        else:
-            key = self._processMultiple(key)
-
-        # If key resolution returns None, assume an attempt to set the whole base
-        if key is None:
-            if isinstance(value, type(self._base)):
-                self._base = value.copy()
-            else:
-                raise ValueError("Incompatible value type for full assignment")
-            return
-
-        # Handling the setting operation
-        if singleKey and len(self._base._dims) > 2:
-            # If the structure has more than two dimensions and a single key is provided
-            self._base.pointView(key[0]).update(value)
-        else:
-            # General case for setting multiple indices
-            self._structuralBackend_implementation('set', key, value)
-
-
-
     def _anyDefaultNames(self):
         return self.names is None or len(self.names) < len(self)
 
