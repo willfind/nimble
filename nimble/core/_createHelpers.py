@@ -2157,11 +2157,17 @@ def createDataFromFile(
         elif (source.startswith('/') or source.startswith('~') 
               or source.startswith('..')):
             path = source
+            raise ValueError(f"Cannot find local file at '{source}' location.")
         # Valid UNIX-style path
         elif re.match(r'^[A-Za-z]:\\', source):
             path = source
-        
+            raise ValueError(f"Cannot find local file at '{source}' location.")
+
         else: # webpage
+            parsed_url = urlparse(source)
+            if not parsed_url.netloc:
+                raise ValueError(f"Unrecognized as valid path or URL: '{source}'")
+            
             source, database = _urlSourceProcessor(source)
             try:
                 urlManager = _DirectURLManager(source, False)
