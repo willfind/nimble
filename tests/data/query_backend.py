@@ -1738,10 +1738,8 @@ class QueryBackendSparseSafe(DataTestObject):
             else: # if no pname, the value must have been the row separator
                 assert truncated
         if addPath:
-            assert data.absolutePath in retSplit[-1]
-            assert retSplit[-1].endswith('>')
-        else:
-            assert retSplit[-1] == '>'
+            assert data.absolutePath is not None
+        assert retSplit[-1] == '>'
 
         # check repr of .points and .features
         addIdxMatch = re.compile(u' [ 0-9\u2502]+? \u2502 +([pf]t[0-9]+|[0-9]+)? \u2502?($| [-0-9\\. \u2502\u2500]+)')
@@ -1765,6 +1763,9 @@ class QueryBackendSparseSafe(DataTestObject):
 
     def test_repr_notTruncated(self):
         self.back_reprOutput(9, 9)
+
+    def test_repr_withPath(self):
+        self.back_reprOutput(9, 9, addPath=True)
 
     def test_repr_truncated(self):
         self.back_reprOutput(40, 20, truncated=True)
