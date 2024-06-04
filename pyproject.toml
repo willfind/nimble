@@ -11,7 +11,7 @@ requires = [
 [project]
 name = "nimble"
 authors = [
-        { name="Spark Wave LLC", email="willfind@gmail.com" },
+        { name="Spark Wave LLC", email="info@sparkwave.tech" },
         ]
 description = "Interfaces and tools for data science."
 readme = {file="README.md", content-type="text/markdown"}

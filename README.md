@@ -1,14 +1,36 @@
-## Nimble - python data science package
+## Nimble - Python data science package
 
 Nimble provides a unified framework for data science, data analysis, and machine
 learning in Python that can be used as a more elegant alternative to the standard
-stack (numpy, pandas, scikit-learn/sklearn, scipy etc.). Nimble can also be used
+stack (numpy, pandas, scikit-learn/sklearn, scipy, etc.). Nimble can also be used
 alongside these standard tools to make it faster and easier to make predictions and
 manipulate, analyze, process and visualize data.
 
-We believe the best way to learn about Nimble is to see it in action. So,
-we invite you to check out our [Cheatsheet](https://www.nimbledata.org/cheatsheet.html)
-and the examples below and explore how Nimble makes data science easier.
+### Getting Started
+
+You can check the [Install](https://www.nimbledata.org/install.html) page for detailed
+options or just started with this:
+
+```
+pip install nimble\[quickstart\]
+```
+
+Once Nimble is installed, you can load data in a script by calling
+[`nimble.data`](https://www.nimbledata.org/docs/generated/nimble.data.html)
+with a URL or local path.
+
+```
+import nimble
+urlOrPath = "https://storage.googleapis.com/nimble/Metro_Interstate_Traffic_Volume.csv"
+loaded = nimble.data(urlOrPath)
+```
+
+From there, you can explore the examples below or check out the the
+[Cheatsheet](https://www.nimbledata.org/cheatsheet.html) and
+[API Docs](https://www.nimbledata.org/docs/index.html)
+to see what's possible!
+
+### Examples
 
 * [Cleaning Data](https://www.nimbledata.org/examples/cleaning_data.html)
 * [Supervised Learning](https://www.nimbledata.org/examples/supervised_learning.html)
@@ -24,4 +46,12 @@ and the examples below and explore how Nimble makes data science easier.
 * [API Documentation](https://www.nimbledata.org/docs/index.html)
 * [Cheatsheet](https://www.nimbledata.org/cheatsheet.html)
 * [Example Datasets](https://www.nimbledata.org/datasets.html)
+
+### Contact
+
+Feel free to get in touch with us at:
+
+<img src="https://www.nimbledata.org/_static/sparkwave_email.png" width="334" height="30">
+
+or through the [Nimble Github](https://github.com/willfind/nimble) page.
 
