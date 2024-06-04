@@ -29,7 +29,7 @@ from nimble import match
 if __name__ == "__main__":
     # string manipulation to get and make paths
     projectRoot = os.path.dirname(nimble.nimblePath)
-    projectData = os.path.join(projectRoot, "datasets")
+    projectData = "https://storage.googleapis.com/nimble/datasets/"
 
     # if a directory is given, we will output the numerical data to that location.
     if len(sys.argv) > 1:

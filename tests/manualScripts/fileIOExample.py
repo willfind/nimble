@@ -31,6 +31,7 @@ if __name__ == "__main__":
 
     # string manipulation to get and make paths
     projectRoot = os.path.dirname(nimble.nimblePath)
+    projectData = "https://storage.googleapis.com/nimble/datasets/"
     inFileName = "adult_income_classification_tiny.csv"
     nameSplit = inFileName.rsplit('.')
 
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     else:
         outDir = os.path.join(projectRoot, "datasets")
 
-    pathOrig = os.path.join(projectRoot, "datasets", inFileName)
+    pathOrig = os.path.join(projectData, inFileName)
     pathTrain = os.path.join(outDir, nameSplit[0] + "TRAIN" + ".csv")
     pathTest = os.path.join(outDir, nameSplit[0] + "TEST" + ".csv")
 
