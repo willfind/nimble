@@ -1957,7 +1957,7 @@ class Base(ABC):
         >>> pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
         >>> featureNames = ['id', 'age', 'department', 'salary',
         ...                 'gender']
-        >>> office = nimble.data(lst, pointNames=pointNames,
+        >>> office = nimble.data(lst, pointNames=pointNames, 
         ...                      featureNames=featureNames)
 
         Get a single value.
@@ -2139,7 +2139,90 @@ class Base(ABC):
             ret = self.points._structuralBackend_implementation('copy', x)
             ret = ret.features._structuralBackend_implementation('copy', y)
         return ret
+    
+    @limitedTo2D
+    def __setitem__(self, key, value):
+        """
+        Set a single item in the data structure.
 
+        Parameters
+        ----------
+        key : tuple, slice, or combination
+            Describes the subset of data to set.
+        value : single value, list, or ndarray
+            The new values to set. Can be a single value to apply to all selected points
+            and features, or an array/list of values matching the size of the selection.
+
+        Examples
+        --------
+        >>> lst = [[4132, 41, 'management'],
+        ...        [4434, 26, 'sales'],
+        ...        [4331, 26, 'administration'],
+        ...        [4211, 45, 'sales']]
+        >>> pointNames = ['michael', 'jim', 'pam', 'dwight']
+        >>> featureNames = ['id', 'age', 'department']
+        >>> office = nimble.data(lst, pointNames=pointNames,
+        ...                      featureNames=featureNames)
+        >>> office
+        <DataFrame 4pt x 3ft
+                    id   age    department
+                 ┌──────────────────────────
+         michael │ 4132   41      management
+             jim │ 4434   26           sales
+             pam │ 4331   26  administration
+          dwight │ 4211   45           sales
+        >
+        >>> office['michael', 'age'] = 42
+        >>> office['michael']
+        <DataFrame 1pt x 3ft
+                    id   age  department
+                 ┌──────────────────────
+         michael │ 4132   42  management
+        >
+        >>> office[3,1] = 85
+        >>> office[1, 'department'] = 'management'
+        >>> office
+        <DataFrame 4pt x 3ft
+                    id   age    department
+                 ┌──────────────────────────
+         michael │ 4132   42      management
+             jim │ 4434   26      management
+             pam │ 4331   26  administration
+          dwight │ 4211   85           sales
+        >
+        
+        """
+        
+        # If key is not a tuple, convert it to a tuple
+        if not isinstance(key, tuple):
+            key = (key, slice(None))  # Assuming the first dimension is 'x' and the second is 'y'
+        
+        # Extract x and y indices from the key
+        x, y = key
+        
+        # Validate single or multiple indices for 'x'
+        single_x = isinstance(x, (int, float, str, np.integer))
+        if single_x:
+            x = self.points._getIndex(x, allowFloats=True)
+        else:
+            x = self.points._processMultiple(x)
+        
+        # Validate single or multiple indices for 'y'
+        single_y = isinstance(y, (int, float, str, np.integer))
+        if single_y:
+            y = self.features._getIndex(y, allowFloats=True)
+        else:
+            y = self.features._processMultiple(y)
+        
+        # Perform setting operation based on single or multiple indices
+        if single_x and single_y:
+            self._setitem_implementation(x, y, value)
+        else:
+            for i in x:
+                for j in y:
+                    self._setitem_implementation(i, j, value)
+        
+    
     def pointView(self, identifier):
         """
         A read-only view of a single point.
@@ -5894,6 +5977,10 @@ class Base(ABC):
 
     @abstractmethod
     def _getitem_implementation(self, x, y):
+        pass
+    
+    @abstractmethod
+    def _setitem_implementation(self, x, y, value):
         pass
 
     @abstractmethod

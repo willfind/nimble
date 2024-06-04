@@ -362,7 +362,8 @@ baseDunder_tested = list(map(prefixAdder('Base'),
      '__iter__', '__itruediv__', '__len__', '__matmul__', '__mod__', '__mul__',
      '__neg__', '__or__', '__pos__', '__pow__', '__radd__', '__rfloordiv__',
      '__rmatmul__', '__rmod__', '__rmul__', '__rpow__', '__rsub__',
-     '__rtruediv__', '__sub__', '__truediv__', '__xor__',
+     '__rtruediv__', '__sub__', '__setitem__',
+     '__truediv__', '__xor__',
     ]))
 axisDunder_tested = ['Axis.__bool__', 'Axis.__len__']
 pointsDunder_tested = ['Points.__iter__', 'Points.__getitem__']

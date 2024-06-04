@@ -2508,7 +2508,7 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
     
 
 class HighLevelModifyingSparseUnsafe(DataTestObject):
-    
+
     def test_features_fillMatching_mode(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj0.features.fillMatching(None, 9)
@@ -3114,6 +3114,39 @@ class HighLevelModifyingSparseUnsafe(DataTestObject):
     
     
 class HighLevelModifyingSparseSafe(DataTestObject):
+    
+    ##############
+    # __setitem__#
+    ##############
+        
+    @noLogEntryExpected
+    def test_setitem_allExamples(self):
+        #import pdb; pdb.set_trace()
+        featureNames = ["one", "two", "three", "zero", "unit"]
+        pnames = ['1', '4', '7', '0']
+        data = [[1, 2, 3, 0, 200], [4, 5, 0, 0, 100], [7, 0, 9, 0, 200], [0, 0, 0, 0, 100]]
+
+        toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+        exp1, exp2, exp3, exp4 = [22, 55, 99, 10]
+        
+        toTest['1',1] = 22
+        toTest[1, "two"] = 55
+        toTest['7', "three"] = 99
+        toTest[1,4] = 10
+        
+        assert toTest [0,1] == exp1
+        assert toTest[1,1] == exp2
+        assert toTest[2,2] == exp3
+        assert toTest[1,4] == exp4
+
+        # Zero entry manipulation checks that may be relevant for sparse
+        toTest[0,3] = -10
+        toTest[1,0] = 0
+        toTest[2,1] = 0
+
+        assert toTest[0,3] == -10
+        assert toTest[1,0] == 0
+        assert toTest[2,1] == 0
 
     ####################################
     # replaceFeatureWithBinaryFeatures #

@@ -372,7 +372,7 @@ class Axis(ABC):
         if singleKey and len(self._base._dims) > 2:
             return self._base.pointView(key[0]).copy()
         return self._structuralBackend_implementation('copy', key)
-
+    
     def _anyDefaultNames(self):
         return self.names is None or len(self.names) < len(self)
 

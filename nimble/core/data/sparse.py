@@ -821,8 +821,54 @@ class Sparse(Base):
         k = np.searchsorted(offAxis[start:end], offAxisVal) + start
         if k < end and offAxis[k] == offAxisVal:
             return self._data.data[k]
-        return self._data.data.dtype.type(0)
-
+        return self._data.data.dtype.type(0) 
+    
+    def _setitem_implementation(self, x, y, value):
+        """ 
+        currently, we sort the data first and then do binary search
+        """
+        sortedAxis = self._sorted['axis']
+        sort = sortedAxis if sortedAxis is not None else 'point'
+        self._sortInternal(sort, setIndices=True)
+        
+        if self._sorted['axis'] == 'point':
+            offAxis = self._data.col
+            axisVal = x
+            offAxisVal = y
+        else:
+            offAxis = self._data.row
+            axisVal = y
+            offAxisVal = x
+            
+        # binary search
+        start, end = self._sorted['indices'][axisVal:axisVal + 2]
+        if start != end:
+            k = np.searchsorted(offAxis[start:end], offAxisVal) + start
+            if k < end and offAxis[k] == offAxisVal:
+                if value != 0:
+                    self._data.data[k] = value  # Update existing entry
+                else:
+                    # Remove entry if value is zero (maintain sparsity)
+                    self._data.data = np.delete(self._data.data, k)
+                    self._data.row = np.delete(self._data.row, k)
+                    self._data.col = np.delete(self._data.col, k)
+                    # Re-sort and re-index
+                    self._sortInternal(self._sorted['axis'], setIndices=True, forceSort=True)
+                return
+        if value != 0:
+            numPts = len(list(self.points))
+            numFts = len(list(self.features))
+            # Insert new entry if value is not zero
+            self._data.data = np.append(self._data.data, value)
+            self._data.row = np.append(self._data.row, x)
+            self._data.col = np.append(self._data.col, y)
+            self._data = scipy.sparse.coo_matrix(
+                (self._data.data, (self._data.row, self._data.col)),
+                 shape=(numPts,numFts)
+            )
+            # Re-sort and re-index
+            self._sortInternal(self._sorted['axis'], setIndices=True, forceSort=True)
+            
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):
         """
@@ -1180,8 +1226,8 @@ class Sparse(Base):
     # Helpers #
     ###########
 
-    def _sortInternal(self, axis, setIndices=False):
-        if self._sorted['axis'] == axis:
+    def _sortInternal(self, axis, setIndices=False, forceSort=False):
+        if self._sorted['axis'] == axis and not forceSort:
             # axis sorted; can return now if do not need to set indices
             if not setIndices or self._sorted['indices'] is not None:
                 return

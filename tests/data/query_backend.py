@@ -1044,7 +1044,6 @@ class QueryBackendSparseSafe(DataTestObject):
         # technically unambiguous, but we disallow this
         _ = data[2]
 
-
     ################
     # pointView #
     ################
