@@ -1657,13 +1657,13 @@ class Points(ABC):
         >>> X = nimble.data(travelData, featureNames=fts)
         >>> X
         <DataFrame 5pt x 3ft
-             'STATE'  'HOURS' 'MPH'
-           ┌───────────────────────
-         0 │   Iowa    0.500    19
-         1 │ Maryland  1.500    48
-         2 │ Maryland  2.000    40
-         3 │  Texas    3.200    50
-         4 │  Texas    3.000    45
+              STATE    HOURS  MPH
+           ┌─────────────────────
+         0 │     Iowa  0.500   19
+         1 │ Maryland  1.500   48
+         2 │ Maryland  2.000   40
+         3 │    Texas  3.200   50
+         4 │    Texas  3.000   45
         >
         
         >>> X.points.mapReduce(distanceMapper, distanceReducer)
