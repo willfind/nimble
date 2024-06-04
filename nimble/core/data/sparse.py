@@ -852,7 +852,8 @@ class Sparse(Base):
                     self._data.data = np.delete(self._data.data, k)
                     self._data.row = np.delete(self._data.row, k)
                     self._data.col = np.delete(self._data.col, k)
-                    self._sortInternal(self._sorted['axis'], setIndices=True)  # Re-sort and re-index
+                    # Re-sort and re-index
+                    self._sortInternal(self._sorted['axis'], setIndices=True, forceSort=True)
                 return
         if value != 0:
             numPts = len(list(self.points))
@@ -865,8 +866,8 @@ class Sparse(Base):
                 (self._data.data, (self._data.row, self._data.col)),
                  shape=(numPts,numFts)
             )
-            self._sortInternal(self._sorted['axis'], setIndices=True)  # Re-sort and re-index
-            self._sorted['axis'] = None
+            # Re-sort and re-index
+            self._sortInternal(self._sorted['axis'], setIndices=True, forceSort=True)
             
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):
@@ -1225,8 +1226,8 @@ class Sparse(Base):
     # Helpers #
     ###########
 
-    def _sortInternal(self, axis, setIndices=False):
-        if self._sorted['axis'] == axis:
+    def _sortInternal(self, axis, setIndices=False, forceSort=False):
+        if self._sorted['axis'] == axis and not forceSort:
             # axis sorted; can return now if do not need to set indices
             if not setIndices or self._sorted['indices'] is not None:
                 return
