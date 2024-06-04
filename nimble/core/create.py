@@ -216,7 +216,7 @@ def data(source, pointNames='automatic', featureNames='automatic',
        ┌────────
      0 │ 1  2  3
      1 │ 4  5  6
-     path=...simpleData.csv>
+    >
 
     Adding point and feature names.
 

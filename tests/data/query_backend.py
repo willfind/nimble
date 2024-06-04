@@ -1737,10 +1737,8 @@ class QueryBackendSparseSafe(DataTestObject):
             else: # if no pname, the value must have been the row separator
                 assert truncated
         if addPath:
-            assert data.absolutePath in retSplit[-1]
-            assert retSplit[-1].endswith('>')
-        else:
-            assert retSplit[-1] == '>'
+            assert data.absolutePath is not None
+        assert retSplit[-1] == '>'
 
         # check repr of .points and .features
         addIdxMatch = re.compile(u' [ 0-9\u2502]+? \u2502 +([pf]t[0-9]+|[0-9]+)? \u2502?($| [-0-9\\. \u2502\u2500]+)')

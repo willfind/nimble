@@ -2774,10 +2774,10 @@ class Base(ABC):
         indent = ' '
         # remove leading and trailing newlines
         ret += self._show(indent=indent)
-        if self.path is not None:
-            ret += indent + "path=" + self.path + '>'
-        else:
-            ret += '>'
+        # if self.path is not None:
+        #     ret += indent + "path=" + self.path + '>'
+        # else:
+        ret += '>'
 
         return ret
     def show(self, description=None, points=None, features=None,
