@@ -6114,7 +6114,8 @@ class Base(ABC):
         0.5
         """
         if not isNumeric(self):
-            return(np.nan) 
+            calcListByFeature = list(self.features.proportionMissing())
+            return sum(calcListByFeature)/len(self.features)
         return nimble.calculate.proportionMissing(self._vectorize())
 
     def proportionZero(self):
@@ -6130,7 +6131,8 @@ class Base(ABC):
         0.5
         """
         if not isNumeric(self):
-            return(np.nan) 
+            calcListByFeature = list(self.features.proportionZero())
+            return sum(calcListByFeature)/len(self.features)
         return nimble.calculate.proportionZero(self._vectorize())
     
     def mode(self):
