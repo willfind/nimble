@@ -40,6 +40,7 @@ import numbers
 import itertools
 import time
 from collections.abc import Sequence
+from urllib.parse import urlparse
 
 import numpy as np
 
@@ -2152,6 +2153,14 @@ def createDataFromFile(
             with open(source, 'rb', newline=None) as f:
                 content = f.read()
             path = source
+        # Valid UNIX-style path
+        elif (source.startswith('/') or source.startswith('~') 
+              or source.startswith('..')):
+            path = source
+        # Valid UNIX-style path
+        elif re.match(r'^[A-Za-z]:\\', source):
+            path = source
+        
         else: # webpage
             source, database = _urlSourceProcessor(source)
             try:
