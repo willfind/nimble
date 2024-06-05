@@ -940,6 +940,7 @@ class Points(ABC):
          c │ 0  0  1
          a │ 1  0  0
         >
+        
         Keywords
         --------
         keep, hold, maintain, preserve, remove, filter
