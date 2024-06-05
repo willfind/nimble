@@ -2133,6 +2133,38 @@ def _decompressGZip(ioStream):
     with gzip.open(ioStream, 'rb') as unzipped:
         return BytesIO(unzipped.read())
 
+def _guessURLorPath(toCheck):
+    """ takes a string, returns whether we think it is a url or a path.
+    For a sufficiently giberish string, it isn't clear how which will be
+    returned, but most common cases ought to be correct.
+    """
+    # if its there it's a path
+    if os.path.exists(toCheck):
+        return 'path'
+
+    # Known starts
+    if toCheck.startswith("www."):
+        return 'url'
+    # home dir, relative, unix root
+    if toCheck.startswith("~") or toCheck.startswith('.') or toCheck.startswith('/'):
+        return 'path'
+
+    results = urllib.parse.urlparse(toCheck)
+    # probably a windows path
+    if len(results.scheme) == 1:
+        return 'path'
+    # looks like it starts with some kind of protocol (https, http, etc.)
+    if len(results.scheme) >= 2:
+        return 'url'
+
+    # try adding https:// and see if url parse identifies a plausible domain
+    results = urllib.parse.urlparse("http://" + toCheck)
+    if len(results.netloc) >= 3:
+        return 'url'
+
+    # last resort
+    return "path"
+
 def createDataFromFile(
         source, pointNames, featureNames, returnType, name, convertToType,
         keepPoints, keepFeatures, treatAsMissing, replaceMissingWith,
@@ -2148,11 +2180,12 @@ def createDataFromFile(
     # Case: string value means we need to open the file, either directly or
     # through an http request
     if isinstance(source, str):
-        if os.path.exists(source):
+        toTry = _guessURLorPath(source)
+        if toTry == 'path':
             with open(source, 'rb', newline=None) as f:
                 content = f.read()
             path = source
-        else: # webpage
+        if toTry == 'url':
             source, database = _urlSourceProcessor(source)
             try:
                 urlManager = _DirectURLManager(source, False)

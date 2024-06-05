@@ -34,6 +34,7 @@ import h5py
 import pytest
 
 import nimble
+import nimble.core._createHelpers
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import FileFormatException
@@ -4626,3 +4627,30 @@ def test_convertToType_overwriteMatrixReturnType():
     for i in nonNumericTypes:
         data = nimble.data(rawData, returnType="Matrix", convertToType=i) 
         assert type(data) == nimble.core.data.dataframe.DataFrame
+
+
+########################
+# url vs path guessing #
+########################
+
+def test_stringURLPathGuesser():
+    pathsToLoad = []
+    pathsToLoad.append("/home/someone/Downloads/bogusData.csv")
+    pathsToLoad.append("C:\\Users\\someone\\Downloads\\bogusData.csv")
+    pathsToLoad.append("~/Downloads/bogusData.csv")
+    pathsToLoad.append("../documentation/source/datasets/bogusData.csv")
+    pathsToLoad.append("./documentation/source/datasets/bogusData.csv")
+
+    for p in pathsToLoad:
+        ret = nimble.core._createHelpers._guessURLorPath(p)
+        assert ret == 'path'
+
+    urlsToLoad = []
+    urlsToLoad.append("https://www.nimbledata.org/_downloads/9cb0c1bf5b8933f06b4cbf91e6fb087d/bogusData.csv")
+    urlsToLoad.append("ftp://www.nimbledata.org/bogusData.csv")
+    urlsToLoad.append("https://sparkwave.tech/notReal.csv")
+    urlsToLoad.append("sparkwave.tech/notReal.csv")
+
+    for u in urlsToLoad:
+        ret = nimble.core._createHelpers._guessURLorPath(u)
+        assert ret == 'url'
