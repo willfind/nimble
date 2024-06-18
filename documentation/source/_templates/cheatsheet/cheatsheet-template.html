@@ -649,6 +649,99 @@
       </div>
     </div>
     <div class="new-row">
+      <div class="col" id="statistics">
+        <div class="outline">
+          {% block statistics_head %}
+          <h3 class="section-head">Statistics</h3>
+          {% endblock %}
+          <div class="left rborder" id="stats-left">
+            {% block statistics_methods_head %}
+            <h4 class="subhead">Methods</h4>
+            {% endblock %}
+            {% block statistics_methods_content %}
+            <div class="pad">
+              <p>Bound methods for easy access to simple statistics, returning values
+                for each point or feature packed into a new object.
+              </p>
+            </div>
+            <div class="code">
+              <div class="first-half">
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.max.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.max.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.max.html">max</a>(order)</p>
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.mean.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.mean.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.mean.html">mean</a>(order)</p>
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.median.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.median.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.median.html">median</a>(order)</p>
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.medianAbsoluteDeviation.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.medianAbsoluteDeviation.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.medianAbsoluteDeviation.html">medianAbsoluteDeviation</a>(order)</p>
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.min.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.min.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.min.html">min</a>(order)</p>
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.mode.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.mode.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.mode.html">mode</a>(order)</p>
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.populationStandardDeviation.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.populationStandardDeviation.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.populationStandardDeviation.html">populationStandardDeviation</a>(order)</p>
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.proportionMissing.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.proportionMissing.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.proportionMissing.html">proportionMissing</a>(order)</p>
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.proportionZero.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.proportionZero.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.proportionZero.html">proportionZero</a>(order)</p>
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.quartiles.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.quartiles.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.quartiles.html">quartiles</a>(order)</p>
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.standardDeviation.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.standardDeviation.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.standardDeviation.html">standardDeviation</a>(order)</p>
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.uniqueCount.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.uniqueCount.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.uniqueCount.html">uniqueCount</a>(order)</p>
+                <p> X.[<a class="point" href="docs/generated/nimble.core.data.Points.variance.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.variance.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.variance.html">variance</a>(order)</p>
+              </div>
+              <div>
+                <p># Maximum values along the calling axis.</p>
+                <p># Mean values along the calling axis.</p>
+                <p># Median values along the calling axis.</p>
+                <p># Median absolute deviations along the calling axis.</p>
+                <p># Minimum values along the calling axis.</p>
+                <p># Modes along the calling axis.</p>
+                <p># Population standard deviations along the calling axis.</p>
+                <p># Proportions of values that are None or NaN along the calling axis.</p>
+                <p># Proportions of values equal to zero along the calling axis.</p>
+                <p># Quartiles along the calling axis</p>
+                <p># Standard deviations along the calling axis.</p>
+                <p># Numbers of unique values along the calling axis.</p>
+                <p># Variances along the calling axis.</p>
+              </div>
+            </div>
+            {% endblock %}
+          </div>
+          <div class="left lborder" id="stats-right">
+            {% block statistics_choice_head %}
+            <h4 class="subhead">By Axis vs By Object</h4>
+            {% endblock %}
+            {% block statistics_choice_content %}
+            <div class="pad">
+              <p>The listed methods may also be called directly from an object, which will calculate
+                against <strong>ALL</strong> values in the data, and then return that as a number.
+                Mostly useful for objects which are themselves a single point or single feature.
+              </p>
+            </div>
+            <div class="code">
+              <div class="first-half">
+                <p>>>> obj = nimble.data([0,2,4])</p>
+                <p>>>> featureMins = obj.features.<a class="feature" href="docs/generated/nimble.core.data.Features.min.html">min</a>()</p>
+                <p>>>> print(featureMins) </p>
+                <p>1pt x 3ft</p>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp; 1&nbsp; 2</p>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;┌────────</p>
+                <p>min │ 0 &nbsp;2 &nbsp;4</p>
+                <p> </p>  
+                <p>>>> objectMin = obj.<a class="method" href="docs/generated/nimble.core.data.Base.min.html">min</a>(order)() </p>
+                <p>>>> print(objectMin)</p>
+                <p>0</p>
+              </div>  
+              <div>
+                <p>&nbsp;</p>
+                <p># From axis</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p># From object</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+              </div>
+            </div>
+            {% endblock %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="new-row">
       <div class="col" id="manipulation">
         <div class="outline">
           {% block manipulation_head %}

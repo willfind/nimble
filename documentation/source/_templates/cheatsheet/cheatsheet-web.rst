@@ -483,6 +483,46 @@
     </div>
     <div class="row section">
       <div class="col-lg-12">
+
+        {% block statistics_head %}
+        <div class="heading rounded section-head">
+          <i class="bi bi-caret-right-fill"></i>
+          {{super()}}
+        </div>
+        {% endblock %}  
+
+        <div class="subsection">
+          <div class="heading rounded subhead">
+            {% block statistics_methods_head %}
+            <i class="bi bi-caret-right-fill"></i>
+            {{super()}}
+            {% endblock %}
+          </div>
+          <div class="content">
+            {% block statistics_methods_content %}
+            {{super()}}
+            {% endblock %}
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="heading rounded subhead">
+            {% block statistics_choice_head %}
+            <i class="bi bi-caret-right-fill"></i>
+            {{super()}}
+            {% endblock %}
+          </div>
+          <div class="content">
+            {% block statistics_choice_content %}
+            {{super()}}
+            {% endblock %}
+          </div>
+        </div>
+        
+      </div>
+    </div>      
+    <div class="row section">
+      <div class="col-lg-12">
         {% block manipulation_head %}
         <div class="heading rounded section-head">
           <i class="bi bi-caret-right-fill"></i>
