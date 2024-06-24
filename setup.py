@@ -30,13 +30,17 @@ clean - remove setup generated directories and files. By default, clean
 """
 
 import os
+import os.path
 import glob
 
 from setuptools import setup, Distribution
 from setuptools.extension import Extension
 
-from Cython.Build import cythonize
-
+# If available, import
+try:
+    from Cython.Build import cythonize
+except ModuleNotFoundError:
+    cyythonize = None
 
 def getCFiles():
     """
@@ -52,15 +56,26 @@ def getExtensions():
     for extension in getCFiles():
         # name convention dir.subdir.filename
         name = ".".join(extension[:-2].split(os.path.sep))
-        extensions.append(Extension(name, [extension]))
+        extensions.append(Extension(name, [extension], optional=True))
     return extensions
 
 def cythonizeFiles():
     """
     Use cython to convert to C sources
     """
+    if not cythonize:
+        return
+
     toCythonize = glob.glob(os.path.join('nimble', '**', '*.py'), recursive=True)
+    alreadyDone = glob.glob(os.path.join('nimble', '**', '*.c'), recursive=True)
+
+    # depending on where/how this was build, the files may already be present.
+    # if so, add them to a skip list
     exclude = []
+    for cFile in alreadyDone:
+        raw = os.path.splitext(cFile)
+        exclude.append(raw[0] + ".py")
+
     cythonize(toCythonize, exclude=exclude, force=True,
               compiler_directives={'always_allow_keywords': True,
                                    'language_level': 3,

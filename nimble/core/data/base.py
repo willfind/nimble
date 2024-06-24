@@ -34,7 +34,6 @@ import shutil
 import re
 
 import numpy as np
-import pandas as pd 
 from scipy.sparse import coo_matrix
 
 
@@ -45,7 +44,7 @@ from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging, LogID
 from nimble.match import QueryString
-from nimble._utility import cloudpickle, h5py, plt, IPython
+from nimble._utility import cloudpickle, h5py, plt, IPython, pd
 from nimble._utility import isDatetime
 from nimble._utility import tableString, prettyListString, quoteStrings
 from nimble._utility import _getStatsFunction, acceptedStats
@@ -114,8 +113,9 @@ def isNumeric(base):
     def is_numeric_column(column):
         return pd.api.types.is_numeric_dtype(column)
 
-    if isinstance(base._data, pd.DataFrame):
-        return all(is_numeric_column(column) for column in base._data.dtypes)
+    if pd.nimbleAccessible():
+        if isinstance(base._data, pd.DataFrame):
+            return all(is_numeric_column(column) for column in base._data.dtypes)
     elif isinstance(base._data, np.ndarray):
         return np.issubdtype(base._data.dtype, np.number)
     elif isinstance(base._data, coo_matrix):
