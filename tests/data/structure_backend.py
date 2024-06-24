@@ -3309,15 +3309,23 @@ class StructureModifyingSparseUnsafe(StructureShared):
         self.merge_backend(left, right, expected, on="id")
 
     def test_merge_onFeature_sharedIds_newFeatures_duplicate_mixedOrder(self):
+        # supposedly fine
+        import pdb; pdb.set_trace()
+        
         dataL = [["id1", "a", 1], ["id3", "c", 3], ["id6", "f", 6]]
         dataR = [["id2", "w", 9], ["id3", "v", 8], ["id4", "x", 7], ["id4", "y", 6], ["id5", "z", 5]]
         fNamesR = ["id", "f3", "f4"]
         left = self.constructor(dataL, featureNames=["id", "f1", "f2"])
         right = self.constructor(dataR, featureNames=fNamesR)
 
-        mData = [["id1", "a", 1, None, None], ["id3", "c", 3, "v", 8],
-                 ["id6", "f", 6, None, None],["id2", None, None, "w", 9],
-                 ["id4", None, None, "x", 7], ["id4", None, None, "y", 6], ["id5", None, None, "z", 5]]
+        # mData = [["id1", "a", 1, None, None], ["id3", "c", 3, "v", 8],
+        #          ["id6", "f", 6, None, None],["id2", None, None, "w", 9],
+        #          ["id4", None, None, "x", 7], ["id4", None, None, "y", 6], ["id5", None, None, "z", 5]]
+        
+        mData = [["id1", "a", 1, None, None], ["id2", None, None, "w", 9],
+                 ["id3", "c", 3, "v", 8], ["id4", None, None, "x", 7],
+                 ["id4", None, None, "y", 6], ["id5", None, None, "z", 5], ["id6", "f", 6, None, None]]
+        
         mFtNames = ["id", "f1", "f2", "f3", "f4"]
         mLargest = self.constructor(mData, featureNames=mFtNames)
 
@@ -3325,15 +3333,20 @@ class StructureModifyingSparseUnsafe(StructureShared):
         assert left == mLargest
 
     def test_merge_onFeature_sharedIds_newFeatures_duplicate_differentMatchIdx(self):
+        import pdb; pdb.set_trace()
         dataL = [["id1", "a", 1], ["id3", "c", 3], ["id6", "f", 6], ["id7", "g", 7]]
         dataR = [["id3", "v", 8], ["id4", "x", 7], ["id4", "y", 6]]
         fNamesR = ["id", "f3", "f4"]
         left = self.constructor(dataL, featureNames=["id", "f1", "f2"])
         right = self.constructor(dataR, featureNames=fNamesR)
 
+        # mData = [["id1", "a", 1, None, None], ["id3", "c", 3, "v", 8],
+        #          ["id6", "f", 6, None, None],["id7", "g", 7, None, None],
+        #          ["id4", None, None, "x", 7], ["id4", None, None, "y", 6]]
+        
         mData = [["id1", "a", 1, None, None], ["id3", "c", 3, "v", 8],
-                 ["id6", "f", 6, None, None],["id7", "g", 7, None, None],
-                 ["id4", None, None, "x", 7], ["id4", None, None, "y", 6]]
+                 ["id4", None, None, "x", 7], ["id4", None, None, "y", 6],
+                 ["id6", "f", 6, None, None], ["id7", "g", 7, None, None]]
         mFtNames = ["id", "f1", "f2", "f3", "f4"]
         mLargest = self.constructor(mData, featureNames=mFtNames)
 

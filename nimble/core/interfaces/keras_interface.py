@@ -55,6 +55,7 @@ LEARNERTYPES = {
         'Hinge', 'hinge',
         'CategoricalHinge', 'categorical_hinge',
         'SquaredHinge', 'squared_hinge',
+        'CTC', 'ctc',
     ],
     'regression': [
         'MeanSquaredError', 'mean_squared_error',
