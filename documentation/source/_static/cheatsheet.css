@@ -155,6 +155,11 @@ div.body .rborder {
   margin-right: -1px;
 }
 
+div.body .lborder {
+  box-sizing: border-box;
+  border-left: 1px solid black;
+}
+
 div.body .inplace {
   color: red;
   font-weight: bold;
@@ -207,17 +212,17 @@ div.body .inplace {
 
 #data-structure {
   width: 482px;
-  height: 288px;
+  height: 290px;
 }
 
 #io {
   width: 304px;
-  height: 288px;
+  height: 290px;
 }
 
 #info {
   width: 266px;
-  height: 280px;
+  height: 271px;
 }
 
 #vizAndIter {
@@ -225,16 +230,16 @@ div.body .inplace {
 }
 
 #visualization {
-  height: 191px;
+  height: 189px;
 }
 
 #iteration {
-  height: 87px;
+  height: 80px;
   margin-top: 2px;
 }
 
 #query {
-  height: 273px;
+  height: 271px;
   width: 498px;
 }
 
@@ -243,8 +248,22 @@ div.body .inplace {
 }
 
 #math {
-  height: 273px;
+  height: 271px;
   width: 288px;
+}
+
+#statistics {
+  height: 148px;
+  width: 790px;
+  page-break-inside: avoid;
+}
+
+#stats-left {
+  width: 525px;
+}
+
+#stats-right {
+  width: 264px;
 }
 
 #manipulation {
