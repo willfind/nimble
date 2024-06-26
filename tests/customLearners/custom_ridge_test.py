@@ -22,7 +22,6 @@ from nimble.learners import RidgeRegression
 
 
 def testRidgeRegressionShapes():
-    import pdb; pdb.set_trace()
     """ Test ridge regression by checking the shapes of the inputs and outputs """
 
     data = [[0, 0, 0], [4, 3, 1], [12, 15, -3], ]
