@@ -26,6 +26,8 @@ import inspect
 import tomli
 import importlib
 
+from packaging.requirements import Requirement
+
 def test_deps_matchingSections():
     """
     Check that the hard-coded sections of the Dependency objects match the
@@ -47,14 +49,18 @@ def test_deps_matchingSections():
             infoFull = tomlDict["project"]
 
     optional = infoFull['optional-dependencies']
+    for name, vals in optional.items():
+        optional[name] = list(map(Requirement, vals))
     required = infoFull['dependencies']
+    required = list(map(Requirement, required))
 
     for name, depObj in nimble._dependencies.DEPENDENCIES.items():
+        currReq = Requirement(depObj.requires)
         if depObj.section == "required":
-            assert depObj.requires in required
+            assert currReq in required
         else:
-            assert depObj.requires in optional['all']
-            assert depObj.requires in optional[depObj.section]
+            assert currReq in optional['all']
+            assert currReq in optional[depObj.section]
 
 
 def test_pyproject_matches_recipe():
