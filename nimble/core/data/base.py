@@ -113,9 +113,8 @@ def isNumeric(base):
     def is_numeric_column(column):
         return pd.api.types.is_numeric_dtype(column)
 
-    if pd.nimbleAccessible():
-        if isinstance(base._data, pd.DataFrame):
-            return all(is_numeric_column(column) for column in base._data.dtypes)
+    if pd.nimbleAccessible() and isinstance(base._data, pd.DataFrame):
+        return all(is_numeric_column(column) for column in base._data.dtypes)
     elif isinstance(base._data, np.ndarray):
         return np.issubdtype(base._data.dtype, np.number)
     elif isinstance(base._data, coo_matrix):
