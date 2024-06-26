@@ -78,7 +78,7 @@ def calledException(*args, **kwargs):
 
 
 # TODO: polish and relocate to random module
-def generateClassificationData(labels, pointsPer, featuresPer, testSizePerLabel=1):
+def generateClassificationData(labels, pointsPer, featuresPer, testSizePerLabel=1, addFeatureNoise=True, addLabelNoise=False):
     """
     Randomly generate sensible data for a classification problem.
     Returns a tuple of tuples, where the first value is a tuple

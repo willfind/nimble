@@ -348,10 +348,10 @@ def testKerasIncremental(optimizer):
     Test Keras can handle and incrementalTrain call
     """
     numClasses = 4
-    small = generateClassificationData(numClasses, 1, 16, 0)
+    small = generateClassificationData(numClasses, 1, 16, 0, True, True)
     ((x_small, y_small), (_, _)) = small
 
-    ret = generateClassificationData(numClasses, 100, 16, 10)
+    ret = generateClassificationData(numClasses, 100, 16, 10, False, False)
     ((x_train, y_train), (x_test, y_test)) = ret
     FC = nimble.calculate.fractionCorrect
 
