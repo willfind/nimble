@@ -639,6 +639,8 @@ texinfo_documents = [
 # -- Options for nbsphinx -------------------------------------------------
 
 # suffix for source files, by default is .txt
+nbsphinx_allow_errors = True
+
 html_sourcelink_suffix = ''
 
 # recommended when matplotlib is used

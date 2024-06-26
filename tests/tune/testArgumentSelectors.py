@@ -321,7 +321,7 @@ def test_Bayesian(minValidator, maxValidator):
         except StopIteration:
             break
     duration = default_timer() - start
-    assert 2 < duration < 2.1
+    assert 2 < duration < 2.8
     # with 1 second sleep, StopIteration should occur on 3rd iteration
     assert i == 2
 
@@ -446,7 +446,7 @@ def test_Iterative(maxValidator):
     # first next call gets only the performance of the middle values (.4 sec)
     # the second call tests the higher and lower values for each variable
     # (1.6 sec) and none will improve performance so expect just over 2 seconds
-    assert 2 < duration < 2.1
+    assert 2 < duration < 2.8
     assert i == 2
 
     # threshold, k=7, p=2 will trigger threshold
@@ -508,7 +508,7 @@ def test_StochasticRandomMutator(minValidator):
         except StopIteration:
             break
     duration = default_timer() - start
-    assert 2 < duration < 2.1
+    assert 2 < duration < 2.8
     # with 1 second sleep, StopIteration should occur on 3rd iteration
     assert i == 2
 

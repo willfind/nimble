@@ -175,7 +175,7 @@ class Matrix(Base):
         else:
             header += '#\n'
 
-        scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float_),
+        scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float64),
                          comment=header)
 
     def _copy_implementation(self, to):
@@ -206,7 +206,7 @@ class Matrix(Base):
             if to == 'scipycoo':
                 return scipy.sparse.coo_matrix(data)
             try:
-                ret = data.astype(np.float_)
+                ret = data.astype(np.float64)
             except ValueError as e:
                 msg = f'Must create scipy {to[-3:]} matrix from numeric data'
                 raise ValueError(msg) from e

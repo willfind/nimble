@@ -987,10 +987,10 @@ def test_data_CSV_allMissingColumn():
         dfCSVMissing = nimble.data(source=tmpCSV.name)
         assert dfCSVMissing.getTypeString() == 'DataFrame'
         dtypes = dfCSVMissing._data.dtypes
-        assert dtypes[0] == np.float_
+        assert dtypes[0] == np.float64
         assert dtypes[1] == np.int_
         assert dtypes[2] == np.object_
-        assert dtypes[3] == np.float_
+        assert dtypes[3] == np.float64
 
     with PortableNamedTempFileContext('w+', suffix='.csv') as tmpCSV:
         tmpCSV.write('ft0,ft1,ft2,ft3\n')
@@ -1001,7 +1001,7 @@ def test_data_CSV_allMissingColumn():
         tmpCSV.flush()
         mtxCSVMissing = nimble.data(source=tmpCSV.name)
         assert mtxCSVMissing.getTypeString() == 'Matrix'
-        assert mtxCSVMissing._data.dtype == np.float_
+        assert mtxCSVMissing._data.dtype == np.float64
 
 def test_data_MTXArr_data():
     """ Test of data() loading a mtx (arr format) file, default params """
@@ -4325,7 +4325,7 @@ def test_tuplesArePoints_numpyStructuredArrays():
     regularArray = np.array([[12, 23, 34, 45],[11, 21, 31, 41],[13, 21, 31, 43]])
     regularMatrix = nimble.data(regularArray, featureNames=['Weight', 'Speed', 'Age', 'RPM'])
     assert dataArray == regularMatrix
-    assert np.issubdtype(dataArray._data.dtype, np.float_)
+    assert np.issubdtype(dataArray._data.dtype, np.float64)
 
 def test_featureNames_numpyStructuredArrays():
     structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],

@@ -254,10 +254,10 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
             pointsList.append(featureVector)
             clusterNoiselessLabelList.append([float(curr)])
 
-    pointsArray = np.array(pointsList, dtype=np.float_)
-    labelsArray = np.array(labelsList, dtype=np.float_)
+    pointsArray = np.array(pointsList, dtype=np.float64)
+    labelsArray = np.array(labelsList, dtype=np.float64)
     clusterNoiselessLabelArray = np.array(clusterNoiselessLabelList,
-                                          dtype=np.float_)
+                                          dtype=np.float64)
     # todo verify that your list of lists is valid initializer for all
     # datatypes, not just matrix
     # then convert

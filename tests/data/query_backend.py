@@ -3402,8 +3402,8 @@ class QueryBackendSparseSafe(DataTestObject):
         ret = obj.features.report(dtypes=True)
         assert 'dataType' in ret.features.getNames()
         reportDtypes = list(ret.features['dataType'])
-        expDtypes1 = [np.float_, np.float_]
-        expDtypes2 = [np.integer, np.float_]
+        expDtypes1 = [np.float64, np.float64]
+        expDtypes2 = [np.integer, np.float64]
         
         numericTypes = ['TestMatrix', 'TestMatrixView', 'TestSparse', 'TestSparseView']
 
