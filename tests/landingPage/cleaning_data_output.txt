@@ -1,4 +1,4 @@
-['/home/tpburns/nimbleData/archive.ics.uci.edu/static/public/492/Metro_Interstate_Traffic_Volume.csv.gz']
+REGEX: .+?nimbleData.+?Metro_Interstate_Traffic_Volume.+?
 Raw traffic data
 45647pt x 9ft
            holiday       temp   rain_1h  snow_1h  ──  weather_description       date_time       traffic_volume
