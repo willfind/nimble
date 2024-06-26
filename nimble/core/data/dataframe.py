@@ -189,7 +189,7 @@ class DataFrame(Base):
             comment += ','.join(self.points.getNames())
         if includeFeatureNames:
             comment += '\n#' + ','.join(self.features.getNames())
-        scipy.io.mmwrite(outPath, self._data.astype(np.float_),
+        scipy.io.mmwrite(outPath, self._data.astype(np.float64),
                          comment=comment)
 
     def _copy_implementation(self, to):

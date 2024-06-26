@@ -317,7 +317,7 @@ def dtypeConvert(obj):
     """
     if hasattr(obj, 'dtype') and obj.dtype == np.object_:
         try:
-            obj = obj.astype(np.float_)
+            obj = obj.astype(np.float64)
         except ValueError:
             pass
     return obj

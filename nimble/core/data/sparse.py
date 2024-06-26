@@ -347,7 +347,7 @@ class Sparse(Base):
         else:
             header += '#\n'
 
-        scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float_),
+        scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float64),
                          comment=header)
 
     def _referenceFrom_implementation(self, other, kwargs):
@@ -389,7 +389,7 @@ class Sparse(Base):
                     return scipy.sparse.coo_matrix(data)
                 return data.copy()
             try:
-                ret = data.astype(np.float_)
+                ret = data.astype(np.float64)
             except ValueError as e:
                 msg = f'Must create scipy {to[-3:]} matrix from numeric data'
                 raise ValueError(msg) from e
@@ -773,7 +773,7 @@ class Sparse(Base):
         if len(mergedData) == 0:
             mergedData = []
 
-        mergedData = mergedData.astype(np.float_)
+        mergedData = mergedData.astype(np.float64)
         self._dims = [numPts, numFts]
         self._data = scipy.sparse.coo_matrix(
             (mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts))

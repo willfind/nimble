@@ -4578,8 +4578,9 @@ class Base(ABC):
         else:
             self._genericMergeFrontend(other, point, feature, onFeature)
         
-        if onFeature:
-            self.points.sort(by=onFeature, useLog=False)
+        if point == 'union':
+            if onFeature:
+                self.points.sort(by=onFeature, useLog=False)
         
             
     def _genericStrictMerge_implementation(self, other, point, feature,

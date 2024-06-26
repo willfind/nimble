@@ -150,7 +150,7 @@ def formatIfNeeded(value, sigDigits):
     Format the value into a string, and in the case of a float typed value,
     limit the output to the given number of significant digits.
     """
-    if isinstance(value, (float, np.float_)):
+    if isinstance(value, (float, np.float64)):
         if value != value:
             return ''
         if sigDigits is not None:
@@ -389,8 +389,8 @@ def allDataIdentical(arr1, arr2):
         # check the values that are not equal
         checkPos = arr1 != arr2
         # if values are nan, conversion to float dtype will be successful
-        test1 = np.array(arr1[checkPos], dtype=np.float_)
-        test2 = np.array(arr2[checkPos], dtype=np.float_)
+        test1 = np.array(arr1[checkPos], dtype=np.float64)
+        test2 = np.array(arr2[checkPos], dtype=np.float64)
         return np.isnan(test1).all() and np.isnan(test2).all()
     except ValueError:
         return False
@@ -1165,7 +1165,7 @@ def modifyNumpyArrayValue(arr, index, newVal):
     if nonNumericNewVal and arr.dtype != np.object_:
         arr = arr.astype(np.object_)
     elif floatNewVal and arr.dtype not in (np.floating, np.object_):
-        arr = arr.astype(np.float_)
+        arr = arr.astype(np.float64)
 
     arr[index] = newVal
 

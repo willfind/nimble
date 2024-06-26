@@ -27,6 +27,7 @@ import tomli
 import importlib
 
 def test_deps_matchingSections():
+    import pdb; pdb.set_trace()
     """
     Check that the hard-coded sections of the Dependency objects match the
     structure of the optional dependencies in the pyproject file.
