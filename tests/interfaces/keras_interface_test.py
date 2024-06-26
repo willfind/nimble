@@ -344,7 +344,6 @@ def testKerasAPIRegression():
 @logCountAssertionFactory(8)
 @chooseOptimizer
 def testKerasIncremental(optimizer):
-    import pdb; pdb.set_trace()
     """
     Test Keras can handle and incrementalTrain call
     """
